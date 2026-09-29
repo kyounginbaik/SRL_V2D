@@ -441,7 +441,7 @@ def _hawor_outputs_current(
     except (OSError, json.JSONDecodeError):
         return False
 
-    if int(meta.get("export_version", -1)) < 2:
+    if int(meta.get("export_version", -1)) < 4:
         return False
     if meta.get("left_conversion") != "mirror_conjugate_axis_angle_yz":
         return False
@@ -593,6 +593,7 @@ def run_ego_wilor(
     run_hamer_pass: bool = False,
     hamer_weights: str = "data/weights/hamer",
     hamer_bbox_expansion: float = 1.7,
+    hamer_crop_source: str = "mask",
     hamer_mask_min_pixels: int | None = None,
     hawor_weights: str = "data/weights/hawor",
     hawor_focal_length: float = -1.0,
@@ -790,6 +791,8 @@ def run_ego_wilor(
     print(f"  object_prompt   : {object_prompt}")
     print(f"  sam2_hand_prompt_source: {sam2_hand_prompt_source}")
     print(f"  hand_pose_source: {hand_pose_source}")
+    if hand_pose_source == "hamer":
+        print(f"  hamer_crop_source: {hamer_crop_source}")
     if object_mesh_path is not None:
         print(f"  object_mesh     : {object_mesh_path}")
     print(f"  run_slam        : {run_slam}")
@@ -1356,6 +1359,8 @@ def run_ego_wilor(
                 weights_dir      = hamer_weights,
                 bbox_expansion   = hamer_bbox_expansion,
                 mask_min_pixels  = hamer_mask_min_pixels,
+                detections_dir   = wilor_raw_dir if hamer_crop_source == "detector" else None,
+                crop_source      = hamer_crop_source,
                 dev              = dev,
             )
 
@@ -1440,8 +1445,18 @@ def run_ego_wilor(
                            if t.get("role", "hand") == "hand" and not bool(t.get("is_right"))]
         right_candidates = [int(t["object_id"]) for t in htm_hawor
                             if t.get("role", "hand") == "hand" and bool(t.get("is_right"))]
-        hawor_left_id = left_candidates[0] if left_candidates else 2
-        hawor_right_id = right_candidates[0] if right_candidates else 3
+        used_ids = {int(t["object_id"]) for t in htm_hawor}
+        hawor_left_id = left_candidates[0] if left_candidates else next(
+            i for i in range(2, max(used_ids or {1}) + 3) if i not in used_ids
+        )
+        used_ids.add(hawor_left_id)
+        hawor_right_id = right_candidates[0] if right_candidates else next(
+            i for i in range(2, max(used_ids or {1}) + 3) if i not in used_ids
+        )
+        if hawor_right_id == hawor_left_id:
+            hawor_right_id = next(
+                i for i in range(2, max(used_ids or {1}) + 3) if i not in used_ids
+            )
 
         if float(hawor_focal_length) > 0.0:
             hawor_focal_eff = float(hawor_focal_length)
@@ -2099,6 +2114,7 @@ def run_ego_wilor(
                     "object_prompt": object_prompt,
                     "object_track_id": object_track_id,
                     "hand_pose_source": hand_pose_source,
+                    "hamer_crop_source": hamer_crop_source if hand_pose_source == "hamer" else None,
                     "sam2_hand_prompt_source": sam2_hand_prompt_source,
                     "final_hand_root": final_hand_root,
                     "run_geocalib": run_geocalib_eff,
@@ -2363,6 +2379,8 @@ def parse_args() -> argparse.Namespace:
                         "--hand_pose_source hamer).")
     p.add_argument("--hamer_bbox_expansion", type=float, default=1.7,
                    help="Bbox expansion for HaMeR's mask-driven crop.")
+    p.add_argument("--hamer_crop_source", choices=("mask", "detector"), default="mask",
+                   help="Use the SAM2 mask bbox or same-handed per-frame WiLoR detector bbox for HaMeR crops.")
     p.add_argument("--hamer_mask_min_pixels", type=int, default=None,
                    help="Min SAM2-mask area for HaMeR alignment / regression. "
                         "Defaults to 1 with --hand_pose_source hamer, or 256 "
@@ -2563,6 +2581,7 @@ def run_from_args(args: argparse.Namespace) -> None:
         run_hamer_pass                    = args.run_hamer_pass,
         hamer_weights                     = args.hamer_weights,
         hamer_bbox_expansion              = args.hamer_bbox_expansion,
+        hamer_crop_source                 = args.hamer_crop_source,
         hamer_mask_min_pixels             = args.hamer_mask_min_pixels,
         hawor_weights                     = args.hawor_weights,
         hawor_focal_length                = args.hawor_focal_length,

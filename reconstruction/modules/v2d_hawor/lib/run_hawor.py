@@ -19,7 +19,7 @@ from dataclasses import dataclass
 
 
 _HAWOR_ROOT = os.environ.get("HAWOR_ROOT", "/opt/hawor")
-_EXPORT_VERSION = 2
+_EXPORT_VERSION = 4
 _LEFT_CONVERSION = "mirror_conjugate_axis_angle_yz"
 _MOTION_CACHE_VERSION = 1
 
@@ -319,6 +319,7 @@ def _write_export_metadata(
     right_id: int,
     start_idx: int,
     end_idx: int,
+    source_frame_count: int,
 ) -> None:
     with open(os.path.join(hand_tracks_dir, "_metadata.json"), "w") as f:
         json.dump(
@@ -332,6 +333,9 @@ def _write_export_metadata(
                 "right_id": int(right_id),
                 "start_idx": int(start_idx),
                 "end_idx": int(end_idx),
+                "native_frame_count": int(end_idx - start_idx),
+                "source_frame_count": int(source_frame_count),
+                "timeline_mapping": "nearest_timestamp_endpoint_aligned",
             },
             f,
             indent=2,
@@ -346,6 +350,7 @@ def _export_camera_space_tracks(
     right_id: int,
     start_idx: int,
     end_idx: int,
+    source_frame_count: int,
     frame_chunks_all=None,
 ) -> None:
     import numpy as np
@@ -364,10 +369,21 @@ def _export_camera_space_tracks(
         chunk_dir = os.path.join(seq_folder, "cam_space", str(hand_idx))
         if not os.path.isdir(chunk_dir):
             continue
-        for chunk_i, path in enumerate(sorted(glob.glob(os.path.join(chunk_dir, "*.json")))):
+        native_records = {}
+        for path in glob.glob(os.path.join(chunk_dir, "*.json")):
             with open(path) as f:
                 data = json.load(f)
-            frames = [int(f) for f in np.asarray(chunks[hand_idx][chunk_i]).reshape(-1)]
+            stem = os.path.splitext(os.path.basename(path))[0]
+            try:
+                first, last = (int(v) for v in stem.split("_", 1))
+            except ValueError as exc:
+                raise ValueError(f"Unexpected HaWoR chunk filename: {path}") from exc
+            # Native camera-space files contain a dense prediction for their
+            # inclusive filename range, including frames filled between sparse
+            # detector observations. ``frame_chunks_all`` retains only sparse
+            # observation indices for some tracks and therefore cannot define
+            # the time axis of these dense arrays.
+            frames = list(range(first, last + 1))
             root_rot = _as_time_array(data["init_root_orient"])
             hand_rot = _as_time_array(data["init_hand_pose"])
             trans = _as_time_array(data["init_trans"])
@@ -388,7 +404,7 @@ def _export_camera_space_tracks(
                     # Canonical v2d hand tracks require bbox. Skip frames where
                     # HaWoR only has an infilled/motion-only state.
                     continue
-                rec = {
+                native_records[frame_idx] = {
                     "track_id": int(track_id),
                     "frame_idx": int(frame_idx),
                     "is_right": bool(is_right),
@@ -404,9 +420,31 @@ def _export_camera_space_tracks(
                         "focal_length": float(focal_length),
                     },
                 }
-                with open(os.path.join(out_dir, f"{frame_idx:06d}.json"), "w") as f:
-                    json.dump(rec, f, indent=2)
-    _write_export_metadata(hand_tracks_dir, focal_length, left_id, right_id, start_idx, end_idx)
+        # HaWoR's video loader normalizes videos to 30 fps. Map those native
+        # samples back to the source video timeline so these records line up
+        # with v2d depth, masks, SLAM poses, and frames. Endpoint alignment is
+        # robust to ffmpeg's occasional one-frame rounding at either frame rate.
+        # HaWoR uses a half-open [start_idx, end_idx) interval.
+        native_count = end_idx - start_idx
+        for source_idx in range(source_frame_count):
+            if source_frame_count <= 1 or native_count <= 1:
+                native_idx = start_idx
+            else:
+                native_idx = start_idx + round(
+                    source_idx * (native_count - 1) / (source_frame_count - 1)
+                )
+            rec = native_records.get(native_idx)
+            if rec is None:
+                continue
+            rec = dict(rec)
+            rec["frame_idx"] = int(source_idx)
+            rec["hawor_native_frame_idx"] = int(native_idx)
+            with open(os.path.join(out_dir, f"{source_idx:06d}.json"), "w") as f:
+                json.dump(rec, f, indent=2)
+    _write_export_metadata(
+        hand_tracks_dir, focal_length, left_id, right_id, start_idx, end_idx,
+        source_frame_count,
+    )
 
 
 
@@ -491,6 +529,19 @@ class _Args:
     vis_mode: str = "none"
 
 
+def _video_frame_count(path: str) -> int:
+    import cv2
+
+    cap = cv2.VideoCapture(path)
+    try:
+        count = int(round(cap.get(cv2.CAP_PROP_FRAME_COUNT)))
+    finally:
+        cap.release()
+    if count <= 0:
+        raise RuntimeError(f"Could not determine source video frame count: {path}")
+    return count
+
+
 def run_hawor(
     video: str,
     hand_tracks_dir: str,
@@ -509,6 +560,7 @@ def run_hawor(
     _patch_renderer_mask_fallback()
 
     video = os.path.abspath(video)
+    source_frame_count = min(_video_frame_count(video), int(max_num))
     hand_tracks_dir = os.path.abspath(hand_tracks_dir)
     native_dir = os.path.abspath(native_dir or os.path.join(os.path.dirname(hand_tracks_dir), "hawor_native"))
     os.makedirs(native_dir, exist_ok=True)
@@ -553,7 +605,8 @@ def run_hawor(
         os.chdir(prev_cwd)
 
     _export_camera_space_tracks(
-        seq_folder, hand_tracks_dir, float(est_focal), left_id, right_id, start_idx, end_idx, frame_chunks_all
+        seq_folder, hand_tracks_dir, float(est_focal), left_id, right_id,
+        start_idx, end_idx, source_frame_count, frame_chunks_all,
     )
 
 

@@ -615,6 +615,7 @@ def parse_args() -> argparse.Namespace:
         "--sam2_hand_prompt_source", choices=("box", "wilor_mask"), default="wilor_mask"
     )
     p.add_argument("--hamer_bbox_expansion", type=float, default=1.7)
+    p.add_argument("--hamer_crop_source", choices=("mask", "detector"), default="mask")
     p.add_argument("--hamer_mask_min_pixels", type=int, default=None)
     p.add_argument(
         "--hawor_focal_length",
@@ -770,6 +771,7 @@ def _run_hamer(args: argparse.Namespace) -> Path:
         run_hamer_pass=(args.hand_tracking == "hamer"),
         hamer_weights=args.hamer_weights,
         hamer_bbox_expansion=args.hamer_bbox_expansion,
+        hamer_crop_source=args.hamer_crop_source,
         hamer_mask_min_pixels=args.hamer_mask_min_pixels,
         hawor_weights=args.hawor_weights,
         hawor_focal_length=args.hawor_focal_length,

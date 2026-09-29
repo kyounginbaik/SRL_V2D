@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>V2D · Ablation Lab</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="/" aria-label="Ablation Lab home"><span class="brandmark">v2d<span>↗</span></span><span class="divider"></span><strong>Ablation Lab</strong><span class="tag">TRACK 03</span></a>
+  <div class="toplinks"><span class="dot"></span><span id="datasetState">Loading local results</span><a href="/data/REPORT.md" target="_blank">Audit report ↗</a><button id="share">Copy view link</button></div>
+</header>
+<div class="workspace">
+<aside class="sidebar">
+  <div class="eyebrow">EXPERIMENT CONFIGURATION</div>
+  <div class="editTarget"><button data-edit="0" class="active"><i class="a">A</i> Reference</button><button data-edit="1"><i class="b">B</i> Comparison</button></div>
+  <p class="sidebarHint">Change one stage. Inspect how its errors propagate.</p>
+  <div id="pipeline"></div>
+  <div class="sidebarFoot"><span class="dot"></span> Actual saved predictions<br><small>Uncomputed combinations stay unavailable.<br>Stages share the same source frames.</small></div>
+</aside>
+<main>
+  <div class="pageTitle"><div><div class="eyebrow">EGOCENTRIC VIDEO → KINEMATIC MOTION</div><h1>Where does the motion break?</h1><p>Inspect the reconstruction. Isolate the stage. Compare the result.</p></div><button id="methodology">How to read these results ⓘ</button></div>
+  <section class="episodeBar"><label for="episode">Demonstration <select id="episode"></select></label><span id="episodeMeta"></span><div class="spacer"></div><label class="check"><input type="checkbox" id="linkCameras" checked> Link 3D views</label><button id="swap">⇄ Swap A / B</button></section>
+  <div id="episodeNotice" class="notice" hidden></div>
+  <section class="presets"><span class="eyebrow">QUICK COMPARISONS</span><button data-preset="crop">Mask / detector crop</button><button data-preset="refine" class="active">Gsplat on / off</button><button data-preset="depth">Before / after depth fit</button><button data-preset="fill">Observed / gap-filled</button><button data-preset="clean">Before / after cleanup</button><button data-preset="scale">Reconstruction / loader scale</button><button data-preset="slam">Static / moving camera</button></section>
+  <section class="comparisons">
+    <article class="pane" id="pane0"><div class="paneHeader"><i class="a">A</i><div><strong class="paneTitle">Reference</strong><small class="paneSubtitle"></small></div><span class="badge status">RECORDED</span></div><div class="viewControls"><button data-view="world" class="active">3D scene</button><button data-view="ego">Ego overlay</button><button data-view="masks">Masks</button><button data-view="retarget">Kinematic replay</button><button class="reset" title="Reset camera">⤢</button></div><div class="viewport"><div class="scene"></div><video class="stageVideo" muted playsinline preload="metadata" hidden></video><div class="empty" hidden></div><div class="viewLabel">WORLD SPACE <span>Drag to orbit · scroll to zoom</span></div><div class="legend"><span class="leftKey">● Left hand</span><span class="rightKey">● Right hand</span><span class="objectKey">● Object</span></div></div><div class="metrics"></div></article>
+    <article class="pane" id="pane1"><div class="paneHeader"><i class="b">B</i><div><strong class="paneTitle">Comparison</strong><small class="paneSubtitle"></small></div><span class="badge status">RECORDED</span></div><div class="viewControls"><button data-view="world" class="active">3D scene</button><button data-view="ego">Ego overlay</button><button data-view="masks">Masks</button><button data-view="retarget">Kinematic replay</button><button class="reset" title="Reset camera">⤢</button></div><div class="viewport"><div class="scene"></div><video class="stageVideo" muted playsinline preload="metadata" hidden></video><div class="empty" hidden></div><div class="viewLabel">WORLD SPACE <span>Drag to orbit · scroll to zoom</span></div><div class="legend"><span class="leftKey">● Left hand</span><span class="rightKey">● Right hand</span><span class="objectKey">● Object</span></div></div><div class="metrics"></div></article>
+  </section>
+  <section class="transport"><button id="play" aria-label="Play or pause">▶</button><button id="prev" aria-label="Previous frame">‹</button><button id="next" aria-label="Next frame">›</button><span id="time">00:00.00</span><input id="timeline" type="range" min="0" max="1" value="0" aria-label="Frame timeline"><span id="frameLabel">Frame 0</span><select id="speed" aria-label="Playback speed"><option value="0.25">0.25×</option><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option></select><label class="check"><input type="checkbox" id="gt" checked> Public object path</label></section>
+  <section class="details"><article class="sourceCard"><div class="cardHeader">SOURCE VIDEO <span>ego_cam_a</span></div><video id="source" muted playsinline preload="metadata"></video><small id="sourceCaption">Original input · no overlays</small></article><article class="diagnostics"><div class="cardHeader">HAND DISTANCE FROM CAMERA <span>Diagnostic, not ground-truth error</span></div><canvas id="chart" aria-label="Per-frame wrist distance chart"></canvas><div class="chartLegend"><span class="aText">— A</span><span class="bText">— B</span><span>Solid: left · dashed: right</span><button id="worst">Jump to largest outlier →</button></div></article></section>
+  <section class="findings"><div><div class="eyebrow">INSPECTION NOTES</div><h2>What this episode tells us</h2><button id="cropProbeButton" hidden>View fresh crop ablation ↗</button></div><ul id="findings"></ul></section>
+  <section class="provenance"><details><summary>Run provenance, numerical checks & reproducible commands</summary><div id="provenance"></div></details></section>
+  <footer>V2D Track 3 · Local research workbench <span>Public dataset: NVIDIA · CC BY 4.0 · No RL in these comparisons</span></footer>
+</main>
+</div>
+<dialog id="info"><button class="close">×</button><div class="eyebrow">READING THE EVIDENCE</div><h2>Ablations, with their limits visible.</h2><div id="methodText"></div><p>Raw means HaMeR after focal calibration, before depth fitting, using the saved <code>cam_t_pre_dz</code>. Depth-fit uses real-frame predictions; filled adds interpolated frames. The loader-scale view reproduces only the discarded scale, not a full re-execution of the loader.</p><p>Camera/gravity switches display saved scene exports. They are coordinate/packaging comparisons, not claims that every upstream model was rerun without SLAM. Public paths are drawn after the same best-fit rigid alignment used by the displayed diagnostic. Video playback uses the encoded video FPS; exported IK metadata uses the dataset's nominal capture rate, which differs slightly.</p><p>Saved IK replay is a separate result with numerically checked input provenance. Changing reconstruction controls does not regenerate robot motion. No hand ground truth or official challenge score is implied.</p></dialog>
+<div id="toast" role="status"></div>
+<dialog id="probe"><button class="close">×</button><div class="eyebrow">FRESH INFERENCE · CONTROLLED CROP TEST</div><h2>Same frame. Same HaMeR. Different crop.</h2><p>Episode 41 · frame 244 · left hand. Two CPU forward passes with identical weights and 1.7× crop expansion. Green rectangles show input crops; coloured surfaces show unoccluded pre-depth projections.</p><div id="cropProbeBody"></div><p>The tight detector crop removes this extreme distance outlier. This is one frame, not a validated sequence-level improvement. Depth fitting, gsplat and IK have not been rerun for this probe.</p><a href="/data/crop_probe.json" target="_blank">Exact predictions and test conditions ↗</a></dialog>
+<script type="module" src="/app.js"></script>
+</body></html>

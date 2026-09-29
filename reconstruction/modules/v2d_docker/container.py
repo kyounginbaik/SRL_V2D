@@ -20,6 +20,22 @@ def _base_dir(path: str) -> str:
     return str(Path(*clean)) if clean else str(Path(path).parent)
 
 
+def _gpu_request() -> str:
+    """
+    Return the docker --gpus value. Under Slurm, expose only the GPUs allocated to
+    this step/job: the docker daemon runs outside the job cgroup, so "all" would
+    expose every GPU on the node. V2D_DOCKER_GPUS overrides (e.g. "1,3" or "all").
+    """
+    devices = (
+        os.environ.get("V2D_DOCKER_GPUS")
+        or os.environ.get("SLURM_STEP_GPUS")
+        or os.environ.get("SLURM_JOB_GPUS")
+    )
+    if not devices or devices == "all":
+        return "all"
+    return f'"device={devices}"'
+
+
 def run_in_container(
     image: str,
     module: str,
@@ -65,7 +81,7 @@ def run_in_container(
 
     cmd = ["docker", "run", "--rm"]
     if gpus:
-        cmd += ["--runtime=nvidia", "--gpus", "all"]
+        cmd += ["--runtime=nvidia", "--gpus", _gpu_request()]
     cmd += [
         "--user", f"{os.getuid()}:{os.getgid()}",
         "-e", "HOME=/tmp",

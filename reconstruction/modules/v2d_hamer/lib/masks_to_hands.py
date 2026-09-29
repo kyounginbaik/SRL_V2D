@@ -67,6 +67,23 @@ def _mask_centroid_and_size(mask: np.ndarray) -> tuple[float, float, float, int]
     return cx, cy, side, int(xs.size)
 
 
+def _box_iou(a: dict, b: dict) -> float:
+    x0, y0 = max(a["x0"], b["x0"]), max(a["y0"], b["y0"])
+    x1, y1 = min(a["x1"], b["x1"]), min(a["y1"], b["y1"])
+    inter = max(0.0, x1 - x0) * max(0.0, y1 - y0)
+    area_a = max(0.0, a["x1"] - a["x0"]) * max(0.0, a["y1"] - a["y0"])
+    area_b = max(0.0, b["x1"] - b["x0"]) * max(0.0, b["y1"] - b["y0"])
+    return inter / max(area_a + area_b - inter, 1e-9)
+
+
+def _select_detector_box(detections: list[dict], is_right: bool, mask_box: dict) -> dict | None:
+    """Pick the same-handed detector box with greatest overlap with the mask."""
+    candidates = [d for d in detections if bool(d.get("is_right")) == is_right and "bbox" in d]
+    if not candidates:
+        return None
+    return max(candidates, key=lambda d: (_box_iou(d["bbox"], mask_box), float(d.get("score", 0.0))))
+
+
 def masks_to_hands(
     frames_dir: str,
     masks_dir: str,
@@ -75,7 +92,13 @@ def masks_to_hands(
     weights_dir: str,
     bbox_expansion: float = 1.7,
     mask_min_pixels: int = 256,
+    detections_dir: str | None = None,
+    crop_source: str = "mask",
 ) -> None:
+    if crop_source not in {"mask", "detector"}:
+        raise ValueError(f"crop_source must be mask or detector, got {crop_source!r}")
+    if crop_source == "detector" and not detections_dir:
+        raise ValueError("crop_source=detector requires detections_dir")
     with open(tracks_path) as f:
         tracks = json.load(f)["tracks"]
     hand_tracks = [t for t in tracks if t.get("role", "hand") == "hand"]
@@ -114,9 +137,31 @@ def masks_to_hands(
                 n_skipped += 1
                 continue
 
+            ys, xs = np.nonzero(mask)
+            mask_box = {"x0": float(xs.min()), "y0": float(ys.min()),
+                        "x1": float(xs.max()), "y1": float(ys.max())}
+            selected_box = mask_box
+            selected_source = "mask"
+            detector_score = None
+            if crop_source == "detector":
+                detection_path = os.path.join(detections_dir, f"{frame_idx:06d}.json")
+                detections = []
+                if os.path.exists(detection_path):
+                    with open(detection_path) as f:
+                        detections = json.load(f)
+                selected = _select_detector_box(detections, is_right, mask_box)
+                if selected is not None:
+                    selected_box = selected["bbox"]
+                    selected_source = "detector"
+                    detector_score = float(selected.get("score", 0.0))
+
             image = np.asarray(Image.open(frame_path).convert("RGB"))
             H, W = image.shape[:2]
-            size = mask_side * bbox_expansion
+            cx = (float(selected_box["x0"]) + float(selected_box["x1"])) * 0.5
+            cy = (float(selected_box["y0"]) + float(selected_box["y1"])) * 0.5
+            selected_side = max(float(selected_box["x1"]) - float(selected_box["x0"]),
+                                float(selected_box["y1"]) - float(selected_box["y0"]))
+            size = selected_side * bbox_expansion
             # Clamp center so the crop stays a real bbox (HaMeR's crop helper
             # handles out-of-image padding internally, but keeping center sane
             # avoids silly edge cases).
@@ -146,6 +191,13 @@ def masks_to_hands(
                     "cam_t":        out["pred_cam_t_full"].tolist(),
                     "focal_length": out["scaled_focal_length"],
                 },
+                "crop": {
+                    "source": selected_source,
+                    "requested_source": crop_source,
+                    "bbox_expansion": float(bbox_expansion),
+                    "mask_bbox": mask_box,
+                    "detector_score": detector_score,
+                },
             }
             with open(out_path, "w") as f:
                 json.dump(record, f, indent=2)
@@ -166,6 +218,8 @@ def main() -> None:
                         help="Dir containing _DATA/hamer_ckpts/.")
     parser.add_argument("--bbox_expansion", type=float, default=1.7)
     parser.add_argument("--mask_min_pixels", type=int, default=256)
+    parser.add_argument("--detections_dir")
+    parser.add_argument("--crop_source", choices=("mask", "detector"), default="mask")
     args = parser.parse_args()
     masks_to_hands(
         frames_dir       = args.frames_dir,
@@ -175,6 +229,8 @@ def main() -> None:
         weights_dir      = args.weights_dir,
         bbox_expansion   = args.bbox_expansion,
         mask_min_pixels  = args.mask_min_pixels,
+        detections_dir   = args.detections_dir,
+        crop_source      = args.crop_source,
     )
 
 
