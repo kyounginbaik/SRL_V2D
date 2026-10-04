@@ -29,6 +29,8 @@ and 0.450 m raw and 0.562 m aligned in e2. The common aligner decodes its
 depth PNGs to metres and keeps the positive camera-Z convention.
 These checks establish schema, timeline, coordinate direction, and alignment
 inputs; they do not establish ground-truth hand-pose accuracy.
+They also do not verify the new observed-bbox-only filter, which is covered by
+the focused CPU detector-gap test below.
 
 The existing downstream `_load_hand_track` loader read each aligned side with
 exactly the JSON frame count marked valid and missing frames marked invalid.
@@ -41,11 +43,12 @@ camera-to-world convention.
 
 ## New execution path
 
-- `tests/test_camera_default.py`: 5 CPU tests passed. They exercise the
+- `tests/test_camera_default.py`: 7 CPU tests passed. They exercise the
   camera-only detector/motion call sequence, 30-to-20 fps export with an
   explicit detector gap, source time and track ID fields, metadata handling
-  for a full detector miss, hand IDs from `hand_tracks.json`, and default versus
-  explicit HaMeR CLI selection.
+  for a full detector miss, observed-box-only export across a detector gap,
+  missing detector files as errors, hand IDs from `hand_tracks.json`, and
+  default versus explicit HaMeR CLI selection.
 - Two focused `tools.e2e.tests.test_e2e.ConfigTests` tests passed: the
   `reconstruct` default resolves to HaWoR and the DynHaMR/refinement rejection
   remains intact.

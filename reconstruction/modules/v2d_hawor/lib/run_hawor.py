@@ -19,7 +19,7 @@ from dataclasses import dataclass
 
 
 _HAWOR_ROOT = os.environ.get("HAWOR_ROOT", "/opt/hawor")
-_EXPORT_VERSION = 5
+_EXPORT_VERSION = 6
 _LEFT_CONVERSION = "mirror_conjugate_axis_angle_yz"
 _MOTION_CACHE_VERSION = 1
 
@@ -92,11 +92,8 @@ def _prepare_mano_links(weights_dir: str) -> None:
 def _prepare_weight_links(weights_dir: str) -> None:
     links = [
         (os.path.join(weights_dir, "external", "detector.pt"), os.path.join(_HAWOR_ROOT, "weights", "external", "detector.pt")),
-        (os.path.join(weights_dir, "external", "droid.pth"), os.path.join(_HAWOR_ROOT, "weights", "external", "droid.pth")),
-        (os.path.join(weights_dir, "external", "metric_depth_vit_large_800k.pth"), os.path.join(_HAWOR_ROOT, "thirdparty", "Metric3D", "weights", "metric_depth_vit_large_800k.pth")),
         (os.path.join(weights_dir, "hawor", "model_config.yaml"), os.path.join(_HAWOR_ROOT, "weights", "hawor", "model_config.yaml")),
         (os.path.join(weights_dir, "hawor", "checkpoints", "hawor.ckpt"), os.path.join(_HAWOR_ROOT, "weights", "hawor", "checkpoints", "hawor.ckpt")),
-        (os.path.join(weights_dir, "hawor", "checkpoints", "infiller.pt"), os.path.join(_HAWOR_ROOT, "weights", "hawor", "checkpoints", "infiller.pt")),
     ]
     for src, dst in links:
         if not os.path.exists(src):
@@ -175,24 +172,11 @@ def _bbox_from_det_box(box) -> dict[str, float]:
     return {"x0": float(x0), "y0": float(y0), "x1": float(x1), "y1": float(y1)}
 
 
-def _interpolate_boxes(boxes):
-    import numpy as np
-    boxes = np.asarray(boxes, dtype=np.float64).copy()
-    valid = np.any(boxes != 0, axis=1)
-    if valid.all() or not valid.any():
-        return boxes
-    idx = np.arange(len(boxes))
-    valid_idx = idx[valid]
-    for col in range(4):
-        boxes[:, col] = np.interp(idx, valid_idx, boxes[valid_idx, col])
-    return boxes
-
-
 def _bbox_lookup(seq_folder: str, start_idx: int, end_idx: int) -> dict[bool, dict[int, dict[str, float]]]:
     import numpy as np
     path = os.path.join(seq_folder, f"tracks_{start_idx}_{end_idx}", "model_tracks.npy")
     if not os.path.exists(path):
-        return {False: {}, True: {}}
+        raise FileNotFoundError(f"HaWoR detector output missing: {path}")
     tracks = np.load(path, allow_pickle=True).item()
     out: dict[bool, dict[int, dict[str, float]]] = {False: {}, True: {}}
     for track in tracks.values():
@@ -201,19 +185,11 @@ def _bbox_lookup(seq_folder: str, start_idx: int, end_idx: int) -> dict[bool, di
             continue
         handed = [float(np.asarray(entry["det_handedness"]).reshape(-1)[0]) for entry in valid]
         is_right = bool(np.mean(handed) > 0.5)
-        entries = sorted(track, key=lambda entry: int(entry["frame"]))
-        frames = np.asarray([int(entry["frame"]) for entry in entries], dtype=np.int64)
-        boxes = np.concatenate([
-            np.asarray(entry["det_box"], dtype=np.float64).reshape(-1)[:4].reshape(1, 4)
-            for entry in entries
-        ], axis=0)
-        non_zero = np.where(np.any(boxes != 0, axis=1))[0]
-        if len(non_zero) == 0:
-            continue
-        lo, hi = int(non_zero[0]), int(non_zero[-1])
-        boxes[lo:hi + 1] = _interpolate_boxes(boxes[lo:hi + 1])
-        for frame_idx, box in zip(frames[lo:hi + 1], boxes[lo:hi + 1]):
-            out[is_right][int(frame_idx)] = _bbox_from_det_box(box)
+        for entry in valid:
+            box = np.asarray(entry["det_box"], dtype=np.float64).reshape(-1)[:4]
+            if not np.any(box):
+                continue
+            out[is_right][int(entry["frame"])] = _bbox_from_det_box(box)
     return out
 
 
@@ -549,7 +525,6 @@ class _Args:
     video_path: str
     img_focal: float | None
     checkpoint: str
-    infiller_weight: str
     input_type: str = "file"
     vis_mode: str = "none"
 
@@ -586,11 +561,16 @@ def run_hawor(
     weights: str,
     native_dir: str | None = None,
     focal_length: float = -1.0,
-    left_id: int = 2,
-    right_id: int = 3,
+    left_id: int | None = None,
+    right_id: int | None = None,
     max_num: int = 1000,
 ) -> None:
     import sys
+
+    if left_id is None or right_id is None:
+        raise ValueError("Pass both hand track IDs from hand_tracks.json; use -1 for an absent side")
+    if (left_id < 0 and right_id < 0) or (left_id >= 0 and left_id == right_id):
+        raise ValueError("HaWoR requires at least one hand and distinct hand track IDs")
 
     if _HAWOR_ROOT not in sys.path:
         sys.path.insert(0, _HAWOR_ROOT)
@@ -632,7 +612,6 @@ def run_hawor(
             video_path=work_video,
             img_focal=None if float(focal_length) <= 0 else float(focal_length),
             checkpoint=os.path.join(_HAWOR_ROOT, "weights", "hawor", "checkpoints", "hawor.ckpt"),
-            infiller_weight=os.path.join(_HAWOR_ROOT, "weights", "hawor", "checkpoints", "infiller.pt"),
         )
         start_idx, end_idx, seq_folder, _imgfiles = detect_track_video(args)
         requested_focal = None if float(focal_length) <= 0 else float(focal_length)
@@ -660,8 +639,8 @@ def main() -> None:
     parser.add_argument("--weights", required=True)
     parser.add_argument("--native_dir", default=None)
     parser.add_argument("--focal_length", type=float, default=-1.0)
-    parser.add_argument("--left_id", type=int, default=2)
-    parser.add_argument("--right_id", type=int, default=3)
+    parser.add_argument("--left_id", type=int, required=True)
+    parser.add_argument("--right_id", type=int, required=True)
     parser.add_argument("--max_num", type=int, default=1000)
     args = parser.parse_args()
     run_hawor(

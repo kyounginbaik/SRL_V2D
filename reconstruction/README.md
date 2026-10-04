@@ -421,8 +421,12 @@ supported shared MANO location). Keep the HaMeR Docker wrapper, image, and
 MANO assets installed: HaWoR uses the common
 `v2d.hamer.lib.align_hands` depth alignment and aligned renderer, even though
 it does not run the HaMeR regressor. The HaWoR download helper prepares the
-upstream weight layout; the selected runtime calls HaWoR's detector/tracker
+camera path weights; the selected runtime calls HaWoR's detector/tracker
 and camera-space motion estimator only. Its own SLAM and infiller are not run.
+The weight helper downloads the detector, HaWoR checkpoint, and model config;
+the camera-only path does not require DROID, Metric3D, or infiller weights.
+When calling the standalone HaWoR runner, pass `--left_id` and `--right_id`
+from `hand_tracks.json` (`-1` for an absent side).
 
 The adapter maps HaWoR's internal 30 fps indices to the original video frame
 numbers by endpoint-aligned nearest timestamps. For 20 fps input, JSON
@@ -434,7 +438,9 @@ with `mask_min_pixels=1`. The portable result bundle uses those aligned JSONs
 and the pipeline's common `camera_to_world_transform` when world coordinates
 are needed.
 
-Frames without a camera prediction or detector bbox have no hand JSON. The
+Frames without a camera prediction or an observed detector bbox have no hand
+JSON. HaWoR may interpolate boxes internally for motion inference, but the
+adapter discards those frames when the original detector missed the hand. The
 HaWoR `_metadata.json` reports these missing source frames by reason and
 records `status=complete` only after a successful export. Runtime failures
 raise an error. The HaWoR path does not interpolate missing poses or silently

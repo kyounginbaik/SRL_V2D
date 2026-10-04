@@ -10,11 +10,15 @@ def run_hawor(
     weights: str,
     native_dir: str | None = None,
     focal_length: float = -1.0,
-    left_id: int = 2,
-    right_id: int = 3,
+    left_id: int | None = None,
+    right_id: int | None = None,
     max_num: int = 1000,
     dev: bool = False,
 ) -> None:
+    if left_id is None or right_id is None:
+        raise ValueError("Pass both hand track IDs from hand_tracks.json; use -1 for an absent side")
+    if (left_id < 0 and right_id < 0) or (left_id >= 0 and left_id == right_id):
+        raise ValueError("HaWoR requires at least one hand and distinct hand track IDs")
     outputs = {"hand_tracks_dir": hand_tracks_dir}
     if native_dir is not None:
         outputs["native_dir"] = native_dir
@@ -44,8 +48,8 @@ if __name__ == "__main__":
     parser.add_argument("--weights", required=True)
     parser.add_argument("--native_dir", default=None)
     parser.add_argument("--focal_length", type=float, default=-1.0)
-    parser.add_argument("--left_id", type=int, default=2)
-    parser.add_argument("--right_id", type=int, default=3)
+    parser.add_argument("--left_id", type=int, required=True)
+    parser.add_argument("--right_id", type=int, required=True)
     parser.add_argument("--max_num", type=int, default=1000)
     parser.add_argument("--dev", action="store_true")
     args = parser.parse_args()

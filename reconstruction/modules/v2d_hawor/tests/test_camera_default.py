@@ -111,12 +111,34 @@ class CameraDefaultTest(unittest.TestCase):
             ]}))
             self.assertEqual(pipeline._hawor_hand_track_ids(str(path)), (4, 7))
 
+    def test_bbox_lookup_excludes_interpolated_detector_gap(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            seq = Path(tmp)
+            tracks = seq / "tracks_0_3"
+            tracks.mkdir()
+            np.save(tracks / "model_tracks.npy", {1: [
+                {"frame": 0, "det": True, "det_handedness": [1],
+                 "det_box": [2, 2, 4, 4]},
+                {"frame": 1, "det": False, "det_handedness": [1],
+                 "det_box": [0, 0, 0, 0]},
+                {"frame": 2, "det": True, "det_handedness": [1],
+                 "det_box": [3, 3, 4, 4]},
+            ]})
+            boxes = hawor._bbox_lookup(str(seq), 0, 3)
+            self.assertEqual(set(boxes[True]), {0, 2})
+            self.assertEqual(boxes[False], {})
+
+    def test_missing_detector_output_is_an_error(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            with self.assertRaises(FileNotFoundError):
+                hawor._bbox_lookup(tmp, 0, 3)
+
     def test_detector_miss_is_a_completed_sparse_export(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             (root / "7").mkdir()
             (root / "_metadata.json").write_text(json.dumps({
-                "export_version": 5, "status": "complete",
+                "export_version": 6, "status": "complete",
                 "left_conversion": "mirror_conjugate_axis_angle_yz",
                 "focal_length": 900.0, "left_id": -1, "right_id": 7,
                 "source_frame_count": 3,

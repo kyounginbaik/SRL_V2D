@@ -442,7 +442,7 @@ def _hawor_outputs_current(
     except (OSError, json.JSONDecodeError):
         return False
 
-    if int(meta.get("export_version", -1)) < 5 or meta.get("status") != "complete":
+    if int(meta.get("export_version", -1)) < 6 or meta.get("status") != "complete":
         return False
     if meta.get("left_conversion") != "mirror_conjugate_axis_angle_yz":
         return False
