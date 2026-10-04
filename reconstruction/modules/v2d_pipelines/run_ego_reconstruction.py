@@ -578,13 +578,20 @@ def parse_args() -> argparse.Namespace:
     p.add_argument(
         "--object_mesh", "--object_mesh_path", dest="object_mesh", default=None
     )
+    p.add_argument("--mesh_generator", choices=("mvsam3d", "sam3d"), default="mvsam3d",
+                   help="Generated object mesh backend for HaWoR/HaMeR (default: mvsam3d).")
+    p.add_argument("--mvsam3d_repo", default="data/vendor/MV-SAM3D")
+    p.add_argument("--mvsam3d_docker_image", default="v2d_mvsam3d:latest")
+    p.add_argument("--mvsam3d_cache_dir", default=None)
+    p.add_argument("--mvsam3d_lib_dir", default=None)
     p.add_argument(
         "--skip_object_scale_estimation",
         action="store_true",
         help="For --object_mesh, trust the provided mesh scale and skip MoGe/FoundationPose scale estimation.",
     )
     p.add_argument(
-        "--hand_tracking", choices=("dynhamr", "hamer", "hawor"), required=True
+        "--hand_tracking", choices=("dynhamr", "hamer", "hawor"), default="hawor",
+        help="Hand reconstruction backend (default: hawor).",
     )
     p.add_argument("--reference_frame", type=int, default=0)
     p.add_argument("--undistort", action="store_true")
@@ -679,7 +686,7 @@ def _validate_args(args: argparse.Namespace) -> None:
             print("INFO: --object_mesh will use the provided mesh scale directly.")
         else:
             print(
-                "INFO: --object_mesh will skip SAM3D generation but still run "
+                "INFO: --object_mesh will skip mesh generation but still run "
                 "MoGe/FoundationPose object scale estimation. Pass "
                 "--skip_object_scale_estimation to trust the provided scale directly."
             )
@@ -760,6 +767,12 @@ def _run_hamer(args: argparse.Namespace) -> Path:
         skip_object_scale_estimation=args.skip_object_scale_estimation,
         grounding_dino_weights=args.grounding_dino_weights,
         sam3d_weights=args.sam3d_weights,
+        mesh_generator=args.mesh_generator,
+        mesh_seed=args.seed,
+        mvsam3d_repo=args.mvsam3d_repo,
+        mvsam3d_docker_image=args.mvsam3d_docker_image,
+        mvsam3d_cache_dir=args.mvsam3d_cache_dir,
+        mvsam3d_lib_dir=args.mvsam3d_lib_dir,
         foundation_pose_weights=args.foundation_pose_weights,
         reregister_iou_thresh=args.reregister_iou_thresh,
         run_slam=args.run_droid_slam,
