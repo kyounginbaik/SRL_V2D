@@ -441,6 +441,8 @@ raise an error. The HaWoR path does not interpolate missing poses or silently
 substitute HaMeR/WiLoR poses; downstream bundle validity masks stay false at
 missing frames. `--hawor_max_num` is a safety limit and rejects a longer video
 instead of truncating and misaligning its timeline.
+The [e0/e2 validation record](docs/hawor_camera_default_validation.md) keeps
+reused-artifact checks separate from new-path smoke test status.
 
 ### v2d_ego_hand_reconstruction
 
