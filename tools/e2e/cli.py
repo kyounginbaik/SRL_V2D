@@ -168,12 +168,12 @@ def build_parser() -> argparse.ArgumentParser:
         "reconstruct", help="reconstruct a source video"
     )
     reconstruct.add_argument("--video", type=Path)
-    reconstruct.add_argument("--hand-tracking", choices=("hamer", "dynhamr"))
+    reconstruct.add_argument("--hand-tracking", choices=("hawor", "hamer", "dynhamr"))
     reconstruct.add_argument(
         "--run-gsplat-refinement",
         action="store_true",
         default=None,
-        help="refine the HaMeR reconstruction with gsplat",
+        help="refine the selected hand reconstruction with gsplat",
     )
     reconstruct.add_argument(
         "--dev",
@@ -639,7 +639,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             video = _input_value(args, config, "reconstruct", "video")
             prompt = config.workflow["object_prompt"]
             hand_tracking = _stage_value(
-                args, config, "reconstruct", "hand_tracking", default="hamer"
+                args, config, "reconstruct", "hand_tracking", default="hawor"
             )
             run_gsplat_refinement = bool(
                 _stage_value(
@@ -654,7 +654,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             if hand_tracking == "dynhamr" and run_gsplat_refinement:
                 raise ConfigError(
                     "--run-gsplat-refinement is only supported with "
-                    "--hand-tracking hamer"
+                    "--hand-tracking hawor or hamer"
                 )
             parameters = {
                 "video": video,

@@ -277,6 +277,7 @@ class ConfigTests(Fixture):
         self.assertEqual(result, 0)
         loaded = load_config(config.path)
         self.assertEqual(loaded.stage("reconstruct")["object_prompt"], "a tissue box")
+        self.assertEqual(loaded.stage("reconstruct")["hand_tracking"], "hawor")
         self.assertEqual(loaded.input_path("video"), self.video)
         self.assertFalse(loaded.stage("reconstruct")["run_gsplat_refinement"])
         self.assertFalse(loaded.stage("reconstruct")["dev"])
@@ -320,7 +321,7 @@ class ConfigTests(Fixture):
             )
         self.assertEqual(result, 2)
         self.assertIn(
-            "--run-gsplat-refinement is only supported with --hand-tracking hamer",
+            "--run-gsplat-refinement is only supported with --hand-tracking hawor or hamer",
             error.getvalue(),
         )
 

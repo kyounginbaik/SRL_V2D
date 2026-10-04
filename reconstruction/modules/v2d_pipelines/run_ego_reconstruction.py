@@ -584,7 +584,8 @@ def parse_args() -> argparse.Namespace:
         help="For --object_mesh, trust the provided mesh scale and skip MoGe/FoundationPose scale estimation.",
     )
     p.add_argument(
-        "--hand_tracking", choices=("dynhamr", "hamer", "hawor"), required=True
+        "--hand_tracking", choices=("dynhamr", "hamer", "hawor"), default="hawor",
+        help="Hand reconstruction backend (default: hawor).",
     )
     p.add_argument("--reference_frame", type=int, default=0)
     p.add_argument("--undistort", action="store_true")

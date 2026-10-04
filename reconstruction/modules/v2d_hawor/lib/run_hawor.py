@@ -19,7 +19,7 @@ from dataclasses import dataclass
 
 
 _HAWOR_ROOT = os.environ.get("HAWOR_ROOT", "/opt/hawor")
-_EXPORT_VERSION = 4
+_EXPORT_VERSION = 5
 _LEFT_CONVERSION = "mirror_conjugate_axis_angle_yz"
 _MOTION_CACHE_VERSION = 1
 
@@ -320,6 +320,8 @@ def _write_export_metadata(
     start_idx: int,
     end_idx: int,
     source_frame_count: int,
+    coverage: dict[str, dict],
+    source_fps: float | None,
 ) -> None:
     with open(os.path.join(hand_tracks_dir, "_metadata.json"), "w") as f:
         json.dump(
@@ -335,7 +337,10 @@ def _write_export_metadata(
                 "end_idx": int(end_idx),
                 "native_frame_count": int(end_idx - start_idx),
                 "source_frame_count": int(source_frame_count),
+                "source_fps": source_fps,
                 "timeline_mapping": "nearest_timestamp_endpoint_aligned",
+                "status": "complete",
+                "coverage": coverage,
             },
             f,
             indent=2,
@@ -352,24 +357,31 @@ def _export_camera_space_tracks(
     end_idx: int,
     source_frame_count: int,
     frame_chunks_all=None,
+    source_fps: float | None = None,
 ) -> None:
     import numpy as np
     W, H = _image_size(seq_folder)
     bboxes = _bbox_lookup(seq_folder, start_idx, end_idx)
-    chunks = frame_chunks_all if frame_chunks_all is not None else _frame_chunks(seq_folder, start_idx, end_idx)
     os.makedirs(hand_tracks_dir, exist_ok=True)
-    for track_id in set((left_id, right_id)):
+    active_tracks = [(side, track_id) for side, track_id in
+                     (("left", left_id), ("right", right_id)) if track_id >= 0]
+    if not active_tracks or (left_id >= 0 and left_id == right_id):
+        raise ValueError("HaWoR requires distinct hand track IDs from hand_tracks.json")
+    coverage = {}
+    for path in glob.glob(os.path.join(hand_tracks_dir, "*")):
+        if os.path.isdir(path) and os.path.basename(path).isdigit():
+            shutil.rmtree(path)
+    for _, track_id in active_tracks:
         out_dir = os.path.join(hand_tracks_dir, str(track_id))
-        if os.path.isdir(out_dir):
-            shutil.rmtree(out_dir)
 
     for hand_idx, (is_right, track_id) in enumerate(((False, left_id), (True, right_id))):
+        if track_id < 0:
+            continue
         out_dir = os.path.join(hand_tracks_dir, str(track_id))
         os.makedirs(out_dir, exist_ok=True)
         chunk_dir = os.path.join(seq_folder, "cam_space", str(hand_idx))
-        if not os.path.isdir(chunk_dir):
-            continue
         native_records = {}
+        native_predictions = set()
         for path in glob.glob(os.path.join(chunk_dir, "*.json")):
             with open(path) as f:
                 data = json.load(f)
@@ -399,6 +411,7 @@ def _export_camera_space_tracks(
                 betas = np.tile(betas.reshape(1, -1), (len(frames), 1))
 
             for i, frame_idx in enumerate(frames):
+                native_predictions.add(frame_idx)
                 bbox = bboxes[is_right].get(frame_idx)
                 if bbox is None:
                     # Canonical v2d hand tracks require bbox. Skip frames where
@@ -426,6 +439,8 @@ def _export_camera_space_tracks(
         # robust to ffmpeg's occasional one-frame rounding at either frame rate.
         # HaWoR uses a half-open [start_idx, end_idx) interval.
         native_count = end_idx - start_idx
+        missing = {"no_camera_prediction": [], "no_detection_bbox": []}
+        written = 0
         for source_idx in range(source_frame_count):
             if source_frame_count <= 1 or native_count <= 1:
                 native_idx = start_idx
@@ -435,15 +450,25 @@ def _export_camera_space_tracks(
                 )
             rec = native_records.get(native_idx)
             if rec is None:
+                reason = ("no_detection_bbox" if native_idx in native_predictions
+                          else "no_camera_prediction")
+                missing[reason].append(source_idx)
                 continue
             rec = dict(rec)
             rec["frame_idx"] = int(source_idx)
             rec["hawor_native_frame_idx"] = int(native_idx)
+            if source_fps is not None:
+                rec["time_s"] = source_idx / source_fps
             with open(os.path.join(out_dir, f"{source_idx:06d}.json"), "w") as f:
                 json.dump(rec, f, indent=2)
+            written += 1
+        coverage["right" if is_right else "left"] = {
+            "track_id": track_id, "valid_frames": written,
+            "missing_frames": missing,
+        }
     _write_export_metadata(
         hand_tracks_dir, focal_length, left_id, right_id, start_idx, end_idx,
-        source_frame_count,
+        source_frame_count, coverage, source_fps,
     )
 
 
@@ -542,6 +567,19 @@ def _video_frame_count(path: str) -> int:
     return count
 
 
+def _video_fps(path: str) -> float:
+    import cv2
+
+    cap = cv2.VideoCapture(path)
+    try:
+        fps = float(cap.get(cv2.CAP_PROP_FPS))
+    finally:
+        cap.release()
+    if not (fps > 0):
+        raise RuntimeError(f"Could not determine source video fps: {path}")
+    return fps
+
+
 def run_hawor(
     video: str,
     hand_tracks_dir: str,
@@ -556,12 +594,21 @@ def run_hawor(
 
     if _HAWOR_ROOT not in sys.path:
         sys.path.insert(0, _HAWOR_ROOT)
-    from demo import detect_track_video, hawor_infiller, hawor_motion_estimation, hawor_slam
+    from demo import detect_track_video, hawor_motion_estimation
     _patch_renderer_mask_fallback()
 
     video = os.path.abspath(video)
-    source_frame_count = min(_video_frame_count(video), int(max_num))
+    source_frame_count = _video_frame_count(video)
+    if max_num > 0 and source_frame_count > max_num:
+        raise ValueError(
+            f"Source video has {source_frame_count} frames, exceeding --max_num={max_num}; "
+            "refusing to remap a truncated timeline"
+        )
+    source_fps = _video_fps(video)
     hand_tracks_dir = os.path.abspath(hand_tracks_dir)
+    meta_path = os.path.join(hand_tracks_dir, "_metadata.json")
+    if os.path.exists(meta_path):
+        os.remove(meta_path)
     native_dir = os.path.abspath(native_dir or os.path.join(os.path.dirname(hand_tracks_dir), "hawor_native"))
     os.makedirs(native_dir, exist_ok=True)
     os.environ.setdefault(
@@ -596,17 +643,13 @@ def run_hawor(
             )
             _clear_hawor_motion_cache(seq_folder, start_idx, end_idx)
         frame_chunks_all, est_focal = hawor_motion_estimation(args, start_idx, end_idx, seq_folder)
-        slam_path = os.path.join(seq_folder, f"SLAM/hawor_slam_w_scale_{start_idx}_{end_idx}.npz")
-        if not os.path.exists(slam_path):
-            hawor_slam(args, start_idx, end_idx)
-        hawor_infiller(args, start_idx, end_idx, frame_chunks_all)
         _write_motion_cache_meta(seq_folder, start_idx, end_idx, requested_focal, float(est_focal))
     finally:
         os.chdir(prev_cwd)
 
     _export_camera_space_tracks(
         seq_folder, hand_tracks_dir, float(est_focal), left_id, right_id,
-        start_idx, end_idx, source_frame_count, frame_chunks_all,
+        start_idx, end_idx, source_frame_count, frame_chunks_all, source_fps,
     )
 
 

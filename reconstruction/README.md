@@ -389,6 +389,59 @@ section.
 
 ---
 
+### Unified egocentric reconstruction (HaWoR default)
+
+From `reconstruction/`, the general entrypoint now selects HaWoR when
+`--hand_tracking` is omitted:
+
+```bash
+python modules/v2d_pipelines/run_ego_reconstruction.py \
+  --video data/clip.mp4 --object_prompt "a pot" \
+  --output_dir data/outputs/clip --undistort
+```
+
+Select HaMeR explicitly with `--hand_tracking hamer`. The `tools/e2e`
+`reconstruct` command also defaults to HaWoR and accepts
+`--hand-tracking hamer`. Existing configurations that name a backend keep that
+choice.
+
+Install the Docker wrappers and build the HaWoR and shared HaMeR images along
+with the other pipeline modules:
+
+```bash
+pip install -e modules/v2d_hawor/docker -e modules/v2d_hamer/docker -e modules/v2d_pipelines
+python modules/v2d_hawor/docker/build.py
+python modules/v2d_hamer/docker/build.py
+python -m v2d.hawor.docker.run_download_weights --weights_dir data/weights/hawor
+```
+
+Prepare licensed `MANO_RIGHT.pkl`, `MANO_LEFT.pkl`, and
+`mano_mean_params.npz` under `data/weights/hamer/_DATA/data/` (or another
+supported shared MANO location). Keep the HaMeR Docker wrapper, image, and
+MANO assets installed: HaWoR uses the common
+`v2d.hamer.lib.align_hands` depth alignment and aligned renderer, even though
+it does not run the HaMeR regressor. The HaWoR download helper prepares the
+upstream weight layout; the selected runtime calls HaWoR's detector/tracker
+and camera-space motion estimator only. Its own SLAM and infiller are not run.
+
+The adapter maps HaWoR's internal 30 fps indices to the original video frame
+numbers by endpoint-aligned nearest timestamps. For 20 fps input, JSON
+`frame_idx` and `time_s` use the original 20 fps timeline. Only IDs explicitly
+listed as hands in `hand_tracks.json` are exported; an object mask ID is never
+used as a hand ID. Camera-space MANO JSONs are aligned with the stabilized real
+intrinsics, existing depth, the matching SAM2 hand mask, and the object mask,
+with `mask_min_pixels=1`. The portable result bundle uses those aligned JSONs
+and the pipeline's common `camera_to_world_transform` when world coordinates
+are needed.
+
+Frames without a camera prediction or detector bbox have no hand JSON. The
+HaWoR `_metadata.json` reports these missing source frames by reason and
+records `status=complete` only after a successful export. Runtime failures
+raise an error. The HaWoR path does not interpolate missing poses or silently
+substitute HaMeR/WiLoR poses; downstream bundle validity masks stay false at
+missing frames. `--hawor_max_num` is a safety limit and rejects a longer video
+instead of truncating and misaligning its timeline.
+
 ### v2d_ego_hand_reconstruction
 
 4D hand reconstruction from egocentric videos. Integrates ViPE and Dyn-HaMR in containerized environments. Vendored from [IsaacTeleop](https://github.com/NVIDIA/IsaacTeleop).

@@ -291,10 +291,11 @@ def validate_config_data(data: Mapping[str, Any]) -> None:
     if mismatches:
         raise ConfigError(f"workflow does not match its contracts: {mismatches}")
     if "hand_tracking" in workflow and workflow["hand_tracking"] not in {
+        "hawor",
         "hamer",
         "dynhamr",
     }:
-        raise ConfigError("hand tracking must be 'hamer' or 'dynhamr'")
+        raise ConfigError("hand tracking must be 'hawor', 'hamer', or 'dynhamr'")
     for key in (
         "target_successes",
         "pilot_attempts",
