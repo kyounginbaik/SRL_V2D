@@ -391,6 +391,9 @@ section.
 
 ### Unified egocentric reconstruction (HaWoR default)
 
+The HaWoR/HaMeR object branch now generates meshes with MV-SAM3D by default.
+See the [MV-SAM3D setup, pinned versions, selection rules, and commands](docs/mv_sam3d_ego_mesh.md).
+
 From `reconstruction/`, the general entrypoint now selects HaWoR when
 `--hand_tracking` is omitted:
 

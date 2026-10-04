@@ -25,7 +25,7 @@ Steps:
                                        → sam2_prompts.json + hand_tracks.json
   6.  SAM2 mask propagation            → masks/{1,2,…}/*.png
   7.  Render prompts overlay + masks overlay
-  8.  Object branch (SAM3D + FoundationPose + EKF)   [--object_prompt]
+  8.  Object branch (MV-SAM3D + FoundationPose + EKF) [--object_prompt]
   9.  Match wilor detections to SAM2 tracks via silhouette IoU
                                        → wilor/<track_id>/<frame:06d>.json
   9b. (Optional) Fill wilor track gaps pre-align (every visible frame)
@@ -161,6 +161,12 @@ from v2d.hamer.docker.run_masks_to_hands import run_masks_to_hands as run_hamer_
 from v2d.hamer.docker.run_render_hands_aligned_video import run_render_hands_aligned_video
 from v2d.hamer.docker.run_render_hands_video import run_render_hands_video as run_hamer_render
 from v2d.moge.docker.run_video_to_depth import run_video_to_depth as run_moge_depth
+try:
+    from v2d.pipelines.mv_sam3d_mesh import prepare_views, record_single_view, run_mv_sam3d
+except ModuleNotFoundError as exc:
+    if exc.name != "v2d.pipelines.mv_sam3d_mesh":
+        raise
+    from mv_sam3d_mesh import prepare_views, record_single_view, run_mv_sam3d
 from v2d.pipelines.run_hand_masks import _plot_pose_grad_from_checkpoint
 from v2d.sam2.docker.run_video_to_masks import run_video_to_masks
 from v2d.sam3d.docker.run_image_to_mesh import run_image_to_mesh
@@ -607,6 +613,12 @@ def run_ego_wilor(
     skip_object_scale_estimation: bool = False,
     grounding_dino_weights: str = "data/weights/grounding_dino",
     sam3d_weights: str = "data/weights/sam3d",
+    mesh_generator: str = "mvsam3d",
+    mesh_seed: int = 0,
+    mvsam3d_repo: str = "data/vendor/MV-SAM3D",
+    mvsam3d_docker_image: str = "v2d_mvsam3d:latest",
+    mvsam3d_cache_dir: str | None = None,
+    mvsam3d_lib_dir: str | None = None,
     foundation_pose_weights: str = "data/weights/foundation_pose",
     reregister_iou_thresh: float | None = 0.3,
     run_slam: bool = False,
@@ -727,6 +739,8 @@ def run_ego_wilor(
             raise ValueError("--object_mesh_path requires --object_prompt for object masks.")
         if not os.path.isfile(object_mesh_path):
             raise FileNotFoundError(f"Object mesh OBJ not found: {object_mesh_path}")
+    if mesh_generator not in {"mvsam3d", "sam3d"}:
+        raise ValueError(f"Unsupported mesh_generator: {mesh_generator}")
     if simple_refinement_vgg_weights_path is not None:
         simple_refinement_vgg_weights_path = os.path.abspath(simple_refinement_vgg_weights_path)
         os.makedirs(
@@ -847,6 +861,8 @@ def run_ego_wilor(
         print(f"  hamer_crop_source: {hamer_crop_source}")
     if object_mesh_path is not None:
         print(f"  object_mesh     : {object_mesh_path}")
+    else:
+        print(f"  mesh_generator  : {mesh_generator}")
     print(f"  run_slam        : {run_slam}")
     print(f"  min_iou         : {min_iou}")
     print(f"{'='*60}\n")
@@ -1003,7 +1019,16 @@ def run_ego_wilor(
     # prompt and then propagates it through the video.
     rebuilt_sam2_prompts = False
     hand_id_offset = 1 if object_track_id is None else 2
-    if not _sam2_prompt_artifacts_match(
+    object_track_matches = object_track_id is None
+    if object_track_id is not None and os.path.exists(object_track):
+        with open(object_track) as f:
+            prior_track = json.load(f)
+        object_track_matches = (
+            prior_track.get("reference_frame") == reference_frame
+            and prior_track.get("object_id") == object_track_id
+            and prior_track.get("prompt") == object_prompt
+        )
+    if not object_track_matches or not _sam2_prompt_artifacts_match(
         sam2_prompts,
         hand_tracks,
         sam2_hand_prompt_source,
@@ -1123,7 +1148,16 @@ def run_ego_wilor(
     if object_prompt is not None:
         ref_obj_mask = f"{masks_dir}/{object_track_id}/{reference_frame:06d}.png"
         if object_mesh_path is not None:
-            print("  [skip] SAM3D mesh generation (using provided OBJ)")
+            print("  [skip] mesh generation (using provided OBJ)")
+            provided_manifest = {
+                "requested_backend": mesh_generator, "actual_backend": "provided",
+                "fallback_reason": "provided_object_mesh_override",
+                "selected_frames": [], "object_id": object_track_id,
+                "object_prompt": object_prompt, "mask_source": "SAM2 propagated object track",
+                "seed": mesh_seed, "provided_mesh": object_mesh_path,
+            }
+            with open(f"{output_dir}/mesh_generation_manifest.json", "w") as f:
+                json.dump(provided_manifest, f, indent=2)
             if skip_object_scale_estimation:
                 object_mesh_for_pipeline = object_mesh_path
                 print("  [skip] FoundationPose scale estimation (using provided OBJ scale)")
@@ -1149,32 +1183,74 @@ def run_ego_wilor(
                     )
                 object_mesh_for_pipeline = provided_mesh_scaled
         else:
-            os.makedirs(mesh_dir, exist_ok=True)
-            if not _step("SAM3D mesh generation", os.path.exists(mesh_path)):
-                run_image_to_mesh(
-                    image_path            = ref_rgb,
-                    mask_path             = ref_obj_mask,
-                    mesh_path             = mesh_path,
-                    transform_path        = mesh_transform,
-                    intrinsics_path       = mesh_intrinsics,
-                    weights_dir           = sam3d_weights,
-                    with_texture_baking   = True,
-                    with_mesh_postprocess = True,
-                    depth_path            = ref_depth,
-                    depth_intrinsics_path = intrinsics_stable,
-                    depth_mask_path       = ref_obj_mask,
-                    dev                   = dev,
+            mesh_rgb, mesh_depth, mesh_mask = ref_rgb, ref_depth, ref_obj_mask
+            scale_input = mesh_pretransformed
+            if mesh_generator == "mvsam3d":
+                manifest = prepare_views(
+                    frames_dir=frames_dir, masks_dir=masks_dir, depth_dir=depth_dir,
+                    object_id=object_track_id, reference_frame=reference_frame,
+                    output_dir=f"{output_dir}/mesh_mv", seed=mesh_seed,
+                    object_prompt=object_prompt,
                 )
-
-            if not _step("Apply SAM3D transform", os.path.exists(mesh_pretransformed)):
-                _apply_sam3d_transform(mesh_path, mesh_transform, mesh_pretransformed)
+                mesh_anchor = manifest["selected_frames"][0]
+                mesh_rgb = f"{frames_dir}/{mesh_anchor:06d}.png"
+                mesh_depth = f"{depth_dir}/{mesh_anchor:06d}.png"
+                mesh_mask = f"{masks_dir}/{object_track_id}/{mesh_anchor:06d}.png"
+                if manifest["actual_backend"] == "mvsam3d":
+                    scale_input = str(run_mv_sam3d(
+                        manifest=manifest, repo_dir=mvsam3d_repo,
+                        weights_dir=os.path.join(sam3d_weights, "hf-download", "checkpoints"),
+                        docker_image=mvsam3d_docker_image,
+                        cache_dir=mvsam3d_cache_dir, lib_dir=mvsam3d_lib_dir,
+                    ))
+                    with open(f"{output_dir}/mesh_mv/raw_mv_sam3d.source.json") as f:
+                        mesh_fingerprint = json.load(f)["fingerprint"][:12]
+                    mesh_scaled = f"{output_dir}/mesh_scaled_mvsam3d_{mesh_fingerprint}.obj"
+                    scale_path = f"{output_dir}/scale_mvsam3d_{mesh_fingerprint}.json"
+                else:
+                    print("  [fallback] one quality-passing view; using SAM3D")
+                    mesh_dir = f"{output_dir}/mesh_sam3d_fallback_f{mesh_anchor:06d}"
+                    mesh_path = f"{mesh_dir}/textured_mesh.obj"
+                    mesh_transform = f"{mesh_dir}/mesh_transform.json"
+                    mesh_intrinsics = f"{mesh_dir}/mesh_intrinsics.json"
+                    mesh_pretransformed = f"{output_dir}/mesh_pretransformed_f{mesh_anchor:06d}.obj"
+                    scale_input = mesh_pretransformed
+                    mesh_scaled = f"{output_dir}/mesh_scaled_sam3d_fallback_f{mesh_anchor:06d}.obj"
+                    scale_path = f"{output_dir}/scale_sam3d_fallback_f{mesh_anchor:06d}.json"
+            if mesh_generator == "sam3d" or scale_input == mesh_pretransformed:
+                if mesh_generator == "sam3d":
+                    record_single_view(
+                        output_dir=mesh_dir, image_path=mesh_rgb,
+                        mask_path=mesh_mask, depth_path=mesh_depth,
+                        object_id=object_track_id, object_prompt=object_prompt,
+                        seed=mesh_seed,
+                    )
+                os.makedirs(mesh_dir, exist_ok=True)
+                if not _step("SAM3D mesh generation", os.path.exists(mesh_path)):
+                    run_image_to_mesh(
+                        image_path            = mesh_rgb,
+                        mask_path             = mesh_mask,
+                        mesh_path             = mesh_path,
+                        transform_path        = mesh_transform,
+                        intrinsics_path       = mesh_intrinsics,
+                        weights_dir           = sam3d_weights,
+                        seed                  = mesh_seed,
+                        with_texture_baking   = True,
+                        with_mesh_postprocess = True,
+                        depth_path            = mesh_depth,
+                        depth_intrinsics_path = intrinsics_stable,
+                        depth_mask_path       = mesh_mask,
+                        dev                   = dev,
+                    )
+                if not _step("Apply SAM3D transform", os.path.exists(mesh_pretransformed)):
+                    _apply_sam3d_transform(mesh_path, mesh_transform, mesh_pretransformed)
 
             if not _step("FoundationPose scale estimation", os.path.exists(mesh_scaled)):
                 run_estimate_mesh_scale(
-                    mesh_path               = mesh_pretransformed,
-                    rgb_path                = ref_rgb,
-                    depth_path              = ref_depth,
-                    mask_path               = ref_obj_mask,
+                    mesh_path               = scale_input,
+                    rgb_path                = mesh_rgb,
+                    depth_path              = mesh_depth,
+                    mask_path               = mesh_mask,
                     intrinsics_path         = intrinsics_stable,
                     weights_dir             = foundation_pose_weights,
                     scale_path              = scale_path,
@@ -2271,14 +2347,20 @@ def parse_args() -> argparse.Namespace:
                         "(e.g. 'blue cup'). When set, runs the object "
                         "branch: DINO → SAM2 → mesh source → FoundationPose.")
     p.add_argument("--object_mesh_path", default=None,
-                   help="Existing OBJ to use for the object branch. Skips SAM3D "
-                        "mesh generation. By default, the OBJ is still scale-estimated "
+                   help="Existing OBJ to use for the object branch. Skips mesh "
+                        "generation. By default, the OBJ is still scale-estimated "
                         "against MoGe/FoundationPose before tracking.")
     p.add_argument("--skip_object_scale_estimation", action="store_true",
                    help="With --object_mesh_path, trust the provided mesh scale "
                         "and skip FoundationPose/MoGe scale estimation.")
     p.add_argument("--grounding_dino_weights",  default="data/weights/grounding_dino")
     p.add_argument("--sam3d_weights",           default="data/weights/sam3d")
+    p.add_argument("--mesh_generator", choices=("mvsam3d", "sam3d"), default="mvsam3d")
+    p.add_argument("--mesh_seed", type=int, default=0)
+    p.add_argument("--mvsam3d_repo", default="data/vendor/MV-SAM3D")
+    p.add_argument("--mvsam3d_docker_image", default="v2d_mvsam3d:latest")
+    p.add_argument("--mvsam3d_cache_dir", default=None)
+    p.add_argument("--mvsam3d_lib_dir", default=None)
     p.add_argument("--foundation_pose_weights", default="data/weights/foundation_pose")
     p.add_argument("--reregister_iou_thresh", type=float, default=0.3,
                    help="FoundationPose re-register-from-scratch IoU threshold "
@@ -2556,6 +2638,12 @@ def run_from_args(args: argparse.Namespace) -> None:
         skip_object_scale_estimation = args.skip_object_scale_estimation,
         grounding_dino_weights  = args.grounding_dino_weights,
         sam3d_weights           = args.sam3d_weights,
+        mesh_generator          = args.mesh_generator,
+        mesh_seed               = args.mesh_seed,
+        mvsam3d_repo            = args.mvsam3d_repo,
+        mvsam3d_docker_image    = args.mvsam3d_docker_image,
+        mvsam3d_cache_dir       = args.mvsam3d_cache_dir,
+        mvsam3d_lib_dir         = args.mvsam3d_lib_dir,
         foundation_pose_weights = args.foundation_pose_weights,
         reregister_iou_thresh   = args.reregister_iou_thresh,
         run_slam                = args.run_slam,

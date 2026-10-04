@@ -169,6 +169,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     reconstruct.add_argument("--video", type=Path)
     reconstruct.add_argument("--hand-tracking", choices=("hawor", "hamer", "dynhamr"))
+    reconstruct.add_argument("--mesh-generator", choices=("mvsam3d", "sam3d"))
     reconstruct.add_argument(
         "--run-gsplat-refinement",
         action="store_true",
@@ -641,6 +642,9 @@ def main(argv: Sequence[str] | None = None) -> int:
             hand_tracking = _stage_value(
                 args, config, "reconstruct", "hand_tracking", default="hawor"
             )
+            mesh_generator = _stage_value(
+                args, config, "reconstruct", "mesh_generator", default="mvsam3d"
+            )
             run_gsplat_refinement = bool(
                 _stage_value(
                     args,
@@ -660,6 +664,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 "video": video,
                 "object_prompt": prompt,
                 "hand_tracking": hand_tracking,
+                "mesh_generator": mesh_generator,
                 "run_gsplat_refinement": run_gsplat_refinement,
                 "dev": dev,
             }

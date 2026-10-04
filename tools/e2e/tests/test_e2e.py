@@ -278,6 +278,7 @@ class ConfigTests(Fixture):
         loaded = load_config(config.path)
         self.assertEqual(loaded.stage("reconstruct")["object_prompt"], "a tissue box")
         self.assertEqual(loaded.stage("reconstruct")["hand_tracking"], "hawor")
+        self.assertEqual(loaded.stage("reconstruct")["mesh_generator"], "mvsam3d")
         self.assertEqual(loaded.input_path("video"), self.video)
         self.assertFalse(loaded.stage("reconstruct")["run_gsplat_refinement"])
         self.assertFalse(loaded.stage("reconstruct")["dev"])
@@ -294,12 +295,15 @@ class ConfigTests(Fixture):
                     str(self.video),
                     "--hand-tracking",
                     "hamer",
+                    "--mesh-generator",
+                    "sam3d",
                     "--run-gsplat-refinement",
                     "--dev",
                 ]
             )
         self.assertEqual(result, 0)
         parameters = load_config(config.path).stage("reconstruct")
+        self.assertEqual(parameters["mesh_generator"], "sam3d")
         self.assertTrue(parameters["run_gsplat_refinement"])
         self.assertTrue(parameters["dev"])
 
@@ -993,8 +997,16 @@ class StageTests(Fixture):
 
     def test_reconstruct_omits_optional_flags_by_default(self) -> None:
         command = reconstruct_stages(self.make_ready_config())[0].commands[0].argv
+        self.assertEqual(command[command.index("--mesh_generator") + 1], "mvsam3d")
         self.assertNotIn("--run_gsplat_refinement", command)
         self.assertNotIn("--dev", command)
+
+    def test_reconstruct_forwards_single_view_choice(self) -> None:
+        config = update_stage_config(
+            self.make_ready_config(), "reconstruct", {"mesh_generator": "sam3d"}
+        )
+        command = reconstruct_stages(config)[0].commands[0].argv
+        self.assertEqual(command[command.index("--mesh_generator") + 1], "sam3d")
 
     def test_every_public_stage_builds_a_dry_run(self) -> None:
         config = self.make_ready_config()

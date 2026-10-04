@@ -1,0 +1,8 @@
+FROM v2d_sam3d:latest
+
+# Open3D's import path needs these runtime libraries on the L40S image.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libudev1 libusb-1.0-0 \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN python -c "import kaolin, open3d, pytorch3d; print('MV-SAM3D runtime imports OK')"

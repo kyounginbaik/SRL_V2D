@@ -249,6 +249,8 @@ def reconstruct_stages(config: E2EConfig) -> list[Stage]:
         "--undistort",
         "--hand_tracking",
         str(workflow["hand_tracking"]),
+        "--mesh_generator",
+        str(parameters.get("mesh_generator", "mvsam3d")),
         "--run_droid_slam",
         "--run_gravity_alignment",
     ]
