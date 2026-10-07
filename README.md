@@ -1,12 +1,8 @@
-# Video to Data (V2D)
+# UniRetargeting
 
-> An end-to-end pipeline that converts human demonstration videos into simulation-ready assets and physics-grounded robot training data.
+Learn a robot motion reference using feedback from a physics-trained motor policy.
 
-**[Documentation](https://nvidia-isaac.github.io/video_to_data/)** · **[Robotic Grounding Project Page](https://nvidia-isaac.github.io/video_to_data/chord/)** · **[Robotic Grounding Tech Report](https://nvidia-isaac.github.io/video_to_data/chord/chord.pdf)**
-
-## UniRetargeting: start here
-
-This SRL fork includes **UniRetargeting**, an experimental bi-level retargeting workflow.
+**UniRetargeting** is an experimental bi-level retargeting workflow.
 The **lower level** trains a FlashSAC motor policy to follow a robot reference in Newton
 physics. The **upper level** edits that reference using feedback from the frozen motor
 policy, then resumes lower training with an accepted edit. The demonstrated object motion
@@ -32,195 +28,113 @@ It does not differentiate through simulation or a converged lower policy. The pi
 runnable reference editing; reliable physical-overlap and end-to-end performance gains remain
 to be established. Experiment data and checkpoints must be supplied separately from Git.
 
-![Video to Data pipeline — from human demonstration video through ingestion, reconstruction, and robotic grounding in Isaac Lab to a physics-grounded policy, dataset, and real-robot deployment](docs/figures/v2d_overview.png)
+## How it works
 
----
-
-## Contents
-
-- [UniRetargeting: start here](#uniretargeting-start-here)
-- [Overview](#overview)
-- [E2E workflow](#e2e-workflow)
-- [Packages](#packages)
-- [Prerequisites](#prerequisites)
-- [Quickstart](#quickstart)
-  - [Video Ingestion Agent](#video-ingestion-agent-video--queryable-action-database)
-  - [Reconstruction](#reconstruction-video--3d-data)
-  - [Robotic Grounding](#robotic-grounding-data--rl-policy)
-  - [FlashCHORD accelerated training](robotic_grounding/flash_chord/README.md)
-- [Design philosophy](#design-philosophy)
-- [Contributing](#contributing)
-
----
-
-## Overview
-
-Video to Data (V2D) turns raw human demonstrations into robot-ready training data through three composable stages and a repository-root E2E workflow. Each stage runs independently and writes its artifacts to disk, so you can stop, inspect, cache, and recompose the pipeline at any boundary.
-
-1. **Video Ingestion Agent** — a LangGraph-driven agentic workflow that segments demonstration videos into temporally-bounded action clips, extracts an entity-relation scene graph, and stores per-frame SigLIP-2 embeddings. The result is a queryable action database (`graph.db` + `vector.db`) that lets downstream stages select which clips to process via natural-language retrieval, instead of brute-forcing the full video.
-2. **Reconstruction** — containerized vision modules turn the selected RGB (or stereo) clips into per-frame depth, object masks, textured meshes, 6-DoF object poses, and SMPL human body parameters. Multi-view pipelines (`run_mv_hoi_reconstruction`, `run_mv_calibration`) orchestrate the full reconstruction from a rosbag.
-3. **Robotic Grounding** — human motion (e.g. Arctic) is retargeted onto the target robot embodiment (Sharpa), then the reconstructed scene and retargeted motion drive Isaac Lab environments trained with RSL-RL PPO to produce deployable policies.
-
-## E2E workflow
-
-An end-to-end workflow serves as a reference for connecting the repository's components into a
-complete reconstruction-to-policy pipeline. The included example starts with a raw egocentric
-human demonstration captured on an iPhone and continues through reconstruction, retargeting,
-source-expert training, demonstration collection, GR00T N1.7 fine-tuning, and closed-loop
-evaluation. It has been verified with both floating Sharpa and Vega Sharpa embodiments.
-
-`run_e2e.sh` provides a reproducible launcher that orchestrates the stages and records their state
-for inspection and resumption. A companion agentic skill uses the launcher under the hood to
-guide setup and execution. The main path trains its own source expert; the bundled tissue-box ONNX
-policy is an optional shortcut for users who want to start directly with GR00T fine-tuning.
-
-The complete workflow can run on a single NVIDIA RTX A6000 GPU with 48 GB of VRAM and has also
-been verified on NVIDIA L40 and L40S GPUs. Follow the [E2E workflow guide](docs/e2e_workflow.md)
-for the runnable tissue-box demo, setup requirements, acceptance gates, and resume behavior.
-
-## Packages
-
-| Package | Role | Runtime |
-|---|---|---|
-| [`video_ingestion_agent/`](video_ingestion_agent/) | Video → action segments + entity scene graph + frame embeddings. LangGraph pipeline (segment → verify/refine → entity graph → embeddings) plus an EGAgent-style natural-language retrieval agent and an optional Gradio UI. | Python venv + vLLM server |
-| [`reconstruction/`](reconstruction/) | Video → depth, masks, meshes, 6D poses, human body. 18 containerized modules + multi-view pipelines. | Docker (per-module images) |
-| [`robotic_grounding/`](robotic_grounding/) | RL training on NVIDIA Isaac Lab 2.3.1 with RSL-RL (PPO); motion retargeting utilities. | Docker (`nvcr.io/your-org/your-team`) |
-| [`robotic_grounding/flash_chord/`](robotic_grounding/flash_chord/) | Accelerated reference-tracking training with PPO and FlashSAC; [setup and complete example workflow](robotic_grounding/flash_chord/README.md#setup). | Separate Newton / Warp / JAX container |
-| [`groot_finetune/`](robotic_grounding/groot_finetune/) | Expert demonstration collection, LeRobot dataset conversion, GR00T N1.7 fine-tuning, and closed-loop evaluation. | Python 3.10 + external Isaac-GR00T checkout |
-
-## Prerequisites
-
-- Docker with GPU support ([install](https://docs.docker.com/engine/install/ubuntu/))
-- [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html)
-- Python 3.10+
-- NVIDIA driver 580.126.09 / CUDA 13.0 recommended (for `robotic_grounding`)
-
-The separate v0.2 multi-view HOI object-reconstruction pipeline is validated on RTX A6000 (SM 86)
-and L40S (SM 89). Blackwell GPUs with compute capability 12.0 (`sm_120`),
-including RTX PRO 6000 Blackwell, are not supported by the TensorRT and cuVSLAM
-versions in `v2d_cusfm`. The reconstruction container build and pipeline
-launcher check this before starting; see the
-[HOI GPU compatibility notes](reconstruction/modules/v2d_hoi_object_reconstruction/README.md#gpu-compatibility).
-
-## Quickstart
-
-### Video Ingestion Agent (video → queryable action database)
-
-```bash
-cd video_ingestion_agent
-
-uv venv .venv && source .venv/bin/activate
-uv pip install -e ".[all]"     # vLLM, webapp, benchmark, dev tools
-
-# 1. Start the vLLM server (loads the VLM, ~1 minute)
-python scripts/serve.py -c configs/ingestion.yaml
-
-# 2. Ingest a video — segmentation → entity graph → report
-python scripts/run_ingestion.py path/to/video.mp4 \
-  -c configs/ingestion.yaml --no-verify -o runs/my_run
-
-# 3. Retrieve clips with natural language
-python scripts/run_retrieval.py "Find clips where someone picks up a mug" \
-  -d outputs/ -c configs/retrieval.yaml
-
-# 4. Or browse interactively in the web UI
-python scripts/run_webapp.py
+```mermaid
+flowchart LR
+    A[Original Mink robot trajectory] --> B[Train lower FlashSAC policy]
+    B --> C[Freeze policy and measure execution]
+    C --> D[Upper editor proposes trajectory corrections]
+    D --> E[Score candidates in Newton physics]
+    E --> F{Validation gates pass?}
+    F -->|Yes: publish reference| B
+    F -->|No: retain reference| B
 ```
 
-See [video_ingestion_agent/README.md](video_ingestion_agent/README.md) for hardware requirements, the full extras list, the verify/refine loop, and batch-ingestion across multiple GPUs. Pre-publication TODOs are tracked in [video_ingestion_agent/docs/release_readiness.md](video_ingestion_agent/docs/release_readiness.md).
+1. **Train the lower policy.** FlashSAC learns residual joint-position commands around
+   the current robot reference. Object tracking and contact objectives define the task.
+2. **Freeze and measure.** Pause lower learning and evaluate physical execution without
+   virtual object control (VOC) assistance.
+3. **Optimize the upper editor.** Each upper action proposes a correction to the entire
+   trajectory. A small FlashSAC actor/critic learns from the candidate's physical cost
+   improvement. An optional geometry search proposes a finger edit for the first trial.
+4. **Validate the candidate.** Check object tracking, stability, overlap, and total cost
+   against the current reference using fresh physical rollouts.
+5. **Publish and continue.** Save an accepted reference with its checksum, rebuild its
+   consumers, and resume lower learning. Clear lower replay at every upper boundary.
 
-### Reconstruction (video → 3D data)
+### Upper optimization at a glance
 
-```bash
-cd reconstruction
+| Component | Current implementation |
+| --- | --- |
+| Observation | Original trajectory statistics, current correction, object/task errors, and 16 temporal bins of signed hand/object feedback; overlap feedback when enabled. |
+| Action | Whole-trajectory coefficients: three smooth temporal modes × 24 Vega/Sharpa joint channels = 72 values for the `smooth` editor. |
+| Other bases | `per_frame` provides smoothed interior-frame corrections; `global_local` adds four localized temporal windows. |
+| Bounds | At most 0.12 rad joint offset and 0.5 rad/s added velocity, joint limits enforced, first/last configurations preserved. |
+| Blending | Default 25% proposed correction plus 75% current correction, anchored to the original trajectory. |
+| Reward | Current cost minus candidate cost, clipped to [-5, 5]. Each physical trial is one terminal upper transition. |
+| Cost | Object position/orientation error, success fraction, robot tracking, optional wrench support and penetration, instability, and edit regularization. |
+| Selection | Best eligible trial when enabled; otherwise deterministic upper actor output. Fresh validation must pass the gates and strictly improve cost. |
+| Schedule | Full pilot: 3,276,800 lower transitions per block, eight upper trials, four upper-evaluation worlds. |
 
-# Install host-side orchestration wrappers (lightweight, no model dependencies)
-./scripts/install_pacakages.sh
+See the [detailed upper optimization walkthrough](robotic_grounding/flash_chord/UNIRETARGETING.md#upper-level-optimization)
+for equations, exact gates, network settings, and links to each corresponding function.
+The [lower-level walkthrough](robotic_grounding/flash_chord/UNIRETARGETING.md#lower-level-and-reference-updates)
+explains reference publication, replay clearing, and checkpoint metadata.
 
-# Build per-module Docker images
-./scripts/build_containers.sh
+## How to run
 
-# Run a minimal video→depth example (MoGe)
-python -m v2d.moge.docker.run_download_weights --output_dir data/weights/moge
-python -m v2d.moge.docker.run_video_to_depth \
-  --video_path modules/v2d_moge/assets/test_video.mp4 \
-  --depth_folder data/outputs/moge/depth \
-  --intrinsics_folder data/outputs/moge/intrinsics \
-  --weights_path data/weights/moge
-```
-
-Full multi-view HOI pipeline (rosbag → textured object mesh + SMPL body):
-
-```bash
-python -m v2d.pipelines.run_mv_hoi_reconstruction \
-  --rosbag_path /data/rosbags/session1 \
-  --output_dir  /data/datasets/session1 \
-  --calibration_camera_params_path /data/datasets/calibration/extrinsics/edex \
-  --obj_mesh_path /data/meshes/object.glb
-```
-
-See [reconstruction/README.md](reconstruction/README.md) for the complete module reference, including [Grounding DINO](reconstruction/README.md#v2d_grounding_dino), [SAM2](reconstruction/README.md#v2d_sam2), [FoundationPose](reconstruction/README.md#v2d_foundation_pose), [SAM3D-Body](reconstruction/README.md#v2d_sam3d_body), and others.
-
-### Robotic Grounding (data → RL policy)
-
-**Accelerated training:** use [FlashCHORD's setup and workflow](robotic_grounding/flash_chord/README.md#setup)
-for Newton/Warp/JAX training on the included Sharpa and G1 examples. FlashCHORD has its own container and dependencies.
-
-**Quick start:** the from-scratch setup & run guide is
-[robotic_grounding/docs/SETUP.md](robotic_grounding/docs/SETUP.md) — it covers the two
-Docker images, downloading each dataset from its original public source, the directory
-layout, and how to run the full hand→robot retargeting pipeline.
-
-Throughout, `<HMD>` (human-motion-data root) is a directory you choose — e.g.
-`~/datasets/human_motion_data` — that holds `mano/` and one subdirectory per dataset
-(`taco/`, `hot3d/`, …); see [docs/SETUP.md §4](robotic_grounding/docs/SETUP.md).
+Use Linux, Docker with NVIDIA GPU support, Git LFS, and the
+[FlashCHORD container prerequisites](robotic_grounding/flash_chord/README.md#setup).
+Full pilot training is configured for a 48 GiB GPU.
 
 ```bash
-cd robotic_grounding
-
-# One-time host setup (git-lfs, pre-commit) + robot assets (LFS)
-bash workflow/setup_deps.sh
+# From the repository root.
+git lfs install
 git lfs pull
+cd robotic_grounding/flash_chord
+docker/run.sh build
 
-# Build both pipeline images (loader + robotic-grounding) in one shot
-python scripts/run_pipeline_docker.py --build-only
-
-# Run the full pipeline on a dataset (download it first per docs/SETUP.md §6).
-# <HMD> is the data root holding mano/ and each <dataset>/.
-python scripts/run_pipeline_docker.py taco \
-    --hmd <HMD> --mano-dir <HMD>/mano --max-sequences 2     # small smoke test
+# Supply the materialized tissue-box asset tree before starting the container.
+export V2D_ASSETS_DIR=/absolute/path/to/tissue_box
+docker/run.sh start latest 0
 ```
 
-Reproduce the sequences end-to-end (arctic / hot3d / taco) in a self-contained
-workspace — see [robotic_grounding/docs/EXAMPLE_SEQUENCES.md](robotic_grounding/docs/EXAMPLE_SEQUENCES.md)
-for the sequence list and prerequisites:
+The asset tree must contain the tuned Vega/Sharpa parquet, its object meshes, and support
+assets. It is mounted at `/v2d/assets`; the original experiment tree is
+`/data1/SRL_V2D/.e2e/tissue_box`. These experiment assets are supplied separately from Git.
 
-```bash
-HMD=<HMD> ./run_example_sequences.sh        # → RL-ready parquets under <HMD>/example_sequences/<ds>/<ds>_processed/
-```
+Run the commands in the guide inside the container at `/workspace`:
 
-Then enter the Isaac Lab container and train a policy on the retargeted motion:
+| Run | Instructions |
+| --- | --- |
+| Prepare data | [Expected input paths and sequence requirements](robotic_grounding/flash_chord/UNIRETARGETING.md#1-prepare-the-container-and-sequence-assets) |
+| Check the online loop | [32-world, 4,096-transition smoke test](robotic_grounding/flash_chord/UNIRETARGETING.md#2-run-a-short-online-wiring-test) |
+| Train both levels | [Full 98,304,000-transition schedule and matched controls](robotic_grounding/flash_chord/UNIRETARGETING.md#3-run-the-full-lowerupper-schedule) |
+| Reuse a trained policy | [Frozen lower-policy editing pilot](robotic_grounding/flash_chord/UNIRETARGETING.md#4-test-an-edit-against-an-existing-frozen-lower-policy) |
+| Evaluate and visualize | [Unassisted evaluation, MP4 rendering, and penetration diagnostics](robotic_grounding/flash_chord/UNIRETARGETING.md#inspect-a-run) |
 
-```bash
-./workflow/run.sh build
-./workflow/run.sh start [version] [gpu_id]              # build + enter the container
-python scripts/rsl_rl/train.py --task Sharpa-V2D-v0    # inside the container
-```
+Set `bilevel.engine=ttsa_flashsac` to select the neural upper editor. Historical mode names
+`fixed`, `reactor`, and `reactor_wrench` select the control/upper-wrench condition;
+the mode name alone does not select the optimization algorithm.
 
-See [robotic_grounding/README.md](robotic_grounding/README.md) for retargeting, debug environments, and task definitions.
+## Where to see results
 
-### Visualizer (retargeting gallery)
+Runs are saved under `robotic_grounding/flash_chord/outputs/` on the host:
 
-Browse retargeted sequences as interactive 3D animations in your browser.
+| Artifact | What it shows |
+| --- | --- |
+| `ttsa_manifest.json` | Upper-loop settings, bounds, basis, and penetration configuration. |
+| `upper_updates.jsonl` | Baseline and candidate scores, validation results, accepted edits, reference versions, and upper simulation budget. |
+| `references/reference_NNNN.npz` | Original and accepted robot-reference snapshots. |
+| `policy_STEP.safetensors` | Lower policy with metadata identifying its reference snapshot. |
+| `upper/` | Saved upper learner state and replay artifacts. |
+| `evaluation_unassisted.json` | Metrics produced by the evaluation command. |
+| `rollout.mp4` | Physical execution produced by the video command. |
+| `guided_report.json` | Frozen-policy pilot comparison. |
 
-See [robotic_grounding/README.md#visualizer](robotic_grounding/README.md#visualizer) for setup instructions.
+Copy reference snapshots together with checkpoints when sharing runs. Full joint
+upper/lower training resume is currently unsupported.
 
-## Design philosophy
+## Current status
 
-- **Host orchestration, containerized inference.** The host runs thin Python wrappers that `docker run` each module; all model dependencies live inside their respective images. No CUDA or PyTorch is ever installed on the host.
-- **Typed contracts between packages.** Modules communicate through strongly-typed dataclasses in [`v2d_common`](reconstruction/modules/v2d_common/) (`DepthImage`, `CameraIntrinsics`, `Transform3d`, `BoundingBox`, `Mask`) — never raw arrays across package boundaries.
-- **File-based dataflow.** Modules write intermediate artifacts to disk (depth PNGs, pose JSONs, mask PNGs, etc.), enabling independent execution, caching, and pipeline composition via [`v2d_pipelines`](reconstruction/modules/v2d_pipelines/).
+The [penetration pilot report](robotic_grounding/flash_chord/UNIRETARGETING_PENETRATION_PILOT.md)
+records runnable upper editing and reduced kinematic reference overlap. Reliable improvements
+in physical overlap and end-to-end task performance still need to be demonstrated.
 
-## Contributing
-
-See the contributing guide in [reconstruction/README.md](reconstruction/README.md#contributing) for adding new reconstruction modules. Each new module must expose a Docker image, a `run_download_weights` entry point (if weights are required), a `run_shell` entry point, and a typed API surface consistent with `v2d_common`.
+The current visual proxy assumes one rigid object and uses its convex hull. Joint bounds
+and relative acceptance gates do not certify collision-free or dynamically feasible motion.
+Study evaluation uses a deterministic lower actor and a fixed reset seed, so fresh validation
+rollouts do not establish performance on independent reset conditions. See the
+[implementation limitations](robotic_grounding/flash_chord/UNIRETARGETING.md#current-evidence-and-limitations)
+before interpreting pilot results.
