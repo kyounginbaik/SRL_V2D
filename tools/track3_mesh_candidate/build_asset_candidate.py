@@ -13,7 +13,7 @@ ROOT = Path(os.environ.get('V2D_MESH_CANDIDATE_ROOT',
                            '/data1/SRL_V2D/challenge_reconstruction/track3_asset_candidate'))
 PUBLIC = Path('/data1/video_to_data_challenge/track_3/public')
 KIT = Path('/data1/video_to_data_challenge/v2d_submission_kit')
-DEFAULT_SPOON = Path('/data1/SRL_V2D/challenge_reconstruction/spoon_mesh_candidates/ep000036_f000000_s42/generated.glb')
+DEFAULT_SPOON = Path('/data1/SRL_V2D/challenge_reconstruction/spoon_mesh_candidates/consensus_alpha50.glb')
 
 
 def public_visual_mesh(name):
