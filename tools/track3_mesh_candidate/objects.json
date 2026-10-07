@@ -1,0 +1,12 @@
+[
+  {"name":"white_pot","episode":41,"frame":0,"mask":"existing"},
+  {"name":"white_pot_lid","episode":0,"frame":150,"mask":"sam2","box":[1230,900,1660,1260]},
+  {"name":"blue_cup","episode":12,"frame":45,"mask":"existing"},
+  {"name":"beige_cup","episode":11,"frame":0,"mask":"existing"},
+  {"name":"plastic_dish_rack","episode":12,"frame":0,"mask":"sam2","box":[610,950,1650,1370]},
+  {"name":"mini_sweeper","episode":18,"frame":0,"mask":"existing"},
+  {"name":"mini_dust_pan","episode":39,"frame":215,"mask":"existing"},
+  {"name":"water_pitcher","episode":21,"frame":0,"mask":"existing"},
+  {"name":"wooden_piece_1","episode":23,"frame":0,"mask":"sam2","box":[465,1120,885,1519]},
+  {"name":"wooden_piece_2","episode":23,"frame":0,"mask":"sam2","box":[1140,1120,1590,1519]}
+]
