@@ -107,7 +107,7 @@ class TrainingConfig:
     device: str = "cuda:0"
     resume: bool = False
     checkpoint: str | None = None
-    wandb_entity: str = "nvidia-isaac"
+    wandb_entity: str | None = None
     wandb_project: str = "v2d-flash-chord"
     experiment_name: str = "sharpa"
     run_name: str = "ppo"

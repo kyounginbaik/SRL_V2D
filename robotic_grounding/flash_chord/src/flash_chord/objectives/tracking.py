@@ -29,8 +29,8 @@ from flash_chord.objectives.contact import (
 )
 from flash_chord.objectives.joints import hand_joint_objective
 from flash_chord.objectives.keypoints import (
-    KEYPOINT_VECS_NP,
     hand_keypoints_objective,
+    object_local_keypoints,
     object_keypoints_objective,
 )
 from flash_chord.objectives.wrench import (
@@ -197,7 +197,7 @@ def normalize_tracking_objectives(
     """Reduce atomic/object and per-hand values to one scalar per world."""
     world = wp.tid()
     if normalize_object != 0:
-        object_keypoints[world] /= float(num_bodies * 6)
+        object_keypoints[world] /= float(num_bodies)
     if normalize_hand_keypoints != 0:
         total = float(0.0)
         for hand in range(num_hands):
@@ -223,6 +223,7 @@ class TrackingObjective:
     num_keypoints: int
     num_fingers: int
     num_bodies: int
+    num_object_points: int
     num_basis: int
     num_edges: int
     num_joint_q: int
@@ -297,6 +298,12 @@ class TrackingObjective:
         num_keypoints = hand_keypoints.shape[1] // num_hands
         num_fingers = finger_targets.shape[1] // num_hands
         num_bodies = command.layout.num_bodies
+        object_local_points, num_object_points = object_local_keypoints(
+            reference,
+            mode=config.object_keypoint_mode,
+            count=config.object_keypoint_count,
+            seed=config.object_keypoint_seed,
+        )
         num_basis = config.num_wrench_basis
         num_edges = config.num_friction_cone_edges
         wrench_terms_enabled = any(
@@ -371,6 +378,7 @@ class TrackingObjective:
             num_keypoints=num_keypoints,
             num_fingers=num_fingers,
             num_bodies=num_bodies,
+            num_object_points=num_object_points,
             num_basis=num_basis,
             num_edges=num_edges,
             num_joint_q=model.joint_coord_count // world_count,
@@ -402,7 +410,7 @@ class TrackingObjective:
             ),
             hand_keypoint_sum=wp.zeros(world_count * num_hands, dtype=wp.float32, device=device),
             hand_joint_value=wp.zeros(world_count * num_hands, dtype=wp.float32, device=device),
-            object_keypoint_vecs=wp.array(KEYPOINT_VECS_NP, dtype=wp.vec3, device=device),
+            object_keypoint_vecs=wp.array(object_local_points, dtype=wp.vec3, device=device),
             wrench_basis=wp.array(basis, dtype=wp.spatial_vector, device=device),
             cone_cos=wp.array(cone_cos, dtype=wp.float32, device=device),
             cone_sin=wp.array(cone_sin, dtype=wp.float32, device=device),
@@ -541,7 +549,7 @@ class TrackingObjective:
         if enabled[_OBJECT_KEYPOINTS]:
             wp.launch(
                 object_keypoints_objective,
-                dim=self.world_count * self.num_bodies * 6,
+                dim=self.world_count * self.num_bodies,
                 inputs=[
                     state.body_q,
                     self.command.body_ids,
@@ -549,9 +557,11 @@ class TrackingObjective:
                     self.command.body_target_quat_w,
                     self.object_keypoint_vecs,
                     self.num_bodies,
+                    self.num_object_points,
                     self.bodies_per_world,
                     self.config.object_keypoints.var,
                     int(self.config.object_keypoints.shape),
+                    int(self.config.object_keypoint_mode == "mesh_surface"),
                 ],
                 outputs=[buffers.object_keypoints],
             )

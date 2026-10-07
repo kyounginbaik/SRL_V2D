@@ -193,6 +193,7 @@ class ReplayConfig:
     sampling: str = "uniform"
     clear_on_stage_change: bool = False
     observation_storage_dtype: str = "float32"
+    recent_window: int | None = None
 
     def __post_init__(self) -> None:
         if self.capacity <= 0:
@@ -203,6 +204,10 @@ class ReplayConfig:
             )
         if not 0 < self.batch_size <= self.capacity:
             raise ValueError(f"batch_size must be in [1, capacity], got {self.batch_size} for capacity {self.capacity}")
+        if self.recent_window is not None and not 0 < self.recent_window <= self.capacity:
+            raise ValueError(
+                f"recent_window must be in [1, capacity], got {self.recent_window} for capacity {self.capacity}"
+            )
         if self.n_step <= 0:
             raise ValueError(f"n_step must be positive, got {self.n_step}")
         if self.sampling != "uniform":
@@ -306,7 +311,7 @@ class TrainingConfig:
     device: str = "cuda:0"
     resume: bool = False
     checkpoint_path: str | None = None
-    wandb_entity: str = "nvidia-isaac"
+    wandb_entity: str | None = None
     wandb_project: str = "v2d-flash-chord"
     experiment_name: str = "sharpa"
     run_name: str = "flash_sac"

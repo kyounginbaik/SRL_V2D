@@ -70,3 +70,27 @@ def test_resting_box_contact_force_equals_weight():
     total = c.contact_force_w.sum(axis=0)
     assert abs(abs(total[2]) - mass * G) < 0.5
     assert np.linalg.norm(total[:2]) < 0.5
+
+
+def test_contact_gap_sign_for_overlapping_boxes():
+    """A 10 mm overlap must not be mistaken for 10 mm of clearance."""
+    import newton
+    from flash_chord.runtime.contact import contact_gaps_w
+
+    builder = newton.ModelBuilder()
+    for label in ("finger", "object"):
+        body = builder.add_body(mass=1.0, label=label)
+        builder.add_shape_box(body, hx=0.05, hy=0.05, hz=0.05)
+    q = np.asarray(builder.joint_q, dtype=np.float32)
+    q[7] = 0.09
+    builder.joint_q = q.tolist()
+    model = builder.finalize(device="cpu")
+    state = model.state()
+    state.joint_q.assign(q)
+    state.joint_qd.zero_()
+    newton.eval_fk(model, state.joint_q, state.joint_qd, state)
+    contacts = model.contacts()
+    model.collide(state, contacts)
+    gaps = contact_gaps_w(model, state, contacts)
+    assert len(gaps) == 4
+    np.testing.assert_allclose(gaps, -0.01, atol=1e-5)

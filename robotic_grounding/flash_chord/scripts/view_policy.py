@@ -109,6 +109,8 @@ class PPOPolicyViewer(ViewerApp):
             source_frame_playback=bool(cfg.task.source_frame_playback),
             motion_start_frame=motion_start_frame,
             motion_end_frame=motion_end_frame,
+            robot_reference_path=cfg.task.get("robot_reference_path"),
+            robot_reference_sha256=cfg.task.get("robot_reference_sha256"),
         )
         reference = setup.reference
         scene = setup.scene
@@ -163,6 +165,7 @@ class PPOPolicyViewer(ViewerApp):
             f"policy view: algorithm=PPO, checkpoint={checkpoint}, iteration={int(learner.iteration)}, "
             f"worlds={env.world_count}, stage={stage_index}, "
             f"policy={'mean' if evaluation.deterministic else 'sample'}, "
+            f"robot_action={'zero' if cfg.viewer.zero_policy_action else 'policy'}, "
             f"voc_target={float(env.voc_scale.numpy()[0]):g}, "
             f"reset_assist_steps={env.reset_policy.config.voc_decay_steps}, "
             f"control={env_config.sim.fps:g} Hz, physics={env_config.sim.physics_fps:g} Hz"
@@ -170,15 +173,18 @@ class PPOPolicyViewer(ViewerApp):
 
     def step(self) -> None:
         action_key = None
-        if not self.evaluation.deterministic:
-            self.key, action_key = jax.random.split(self.key)
-        action = ppo_policy_action(
-            self.learner,
-            self.observation,
-            self.training,
-            self.policy_evaluation,
-            action_key,
-        )
+        if self.args.config.viewer.zero_policy_action:
+            action = jnp.zeros((self.env.world_count, self.env.action.action_dim), dtype=jnp.float32)
+        else:
+            if not self.evaluation.deterministic:
+                self.key, action_key = jax.random.split(self.key)
+            action = ppo_policy_action(
+                self.learner,
+                self.observation,
+                self.training,
+                self.policy_evaluation,
+                action_key,
+            )
         action_frame = int(self.env.timestep.numpy()[0])
         transition = self.jax_env.step(action)
         reset_observation, explicit_reset = _reset_completed_worlds(self.env, self.evaluation)
@@ -246,6 +252,8 @@ class FlashSACPolicyViewer(ViewerApp):
             source_frame_playback=bool(cfg.task.source_frame_playback),
             motion_start_frame=motion_start_frame,
             motion_end_frame=motion_end_frame,
+            robot_reference_path=cfg.task.get("robot_reference_path"),
+            robot_reference_sha256=cfg.task.get("robot_reference_sha256"),
         )
         reference = setup.reference
         scene = setup.scene
@@ -316,17 +324,21 @@ class FlashSACPolicyViewer(ViewerApp):
             f"environment_steps={checkpoint_metadata.get('environment_steps', 'unknown')}, "
             f"worlds={env.world_count}, stage={stage_index}, "
             f"policy={'mean' if evaluation.deterministic else 'sample'}, "
+            f"robot_action={'zero' if cfg.viewer.zero_policy_action else 'policy'}, "
             f"voc_target={float(env.voc_scale.numpy()[0]):g}, "
             f"reset_assist_steps={env.reset_policy.config.voc_decay_steps}, "
             f"control={env_config.sim.fps:g} Hz, physics={env_config.sim.physics_fps:g} Hz"
         )
 
     def step(self) -> None:
-        action, self.key = self.policy_action(
-            self.actor_state,
-            self.observation,
-            self.key,
-        )
+        if self.args.config.viewer.zero_policy_action:
+            action = jnp.zeros((self.env.world_count, self.env.action.action_dim), dtype=jnp.float32)
+        else:
+            action, self.key = self.policy_action(
+                self.actor_state,
+                self.observation,
+                self.key,
+            )
         action_frame = self._next_action_frame
         transition = self.jax_env.step(action)
         reset_observation, explicit_reset = _reset_completed_worlds(self.env, self.evaluation)

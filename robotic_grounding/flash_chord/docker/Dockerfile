@@ -37,7 +37,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY --from=uvbin /uv /uvx /bin/
 
 ENV UV_LINK_MODE=copy \
-    UV_COMPILE_BYTECODE=1 \
+    UV_COMPILE_BYTECODE=0 \
+    UV_CONCURRENT_INSTALLS=4 \
+    UV_CONCURRENT_BUILDS=2 \
+    UV_CONCURRENT_DOWNLOADS=4 \
     UV_PYTHON_INSTALL_DIR=/opt/uv/python \
     VIRTUAL_ENV=/opt/venv \
     PATH="/opt/venv/bin:${PATH}"

@@ -416,6 +416,7 @@ def _run_training(
     voc_scale_override: float | None = None,
     checkpoint_metadata: Mapping[str, object] | None = None,
     progress: TrainingProgress | None = None,
+    reference_update=None,
 ) -> LearnerState:
     """Run one Warp interaction followed by one donated JAX state transition until the step budget is met."""
     if log_interval <= 0:
@@ -610,6 +611,28 @@ def _run_training(
             log_start = time.perf_counter()
             steps_since_log = 0
 
+        if reference_update is not None:
+            replacement = reference_update(env, learner, environment_steps, current_stage)
+            if replacement is not None:
+                # A reference version changes observations, rewards, reset targets and
+                # action feedforward together. Never retain old n-step/replay rows.
+                from flash_chord.training.flash_sac.replay import clear_replay
+                jax.block_until_ready(learner)
+                env = replacement
+                env.set_curriculum(current_stage)
+                observation = jax.device_put(jnp.array(env.reset(), copy=True), jax_device)
+                context = jax.device_put(jnp.array(env.initial_critic_context, copy=True), jax_device)
+                learner = learner.replace(
+                    replay=clear_replay(learner.replay), observation=observation,
+                    critic_context=context,
+                    logging=jax.tree.map(jnp.zeros_like, learner.logging),
+                )
+                action, exploration, key = executables.initial_action(
+                    learner.actor.params, learner.actor.batch_stats, learner.replay.size,
+                    learner.observation, learner.exploration, learner.key,
+                )
+                learner = learner.replace(exploration=exploration, key=key)
+
         should_save = checkpoint_dir is not None and (
             environment_steps >= next_checkpoint or environment_steps == config.total_environment_steps
         )
@@ -664,6 +687,7 @@ def run_training(
     voc_scale_override: float | None = None,
     checkpoint_metadata: Mapping[str, object] | None = None,
     progress: TrainingProgress | None = None,
+    reference_update=None,
 ) -> LearnerState:
     """Run FlashSAC and always close an attached external metric sink."""
     try:
@@ -676,6 +700,7 @@ def run_training(
             voc_scale_override=voc_scale_override,
             checkpoint_metadata=checkpoint_metadata,
             progress=progress,
+            reference_update=reference_update,
         )
     finally:
         if logger is not None:

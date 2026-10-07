@@ -168,6 +168,9 @@ class ObjectiveConfig:
         default_factory=lambda: ForceClosureObjectiveTermConfig(weight=0.0, enabled=False)
     )
     hand_keypoint_frame: HandKeypointFrame = "dp"
+    object_keypoint_mode: str = "axis6"
+    object_keypoint_count: int = 500
+    object_keypoint_seed: int = 0
 
     # wrench-space support function
     num_wrench_basis: int = 512
@@ -177,6 +180,13 @@ class ObjectiveConfig:
     sides: tuple[str, ...] = ("right", "left")
 
     def __post_init__(self) -> None:
+        if self.object_keypoint_mode not in ("axis6", "mesh_surface"):
+            raise ValueError(
+                "object_keypoint_mode must be 'axis6' or 'mesh_surface', "
+                f"got {self.object_keypoint_mode!r}"
+            )
+        if self.object_keypoint_count <= 0:
+            raise ValueError("object_keypoint_count must be positive")
         if self.num_wrench_basis <= 0:
             raise ValueError(f"num_wrench_basis must be positive, got {self.num_wrench_basis}")
         if self.num_friction_cone_edges <= 0:

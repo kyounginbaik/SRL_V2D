@@ -8,6 +8,7 @@ realtime: true
 width: 1920
 height: 1080
 video_fps: 20.0
+zero_policy_action: false
 camera_position: null
 camera_target: null
 background_color: null

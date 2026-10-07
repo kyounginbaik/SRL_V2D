@@ -31,6 +31,7 @@ class ReplaySpec:
     objective_term_count: int
     critic_context_dim: int
     observation_storage_dtype: str = "float32"
+    recent_window: int | None = None
 
     @classmethod
     def from_config(
@@ -57,6 +58,7 @@ class ReplaySpec:
             objective_term_count=objective_term_count,
             critic_context_dim=critic_context_dim,
             observation_storage_dtype=config.observation_storage_dtype,
+            recent_window=config.recent_window,
         )
 
     def __post_init__(self) -> None:
@@ -68,6 +70,10 @@ class ReplaySpec:
             )
         if not 0 < self.batch_size <= self.capacity:
             raise ValueError(f"batch_size must be in [1, capacity], got {self.batch_size} for capacity {self.capacity}")
+        if self.recent_window is not None and not 0 < self.recent_window <= self.capacity:
+            raise ValueError(
+                f"recent_window must be in [1, capacity], got {self.recent_window} for capacity {self.capacity}"
+            )
         if self.n_step <= 0:
             raise ValueError(f"n_step must be positive, got {self.n_step}")
         if not math.isfinite(self.discount) or not 0.0 < self.discount <= 1.0:
@@ -414,13 +420,17 @@ def gather_replay(state: ReplayState, indices: jax.Array) -> ReplayBatch:
 
 def _sample_replay(state: ReplayState, key: jax.Array) -> ReplayBatch:
     """Pure sampling implementation used by the composed learner executable."""
-    indices = jax.random.randint(
-        key,
-        (state.spec.batch_size,),
-        minval=0,
-        maxval=state.size,
-        dtype=jnp.int32,
-    )
+    if state.spec.recent_window is None:
+        indices = jax.random.randint(
+            key, (state.spec.batch_size,), minval=0, maxval=state.size,
+            dtype=jnp.int32,
+        )
+    else:
+        age = jax.random.randint(
+            key, (state.spec.batch_size,), minval=0,
+            maxval=jnp.minimum(state.size, state.spec.recent_window), dtype=jnp.int32,
+        )
+        indices = (state.write_index - 1 - age) % state.spec.capacity
     return _gather(state.storage, indices)
 
 

@@ -353,6 +353,26 @@ def test_uniform_sampling_uses_only_valid_entries_and_preserves_dtypes():
     assert set(np.asarray(batch.observation[:, 0]).tolist()) <= {0.0, 1.0, 10.0, 11.0}
 
 
+def test_recent_sampling_tracks_ring_wrap_and_excludes_old_entries():
+    jax, jnp = _dependencies()
+
+    from flash_chord.training.flash_sac.replay import create_replay, insert_replay, sample_replay
+
+    state = create_replay(_spec(
+        capacity=5, minimum_size=1, batch_size=5, n_step=1, world_count=1,
+        objective_term_count=1, recent_window=2,
+    ))
+    for value in range(8):
+        state = insert_replay(state, _scalar_transition(jnp, value, value, 1))
+    assert int(state.write_index) == 3
+    assert int(state.size) == 5
+    samples = set()
+    for seed in range(5):
+        sample = sample_replay(state, jax.random.key(seed))
+        samples.update(np.asarray(sample.observation[:, 0]).tolist())
+    assert samples == {6.0, 7.0}
+
+
 def test_flush_pending_retains_fifo_and_prevents_cross_stage_windows():
     _, jnp = _dependencies()
 

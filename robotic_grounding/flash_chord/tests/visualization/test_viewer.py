@@ -4,6 +4,7 @@
 
 from types import SimpleNamespace
 
+import pyglet
 import pytest
 
 from flash_chord.visualization import viewer as viewer_module
@@ -106,6 +107,23 @@ def test_mp4_viewer_records_exact_frame_count_with_reused_buffer(monkeypatch, tm
     assert gl.frame_targets == [None, gl.frame]
     assert writer.frames == [None, b"rgb-frame", b"rgb-frame"]
     assert (viewer.frame_count, gl.end_count, writer.close_count, gl.close_count) == (2, 2, 1, 1)
+
+
+def test_mp4_viewer_enables_pyglet_egl_headless_before_gl_init(monkeypatch):
+    monkeypatch.setitem(pyglet.options, "headless", False)
+    monkeypatch.delenv("PYOPENGL_PLATFORM", raising=False)
+    seen = []
+
+    def make_gl(**kwargs):
+        seen.append((pyglet.options["headless"], kwargs))
+        return _GLViewer()
+
+    monkeypatch.setattr(viewer_module.newton.viewer, "ViewerGL", make_gl)
+    viewer = viewer_module.create_viewer(ViewerConfig(backend="mp4", output_path="test.mp4"))
+
+    assert isinstance(viewer, MP4Viewer)
+    assert seen == [(True, {"width": 1920, "height": 1080, "headless": True})]
+    assert viewer_module.os.environ["PYOPENGL_PLATFORM"] == "egl"
 
 
 def test_configured_camera_uses_look_at_after_model_setup():

@@ -89,18 +89,23 @@ def read_contacts_w(model, state, contacts) -> ContactReadout:
 def contact_gaps_w(model, state, contacts) -> np.ndarray:
     """Signed separation per active contact along the normal (negative = penetration depth) [m].
 
-    Gap = ``(point1_w - point0_w) · normal``; the contact points are the closest points on each shape,
-    so a negative value is how deep the shapes interpenetrate. Empty if there are no contacts.
+    Newton releases differ in whether the contact normal points from shape0
+    toward shape1 or the reverse. Infer that orientation from shape centres,
+    then return negative values for overlap in either convention. Empty if
+    there are no contacts.
     """
     n = int(contacts.rigid_contact_count.numpy()[0])
     if n == 0:
         return np.zeros((0,))
+    if n > contacts.rigid_contact_shape0.shape[0]:
+        raise RuntimeError(f"contact buffer overflow: {n} contacts exceed {contacts.rigid_contact_shape0.shape[0]} slots")
     shape0 = contacts.rigid_contact_shape0.numpy()[:n]
     shape1 = contacts.rigid_contact_shape1.numpy()[:n]
     point0 = contacts.rigid_contact_point0.numpy()[:n]  # shape0 body-frame
     point1 = contacts.rigid_contact_point1.numpy()[:n]  # shape1 body-frame
     normal = contacts.rigid_contact_normal.numpy()[:n]
     shape_body = np.asarray(model.shape_body.numpy() if hasattr(model.shape_body, "numpy") else model.shape_body)
+    shape_transform = np.asarray(model.shape_transform.numpy())
     body_q = state.body_q.numpy()
 
     def to_world(pt, shape):
@@ -110,9 +115,15 @@ def contact_gaps_w(model, state, contacts) -> np.ndarray:
         xf = body_q[b]
         return xf[:3] + quat_rotate_xyzw(np.asarray(xf[3:7]), np.asarray(pt))
 
-    return np.array(
-        [float(np.dot(normal[i], to_world(point1[i], shape1[i]) - to_world(point0[i], shape0[i]))) for i in range(n)]
-    )
+    gaps = np.empty(n, dtype=np.float64)
+    for i in range(n):
+        first, second = int(shape0[i]), int(shape1[i])
+        p0, p1 = to_world(point0[i], first), to_world(point1[i], second)
+        center0 = to_world(shape_transform[first, :3], first)
+        center1 = to_world(shape_transform[second, :3], second)
+        direction = float(np.dot(normal[i], center1 - center0))
+        gaps[i] = float(np.dot(normal[i], p1 - p0)) * (1.0 if direction >= 0.0 else -1.0)
+    return gaps
 
 
 @dataclass(frozen=True)

@@ -5,3 +5,5 @@ motion_speed: 0.5
 source_frame_playback: false
 motion_start_frame: 0
 motion_end_frame: -1
+robot_reference_path: null
+robot_reference_sha256: null

@@ -35,6 +35,7 @@ class ViewerConfig:
     width: int = 1920
     height: int = 1080
     video_fps: float = 20.0
+    zero_policy_action: bool = False
     camera_position: tuple[float, float, float] | None = None
     camera_target: tuple[float, float, float] | None = None
     background_color: tuple[float, float, float] | None = None
@@ -169,6 +170,15 @@ class MP4Viewer:
 
 def create_viewer(config: ViewerConfig, device: str | None = None):
     """Create one Newton viewer from a typed config without parsing process arguments."""
+    if config.backend == "mp4":
+        # Newton's ``headless=True`` hides its window but Pyglet otherwise
+        # still selects Xlib and requires DISPLAY on Slurm compute nodes.
+        # Select Pyglet's EGL headless display before Newton imports its GL
+        # viewer (which imports pyglet.window).
+        os.environ.setdefault("PYOPENGL_PLATFORM", "egl")
+        import pyglet
+
+        pyglet.options["headless"] = True
     import newton.viewer
     import warp as wp
 

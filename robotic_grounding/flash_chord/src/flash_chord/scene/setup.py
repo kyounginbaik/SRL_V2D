@@ -5,7 +5,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 
 from flash_chord.assets.registry import support_usda_for_reference
@@ -44,6 +44,8 @@ def setup_scene(
     source_frame_playback: bool = False,
     motion_start_frame: int = 0,
     motion_end_frame: int = -1,
+    robot_reference_path: str | None = None,
+    robot_reference_sha256: str | None = None,
 ) -> SceneSetup:
     """Load one reference, resolve its optional support, and build its scene once.
 
@@ -83,6 +85,13 @@ def setup_scene(
             object_free_joint_damping=object_free_joint_damping,
         )
     scene = build_scene(embodiment, reference, **scene_kwargs)
+    if robot_reference_path:
+        from flash_chord.retargeting.reference_snapshot import load_snapshot
+        scene = replace(scene, robot_reference=load_snapshot(
+            robot_reference_path, scene.layout, scene.robot_reference,
+            sha256=robot_reference_sha256,
+            source_reference=reference,
+        ))
     return SceneSetup(
         parquet_path=parquet_path,
         reference=reference,

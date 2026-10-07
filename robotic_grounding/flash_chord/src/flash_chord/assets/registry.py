@@ -28,6 +28,7 @@ if TYPE_CHECKING:
 HUMAN_MOTION_DATA_DIR = ASSETS_DIR / "human_motion_data"
 ARCTIC_URDF_DIR = ASSETS_DIR / "urdfs" / "arctic"
 _ASSETS_MARKER = "/assets/"
+_HUMAN_MOTION_MARKER = "/human_motion_data/"
 _OBJECT_ASSETS_MARKER = "/data/object_assets/"
 
 
@@ -59,6 +60,17 @@ def resolve_asset_path(path: str, *, reference_path: str | Path | None = None) -
             if candidate.is_file():
                 return str(candidate)
         return str(ASSETS_DIR / suffix)
+    # Retargeted motion bundles may retain the producer's ``/workspace/e2e``
+    # prefix rather than its repository ``assets`` prefix.  The parquet's own
+    # location still identifies the materialized assets tree, so preserve the
+    # portable tail beginning at ``human_motion_data``.
+    idx = path.rfind(_HUMAN_MOTION_MARKER)
+    if idx != -1:
+        reference_assets = _reference_assets_root(reference_path)
+        if reference_assets is not None:
+            candidate = reference_assets / path[idx + 1 :]
+            if candidate.is_file():
+                return str(candidate)
     idx = path.rfind(_OBJECT_ASSETS_MARKER)
     if idx != -1:
         return str(ASSETS_DIR / path[idx + len(_OBJECT_ASSETS_MARKER) :])

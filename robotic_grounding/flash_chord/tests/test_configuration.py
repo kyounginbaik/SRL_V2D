@@ -29,6 +29,7 @@ _PARQUET = "task.parquet=/tmp/reference.parquet"
             "normalized",
             "rational",
         ),
+        ("train", "dexmate_sharpa_ppo", PPOTrainingConfig, 2048, "normalized", "rational"),
         ("train", "g1_recon_body_ppo", PPOTrainingConfig, 4096, "raw", "linear"),
         ("train_flash_sac", "g1_recon_body_flash_sac", FlashSACTrainingConfig, 2048, "raw", "linear"),
     ),

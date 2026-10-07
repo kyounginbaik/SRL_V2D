@@ -64,6 +64,8 @@ def main(cfg: DictConfig) -> None:
             source_frame_playback=bool(cfg.task.source_frame_playback),
             motion_start_frame=int(cfg.task.motion_start_frame),
             motion_end_frame=int(cfg.task.motion_end_frame),
+            robot_reference_path=cfg.task.get("robot_reference_path"),
+            robot_reference_sha256=cfg.task.get("robot_reference_sha256"),
         )
         parquet = setup.parquet_path
         reference = setup.reference
@@ -96,6 +98,18 @@ def main(cfg: DictConfig) -> None:
                 mode=cfg.logging.mode,
                 dir=str(output_dir),
             )
+        reference_update = None
+        if cfg.get("bilevel") is not None:
+            from flash_chord.retargeting.manipulation_bilevel import ManipulationBilevel
+            update_class = ManipulationBilevel
+            if cfg.bilevel.get("engine") == "ttsa_flashsac":
+                from flash_chord.retargeting.ttsa_editor import TTSAReferenceEditor
+                update_class = TTSAReferenceEditor
+            reference_update = update_class(
+                options=resolved_dict(cfg.bilevel), setup=setup, embodiment=embodiment,
+                collision=collision, training=training, environment_config=environment_config,
+                checkpoint_metadata=checkpoint_metadata, output_dir=output_dir,
+            )
         learner = run_training(
             jax_env,
             training,
@@ -105,6 +119,7 @@ def main(cfg: DictConfig) -> None:
             voc_scale_override=cfg.voc_scale_override,
             checkpoint_metadata=checkpoint_metadata,
             progress=ConsoleTrainingProgress(training.total_environment_steps, output_dir),
+            reference_update=reference_update,
         )
     print(f"completed {int(jax.device_get(learner.environment_steps))} environment steps; checkpoints: {output_dir}")
 

@@ -31,6 +31,7 @@ from flash_chord.evaluation.metrics import (
     object_mppe_cm,
 )
 from flash_chord.evaluation.rollout import ObjectPoseRollout, record_object_pose_rollout
+from flash_chord.evaluation.submission import write_object_trajectories_parquet
 from flash_chord.lifecycle.curriculum import CurriculumStage
 from flash_chord.scene.collision import CollisionPolicy
 from flash_chord.scene.setup import setup_scene
@@ -323,6 +324,8 @@ def evaluate_checkpoint(
     motion_start_frame: int | None = None,
     motion_end_frame: int | None = None,
     source_root: str | Path | None = None,
+    object_trajectories_output: str | Path | None = None,
+    eval_script: str | Path | None = None,
 ) -> EvaluationOutcome:
     """Score one actor checkpoint over ``world_count`` unassisted full-sequence attempts."""
     import jax
@@ -372,6 +375,8 @@ def evaluate_checkpoint(
         source_frame_playback=bool(cfg.task.get("source_frame_playback", False)),
         motion_start_frame=int(cfg.task.get("motion_start_frame", 0)),
         motion_end_frame=int(cfg.task.get("motion_end_frame", -1)),
+        robot_reference_path=cfg.task.get("robot_reference_path"),
+        robot_reference_sha256=cfg.task.get("robot_reference_sha256"),
     )
     if not 0 <= start_frame < setup.reference.num_frames:
         raise ValueError(f"start_frame must be in [0, {setup.reference.num_frames}), got {start_frame}")
@@ -440,6 +445,24 @@ def evaluate_checkpoint(
         step_count=step_count,
         start_frame=start_frame,
     )
+    if object_trajectories_output is not None:
+        if eval_script is None:
+            raise ValueError("eval_script is required when exporting object trajectories")
+        code_digest = hashlib.sha256()
+        for code_path in (
+            Path(__file__),
+            Path(record_object_pose_rollout.__code__.co_filename),
+            Path(write_object_trajectories_parquet.__code__.co_filename),
+        ):
+            code_digest.update(code_path.read_bytes())
+        write_object_trajectories_parquet(
+            object_trajectories_output,
+            rollout,
+            checkpoint_sha256=file_sha256(checkpoint_path),
+            eval_script_sha256=file_sha256(Path(eval_script)),
+            eval_code_sha256=code_digest.hexdigest(),
+            reference_parquet=cfg.task.parquet,
+        )
     reference_tracking = score_reference_tracking(rollout, reference_criteria)
     metrics = replace(
         score_rollout(rollout, thresholds),

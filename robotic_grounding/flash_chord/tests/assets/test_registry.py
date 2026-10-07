@@ -48,6 +48,22 @@ def test_resolve_prefers_materialized_reference_asset_tree(tmp_path):
     assert resolved == str(actual)
 
 
+def test_resolve_retargets_e2e_human_motion_path_from_reference(tmp_path):
+    assets = tmp_path / "repo/robotic_grounding/assets"
+    relative = "human_motion_data/ego_recon/processed/object.urdf"
+    actual = assets / relative
+    actual.parent.mkdir(parents=True)
+    actual.write_text("<robot/>")
+    reference = assets / "human_motion_data/ego_recon/processed/sequence_id=clip/data.parquet"
+
+    resolved = resolve_asset_path(
+        f"/workspace/e2e/{relative}",
+        reference_path=reference,
+    )
+
+    assert resolved == str(actual)
+
+
 def test_support_resolution_prefers_materialized_robot_specific_surface(tmp_path):
     dataset = tmp_path / "assets/human_motion_data/ego_recon"
     reference = dataset / "processed/sequence_id=clip/robot_name=vega_sharpa/data.parquet"
