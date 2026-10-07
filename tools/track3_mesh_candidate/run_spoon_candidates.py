@@ -10,7 +10,11 @@ ROOT = Path(os.environ.get('V2D_CHALLENGE_RECON_ROOT',
                            '/data1/SRL_V2D/challenge_reconstruction'))
 OUT = ROOT / 'spoon_mesh_candidates'
 WEIGHTS = '/data1/SRL_V2D/reconstruction/data/weights/sam3d'
-CANDIDATES = [(35, 0, 42), (35, 240, 42), (36, 0, 42), (37, 0, 42), (35, 0, 17)]
+CANDIDATES = [
+    (35, 0, 42), (35, 240, 42), (36, 0, 42), (37, 0, 42), (35, 0, 17),
+    (35, 100, 42), (35, 180, 42), (35, 320, 42),
+    (36, 180, 42), (36, 260, 42), (37, 60, 42),
+]
 
 
 def main():

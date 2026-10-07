@@ -12,8 +12,8 @@ The separate leaderboard candidate uses a different, explicit method:
   corresponding released visual mesh as an object-identity lookup.
 - For `wooden_spoon`, which has no released scan, generate candidates from
   evaluation video masks with SAM3D. `compare_spoons.py` selects a medoid by
-  cross-view shape agreement; `fuse_spoon_candidates.py` produces a consensus
-  mesh from three independent predictions.
+  cross-view shape agreement. `fuse_spoon_candidates.py` is an experimental
+  consensus baseline; the held-out view comparison favors the medoid.
 
 `build_asset_candidate.py` creates one mesh for each of the 36 evaluation
 episode-object pairs and records every source in `manifest.json`. The candidate

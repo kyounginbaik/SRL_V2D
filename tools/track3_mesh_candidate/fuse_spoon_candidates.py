@@ -14,7 +14,8 @@ from v2dlb.object_mesh import align_rigid, surface_moments  # noqa: E402
 
 ROOT = Path(os.environ.get('V2D_SPOON_CANDIDATE_ROOT',
                            '/data1/SRL_V2D/challenge_reconstruction/spoon_mesh_candidates'))
-NAMES = ['ep000036_f000000_s42', 'ep000035_f000000_s42', 'ep000037_f000000_s42']
+NAMES = ['ep000036_f000000_s42', 'ep000035_f000000_s42',
+         'ep000037_f000000_s42', 'ep000036_f000260_s42']
 
 
 def load(name):
@@ -43,7 +44,7 @@ def main():
     average = np.mean(nearest_surfaces, axis=0)
     for alpha in (0.25, 0.5, 0.75):
         vertices = (1.0 - alpha) * ref_v + alpha * average
-        out = ROOT / f'consensus_alpha{int(alpha * 100):02d}.glb'
+        out = ROOT / f'consensus4_alpha{int(alpha * 100):02d}.glb'
         trimesh.Trimesh(vertices=vertices, faces=ref_f, process=False).export(out)
         print(out, flush=True)
 
