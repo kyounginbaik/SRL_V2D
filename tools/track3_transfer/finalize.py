@@ -16,6 +16,7 @@ for r in refs:
  ep=r['episode'];state=json.loads((BASE/ep/'stage.json').read_text())
  if state['stage']!='complete':raise RuntimeError(f'{ep}: incomplete {state["stage"]}')
  check_checkpoint(state['checkpoint'])
+ check_checkpoint(BASE/ep/'training'/f"state_{state['training_steps']}.safetensors")
  report=json.loads((BASE/'results'/(ep+'.json')).read_text())
  assert report['reset_mode']=='explicit' and report['start_frame']==0
  assert report['world_count']==1 and report['step_count']==r['frames']

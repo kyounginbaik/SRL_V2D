@@ -62,6 +62,7 @@ try:
 
  if not checkpoint.is_file():raise RuntimeError('Final checkpoint missing')
  check_checkpoint(checkpoint)
+ check_checkpoint(RUN/f"state_{TOTAL}.safetensors")
  status('official_unassisted_evaluation',checkpoint=str(checkpoint))
  run([KIT/'flash_chord/scripts/evaluate_policy.py',f'evaluation.checkpoint={checkpoint}',
   'evaluation.world_count=1','evaluation.reset_mode=explicit',

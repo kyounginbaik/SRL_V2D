@@ -11,6 +11,11 @@ camera=center+radius*np.array([1.8,-2.3,1.7])
 out=BASE/'videos';out.mkdir(exist_ok=True);path=out/(ep+'.mp4')
 args=['scripts/view_policy.py',f'evaluation.checkpoint={state["checkpoint"]}',
  'evaluation.reset_mode=explicit','scene.world_count=1','training.world_count=1',
+ 'env.auto_reset=false','env.voc_scale=0.0','env.voc.max_force=0.0','env.voc.max_torque=0.0',
+ 'reset.voc_decay_steps=0','env.reset.voc_decay_steps=0',
+ 'reset.always_reset_to_first_frame=true','env.reset.always_reset_to_first_frame=true',
+ *[f'{prefix}.{term}.enabled=false' for prefix in ('termination','env.termination')
+   for term in ('wrist_position','wrist_orientation','object_position','object_orientation')],
  'viewer.backend=mp4',f'viewer.output_path={path}',f'viewer.num_frames={len(reference["object_body_position"])}',
  'viewer.video_fps=20.0','viewer.width=1280','viewer.height=720',
  'viewer.headless=true','viewer.realtime=false','markers.enabled=false',
