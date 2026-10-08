@@ -21,6 +21,12 @@ while True:
     steps,total,percent,rate,elapsed,eta=matches[-1]
     s['progress']={'steps':int(steps.replace(',','')),'total':int(total.replace(',','')),'percent':float(percent),'steps_per_second':int(rate.replace(',','')),'elapsed':elapsed,'training_eta':eta}
   s['objects']=ref['objects']
+  if s['stage']=='complete':
+   try:
+    metrics=json.loads((BASE/'results'/(ref['episode']+'.json')).read_text())['metrics']
+    s['local_position_error_cm']=metrics['object_position_error_m']*100
+    s['local_orientation_error_deg']=metrics['object_orientation_error_deg']
+   except (OSError,KeyError,json.JSONDecodeError):pass
   video=BASE/'videos'/(ref['episode']+'.mp4')
   if video.exists() and video.stat().st_size>1000 and (BASE/'videos'/(ref['episode']+'.complete')).exists():s['video']='videos/'+video.name
   states.append(s)
