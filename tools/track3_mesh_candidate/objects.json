@@ -7,6 +7,6 @@
   {"name":"mini_sweeper","episode":18,"frame":0,"mask":"existing"},
   {"name":"mini_dust_pan","episode":39,"frame":215,"mask":"existing"},
   {"name":"water_pitcher","episode":21,"frame":0,"mask":"existing"},
-  {"name":"wooden_piece_1","episode":23,"frame":0,"mask":"sam2","box":[465,1120,885,1519]},
-  {"name":"wooden_piece_2","episode":23,"frame":0,"mask":"sam2","box":[1140,1120,1590,1519]}
+  {"name":"wooden_piece_1","episode":23,"frame":0,"mask":"sam2","box":[700,810,1000,1260]},
+  {"name":"wooden_piece_2","episode":23,"frame":0,"mask":"sam2","box":[1180,800,1540,1220]}
 ]

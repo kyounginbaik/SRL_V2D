@@ -18,8 +18,11 @@ WEIGHTS = '/data1/SRL_V2D/reconstruction/data/weights/sam2'
 def main():
     predictor = _build_predictor(WEIGHTS)
     errors = {}
+    only = set(filter(None, os.environ.get('V2D_SAM2_ONLY_NAMES', '').split(',')))
     for item in json.loads((ROOT / 'objects.json').read_text()):
         if item['mask'] != 'sam2':
+            continue
+        if only and item['name'] not in only:
             continue
         name, episode, frame = item['name'], item['episode'], item['frame']
         try:
