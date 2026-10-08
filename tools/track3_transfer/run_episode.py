@@ -43,7 +43,8 @@ try:
   if os.environ.get('V2D_FLOAT32') == '1':
    os.environ['V2D_CHECK_FINITE']='1'
    args += ['training.mixed_precision=false','training.compute_dtype=float32']
-  substep_trials=[5,10,20,40] if os.environ.get('V2D_FLOAT32') == '1' else [5]
+  start_substeps=int(os.environ.get('V2D_SUBSTEPS','5'))
+  substep_trials=[n for n in (5,10,20,40) if n>=start_substeps] if os.environ.get('V2D_FLOAT32') == '1' else [start_substeps]
   for substeps in substep_trials:
    status('training',substeps=substeps,compute_dtype='float32' if os.environ.get('V2D_FLOAT32')=='1' else 'float16')
    attempt_args=args+[f'sim.substeps={substeps}']

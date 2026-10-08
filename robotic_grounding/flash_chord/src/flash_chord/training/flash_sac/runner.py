@@ -573,7 +573,12 @@ def _run_training(
                       "objective_terms": step.objective_terms, "action": action}
             finite = jnp.stack([jnp.all(jnp.isfinite(value)) for value in arrays.values()])
             if not np.asarray(jax.device_get(finite)).all():
-                detail = {"environment_steps": next_environment_steps, "invalid": {}}
+                bad_terminal = np.asarray(jax.device_get(~jnp.all(jnp.isfinite(step.terminal_observation), axis=1)))
+                ids = np.flatnonzero(bad_terminal)
+                detail = {"environment_steps": next_environment_steps, "invalid": {},
+                          "bad_terminal_worlds": ids.tolist(),
+                          "terminated": np.asarray(jax.device_get(step.terminated))[ids].tolist(),
+                          "truncated": np.asarray(jax.device_get(step.truncated))[ids].tolist()}
                 for name, value in arrays.items():
                     host = np.asarray(jax.device_get(value))
                     bad = ~np.isfinite(host)

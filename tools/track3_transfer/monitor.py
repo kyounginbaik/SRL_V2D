@@ -31,9 +31,18 @@ while True:
   d['scheduler']=q.stdout
   scheduled={line.split()[0]:line.split()[2] for line in q.stdout.splitlines() if len(line.split())>=3}
   for state in states:
-   if scheduled.get(state['job_id'])=='PENDING' and state['stage']=='failed':
+   if scheduled.get(state['job_id'])=='PENDING' and state['stage'] in ('failed','awaiting_stability_retry'):
     state['stage']='queued_retry';state['previous_attempt_error']=state.pop('error',None)
  except Exception as e:d['scheduler_error']=str(e)
+ # Render each completed policy once; failed previews remain visible for diagnosis.
+ try:
+  vp=BASE/'video_jobs.json';video_jobs=json.loads(vp.read_text()) if vp.exists() else {}
+  for index,state in enumerate(states):
+   if state['stage']=='complete' and state['episode'] not in video_jobs:
+    result=subprocess.run(['sbatch','--parsable',f'--array={index}',str(BASE/'code/render.sbatch')],capture_output=True,text=True,check=True,timeout=20)
+    video_jobs[state['episode']]=result.stdout.strip()
+    vp.write_text(json.dumps(video_jobs,indent=2))
+ except Exception as e:d['preview_scheduling_error']=str(e)
  if d['completed_rollouts']==20:
   if (BASE/'CODE_COMMIT.txt').exists():
    try:

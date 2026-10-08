@@ -11,6 +11,7 @@ assert len(refs)==20 and sum(len(r['objects']) for r in refs)==36
 commit=(BASE/'CODE_COMMIT.txt').read_text().strip()
 if not commit.startswith('https://github.com/') or '/commit/' not in commit:raise ValueError('Producing commit URL required')
 quality=[]
+reproduction=[]
 for r in refs:
  ep=r['episode'];state=json.loads((BASE/ep/'stage.json').read_text())
  if state['stage']!='complete':raise RuntimeError(f'{ep}: incomplete {state["stage"]}')
@@ -24,6 +25,10 @@ for r in refs:
   n=struct.unpack('<Q',f.read(8))[0];metadata=json.loads(f.read(n))['__metadata__']
  assert int(metadata['user.environment_steps'])==state['training_steps']
  assert float(metadata['user.voc_scale'])==0, f'{ep}: final checkpoint still assisted'
+ command=json.loads((BASE/ep/'training/command.json').read_text())
+ reproduction.append({'episode':ep,'checkpoint_sha256':hashlib.sha256(Path(state['checkpoint']).read_bytes()).hexdigest(),
+  'reference_sha256':hashlib.sha256((BASE/ep/'reference.parquet').read_bytes()).hexdigest(),
+  'training_command':command,'evaluation_report':report})
  metrics=report['metrics'];updates=[json.loads(line) for line in (BASE/ep/'training/upper_updates.jsonl').read_text().splitlines()]
  for i,obj in enumerate(r['objects']):
   quality.append({'episode':ep,'object':obj,'position_error_cm':100*metrics['object_position_error_per_body_m'][i],
@@ -33,6 +38,7 @@ for r in refs:
 
  subprocess.run([sys.executable,'/data1/SRL_V2D/tools/track3_validate_trajectory.py',str(BASE/'results'/(ep+'.parquet')),'--kit',str(KIT)],check=True)
 OUT.mkdir(exist_ok=True)
+(OUT/'reproduction.json').write_text(json.dumps(reproduction,indent=2))
 with (OUT/'local_reference_tracking.csv').open('w',newline='') as f:
  writer=csv.DictWriter(f,fieldnames=list(quality[0]));writer.writeheader();writer.writerows(quality)
 subprocess.run([sys.executable,str(KIT/'tools/pack_submission.py'),'--track','track_3','--results',str(BASE/'results'),'--code-commit',commit,'-o',str(OUT/'track3_poses.csv')],cwd=KIT,check=True)
