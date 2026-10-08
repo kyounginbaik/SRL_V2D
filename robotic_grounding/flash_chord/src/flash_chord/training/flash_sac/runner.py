@@ -6,6 +6,8 @@
 from __future__ import annotations
 
 import re
+import os
+import json
 import time
 from collections.abc import Mapping
 from dataclasses import asdict, replace
@@ -563,6 +565,24 @@ def _run_training(
             raise RuntimeError("environment stopped publishing raw objective terms")
         if step.terminal_observation is None or step.critic_context is None or step.terminal_critic_context is None:
             raise RuntimeError("environment stopped publishing terminal-state outputs")
+        if os.environ.get("V2D_CHECK_FINITE") == "1":
+            arrays = {"observation": step.observation,
+                      "terminal_observation": step.terminal_observation,
+                      "critic_context": step.critic_context,
+                      "terminal_critic_context": step.terminal_critic_context,
+                      "objective_terms": step.objective_terms, "action": action}
+            finite = jnp.stack([jnp.all(jnp.isfinite(value)) for value in arrays.values()])
+            if not np.asarray(jax.device_get(finite)).all():
+                detail = {"environment_steps": next_environment_steps, "invalid": {}}
+                for name, value in arrays.items():
+                    host = np.asarray(jax.device_get(value))
+                    bad = ~np.isfinite(host)
+                    if bad.any():
+                        detail["invalid"][name] = {"shape": list(host.shape),
+                            "indices": np.argwhere(bad)[:32].tolist()}
+                if checkpoint_dir is not None:
+                    (Path(checkpoint_dir) / "nonfinite_transition.json").write_text(json.dumps(detail, indent=2))
+                raise FloatingPointError(f"Non-finite simulator transition: {detail}")
         episode_reference_progress, termination_diagnostics = env.transition_logging_inputs()
         learner, action, learner_metrics = executables.consume_transition(
             learner,

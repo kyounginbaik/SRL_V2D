@@ -16,7 +16,7 @@ GPU_UUID=$(python "$BASE/code/allocated_gpu.py")
 CONTAINER="v2d-t3-${SLURM_JOB_ID}"
 trap 'sg docker -c "docker stop $CONTAINER" >/dev/null 2>&1 || true' EXIT TERM INT
 cmd=(docker run --rm --name "$CONTAINER" --gpus "device=$GPU_UUID" --device "/dev/nvidia${SLURM_JOB_GPUS%%,*}" --device /dev/nvidiactl --device /dev/nvidia-uvm --user "$(id -u):$(id -g)"
- -e V2D_FLOAT32=${V2D_FLOAT32:-0} -e HOME=/tmp -e PYTHONUNBUFFERED=1 -e XLA_PYTHON_CLIENT_PREALLOCATE=false -e OMP_NUM_THREADS=4
+ -e V2D_CHECK_FINITE=${V2D_FLOAT32:-0} -e V2D_FLOAT32=${V2D_FLOAT32:-0} -e HOME=/tmp -e PYTHONUNBUFFERED=1 -e XLA_PYTHON_CLIENT_PREALLOCATE=false -e OMP_NUM_THREADS=4
  -v /data1:/data1 -v "$BASE/runtime_cache/warp:/tmp/.cache/warp"
  -v /data1/track3_transfer_worktree/robotic_grounding/flash_chord:/workspace
  -v /data1/SRL_V2D/robotic_grounding/flash_chord/src/flash_chord/assets/meshes:/workspace/src/flash_chord/assets/meshes:ro

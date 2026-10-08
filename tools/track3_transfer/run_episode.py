@@ -41,8 +41,24 @@ try:
    '+bilevel.eval_worlds=1','+bilevel.upper_trials=4',
    'logging.mode=disabled',f'output_dir={RUN}',f'hydra.run.dir={RUN/"hydra"}']
   if os.environ.get('V2D_FLOAT32') == '1':
+   os.environ['V2D_CHECK_FINITE']='1'
    args += ['training.mixed_precision=false','training.compute_dtype=float32']
-  (RUN/'command.json').write_text(json.dumps(args,indent=2));run(args)
+  substep_trials=[5,10,20,40] if os.environ.get('V2D_FLOAT32') == '1' else [5]
+  for substeps in substep_trials:
+   status('training',substeps=substeps,compute_dtype='float32' if os.environ.get('V2D_FLOAT32')=='1' else 'float16')
+   attempt_args=args+[f'sim.substeps={substeps}']
+   (RUN/'command.json').write_text(json.dumps(attempt_args,indent=2))
+   try:
+    run(attempt_args)
+    break
+   except subprocess.CalledProcessError:
+    diagnostic=RUN/'nonfinite_transition.json'
+    if not diagnostic.exists() or substeps==substep_trials[-1]:raise
+    archive=RUN.with_name(f'failed_nonfinite_substeps{substeps}')
+    if archive.exists():raise RuntimeError(f'Refusing to overwrite {archive}')
+    RUN.rename(archive);RUN.mkdir()
+    status('retrying_simulation',failed_substeps=substeps,diagnostic=str(archive/'nonfinite_transition.json'))
+
  if not checkpoint.is_file():raise RuntimeError('Final checkpoint missing')
  check_checkpoint(checkpoint)
  status('official_unassisted_evaluation',checkpoint=str(checkpoint))
