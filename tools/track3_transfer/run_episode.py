@@ -1,6 +1,7 @@
 """Train a floating Sharpa policy, then export and validate its official rollout."""
 from pathlib import Path
 import datetime as dt, hashlib, json, os, subprocess, sys
+from checkpoint_health import check_checkpoint
 
 BASE=Path(os.environ.get('V2D_TRANSFER_RUN',Path(__file__).resolve().parent.parent))
 KIT=Path('/data1/video_to_data_challenge/v2d_submission_kit')
@@ -39,8 +40,11 @@ try:
    '+bilevel.warmup=5033984','+bilevel.interval=5033984',
    '+bilevel.eval_worlds=1','+bilevel.upper_trials=4',
    'logging.mode=disabled',f'output_dir={RUN}',f'hydra.run.dir={RUN/"hydra"}']
+  if os.environ.get('V2D_FLOAT32') == '1':
+   args += ['training.mixed_precision=false','training.compute_dtype=float32']
   (RUN/'command.json').write_text(json.dumps(args,indent=2));run(args)
  if not checkpoint.is_file():raise RuntimeError('Final checkpoint missing')
+ check_checkpoint(checkpoint)
  status('official_unassisted_evaluation',checkpoint=str(checkpoint))
  run([KIT/'flash_chord/scripts/evaluate_policy.py',f'evaluation.checkpoint={checkpoint}',
   'evaluation.world_count=1','evaluation.reset_mode=explicit',

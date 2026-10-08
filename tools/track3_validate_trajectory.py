@@ -10,7 +10,7 @@ import sys
 from pathlib import Path
 
 import numpy as np
-import pandas as pd
+import csv
 
 
 def main() -> int:
@@ -28,9 +28,10 @@ def main() -> int:
     expected_names = objects.get(str(episode))
     if expected_names is None:
         raise SystemExit(f"episode {episode} is absent from the scored evaluation roster")
-    sample = pd.read_csv(kit / "data/track_3_sample_submission.csv", usecols=["row_id"])
     prefix = f"track_3/e{episode:06d}/"
-    expected = set(sample.loc[sample.row_id.str.startswith(prefix), "row_id"])
+    with (kit / "data/track_3_sample_submission.csv").open(newline="") as stream:
+        expected = {row["row_id"] for row in csv.DictReader(stream)
+                    if row["row_id"].startswith(prefix)}
     if not expected:
         raise SystemExit(f"episode {episode} has no public row IDs")
 

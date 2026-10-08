@@ -74,6 +74,8 @@ def update_loss_scale(
     grow = next_finite_steps >= config.loss_scale_growth_interval
     finite_scale = jnp.where(grow, state.scale * config.loss_scale_growth_factor, state.scale)
     scale = jnp.where(finite, finite_scale, state.scale * config.loss_scale_backoff_factor)
+    # Keep repeated overflow skips from underflowing to zero or growing to infinity.
+    scale = jnp.clip(scale, jnp.finfo(jnp.float32).tiny, 2.0 ** 24)
     finite_steps = jnp.where(jnp.logical_or(~finite, grow), 0, next_finite_steps)
     return LossScaleState(scale=scale.astype(jnp.float32), finite_steps=finite_steps.astype(jnp.int32))
 

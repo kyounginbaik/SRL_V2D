@@ -1,5 +1,6 @@
 """Pack only complete, official, unassisted rollouts. Never submit to Kaggle."""
 from pathlib import Path
+from checkpoint_health import check_checkpoint
 import csv,datetime as dt,hashlib,json,os,shutil,struct,subprocess,sys,zipfile
 BASE=Path(os.environ.get('V2D_TRANSFER_RUN',Path(__file__).resolve().parent.parent))
 KIT=Path('/data1/video_to_data_challenge/v2d_submission_kit')
@@ -13,6 +14,7 @@ quality=[]
 for r in refs:
  ep=r['episode'];state=json.loads((BASE/ep/'stage.json').read_text())
  if state['stage']!='complete':raise RuntimeError(f'{ep}: incomplete {state["stage"]}')
+ check_checkpoint(state['checkpoint'])
  report=json.loads((BASE/'results'/(ep+'.json')).read_text())
  assert report['reset_mode']=='explicit' and report['start_frame']==0
  assert report['world_count']==1 and report['step_count']==r['frames']
@@ -38,7 +40,7 @@ shutil.copy2(MESH,OUT/'track3_meshes.parquet')
 shutil.copy2(BASE/'REPOSITORY_ACCESS.txt',OUT/'REPOSITORY_ACCESS.txt')
 report={'validated_utc':dt.datetime.now(dt.timezone.utc).isoformat(),'episodes':20,'object_tracks':36,'code_commit':commit,'uploaded_to_kaggle':False,'source_results':str(BASE/'results'),'files':{p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in OUT.glob('track3_*')}}
 (OUT/'validation.json').write_text(json.dumps(report,indent=2))
-(OUT/'README.txt').write_text('Track 3 submission files\n\ntrack3_poses.csv: official unassisted policy rollout; 20 episodes, 36 objects.\ntrack3_meshes.parquet: reconstructed meshes for CD-O.\n\nNo files have been submitted to Kaggle.\nAccept the competition rules, then run from the official submission kit:\npython submit/v2d_submit.py /path/to/track3_poses.csv --track track_3 -m "HaWoR FoundationPose floating Sharpa chunk1s"\npython submit/v2d_submit.py /path/to/track3_meshes.parquet --track track_3_mesh -m "Track3 reconstructed meshes"\n\nLocal rollout metrics compare to reconstructed references, not hidden leaderboard ground truth.\nProducing transfer code: '+commit+'\n')
+(OUT/'README.txt').write_text('Track 3 submission files\n\ntrack3_poses.csv: official unassisted policy rollout; 20 episodes, 36 objects.\ntrack3_meshes.parquet: reconstructed meshes for CD-O.\n\nNo files have been submitted to Kaggle.\nAccept the competition rules, then run from the official submission kit:\nuv run --with kaggle --with pandas --with pyarrow --with scipy submit/v2d_submit.py /path/to/track3_poses.csv --track track_3 -m "HaWoR FoundationPose floating Sharpa chunk1s"\nuv run --with kaggle --with pandas --with pyarrow --with scipy submit/v2d_submit.py /path/to/track3_meshes.parquet --track track_3_mesh -m "Track3 reconstructed meshes"\n\nLocal rollout metrics compare to reconstructed references, not hidden leaderboard ground truth.\nProducing transfer code: '+commit+'\n')
 with zipfile.ZipFile(BASE/'track3_submission_ready.zip','w',zipfile.ZIP_DEFLATED) as z:
  for p in sorted(OUT.iterdir()):z.write(p,p.name)
 print(BASE/'track3_submission_ready.zip')

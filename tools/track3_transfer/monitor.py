@@ -20,7 +20,10 @@ while True:
    if matches:
     steps,total,percent,rate,elapsed,eta=matches[-1]
     s['progress']={'steps':int(steps.replace(',','')),'total':int(total.replace(',','')),'percent':float(percent),'steps_per_second':int(rate.replace(',','')),'elapsed':elapsed,'training_eta':eta}
-  s['objects']=ref['objects'];states.append(s)
+  s['objects']=ref['objects']
+  video=BASE/'videos'/(ref['episode']+'.mp4')
+  if video.exists() and video.stat().st_size>1000 and (BASE/'videos'/(ref['episode']+'.complete')).exists():s['video']='videos/'+video.name
+  states.append(s)
  d={'updated_utc':dt.datetime.now(dt.timezone.utc).isoformat(),'expected_episodes':20,
   'completed_rollouts':sum(s['stage']=='complete' for s in states),'episodes':states,'uploaded_to_kaggle':False}
  try:

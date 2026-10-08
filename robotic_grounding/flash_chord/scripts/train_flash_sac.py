@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import os
+import json
 import time
 from pathlib import Path
 
@@ -34,6 +35,19 @@ from flash_chord.training.progress import ConsoleTrainingProgress
 os.environ.setdefault("XLA_PYTHON_CLIENT_PREALLOCATE", "false")
 os.environ["TZ"] = "PST8PDT,M3.2.0,M11.1.0"
 time.tzset()
+
+
+class LocalMetricLogger:
+    """Preserve numerical-health evidence when remote logging is disabled."""
+    def __init__(self, path):
+        self.stream = Path(path).open("a")
+
+    def log(self, metrics, step):
+        self.stream.write(json.dumps({"step": step, **metrics}) + "\n")
+        self.stream.flush()
+
+    def close(self):
+        self.stream.close()
 
 
 @hydra.main(version_base="1.3", config_path="../src/flash_chord/configs", config_name="train_flash_sac")
@@ -87,7 +101,7 @@ def main(cfg: DictConfig) -> None:
             policy_schema(env.action, env.observation_strategy),
             critic_schema(env.action, env.observation_strategy, jax_env.critic_context_names),
         )
-        logger = None
+        logger = LocalMetricLogger(output_dir / "training_metrics.jsonl") if cfg.logging.mode == "disabled" else None
         if cfg.logging.mode != "disabled":
             logger = WandbLogger(
                 training,
