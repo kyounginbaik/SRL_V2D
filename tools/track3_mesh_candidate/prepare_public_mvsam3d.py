@@ -18,6 +18,8 @@ def main():
     parser.add_argument('episode', type=int)
     parser.add_argument('frames', help='comma-separated frame numbers')
     parser.add_argument('--mask-slot', type=int, default=1)
+    parser.add_argument('--mask-dir', type=Path,
+                        help='tracked mask directory; defaults to the public run mask slot')
     parser.add_argument('--tag', default='5v')
     args = parser.parse_args()
 
@@ -33,7 +35,8 @@ def main():
     for frame in frames:
         name = f'{frame:06d}.png'
         image = source / 'frames' / name
-        mask_path = source / 'masks' / str(args.mask_slot) / name
+        mask_path = ((args.mask_dir / name) if args.mask_dir else
+                     (source / 'masks' / str(args.mask_slot) / name))
         if not image.is_file() or not mask_path.is_file():
             raise FileNotFoundError(f'{image} or {mask_path}')
         target = images / name
@@ -49,6 +52,7 @@ def main():
     (out / 'input_manifest.json').write_text(json.dumps({
         'episode': args.episode, 'object': args.object_name,
         'frames': frames, 'mask_slot': args.mask_slot,
+        'mask_dir': str(args.mask_dir) if args.mask_dir else None,
         'source': 'public video and tracked masks'}, indent=2) + '\n')
     print(out)
 

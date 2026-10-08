@@ -22,16 +22,34 @@ best single-view mesh. Five-view water pitcher at seed 42 scored 1.0940 cm,
 versus 0.7604 cm for the best single-view mesh. These mixed results show why
 multiview output is scored before it is selected.
 
+The subsequent selected video-only set scored **0.31997 cm** over 33 public
+episode-object pairs. `materialize_public_best.py` copies its ten GLBs and a
+selection manifest to `selected_video_only/`. The largest remaining errors
+were water pitcher (0.6550 cm) and plastic dish rack (0.5363 cm). A five-view
+MV-SAM3D dust-pan mesh improved that object from 0.4940 to 0.2125 cm; a
+frame-120 water-pitcher SAM3D candidate improved it from 0.7604 to 0.6550 cm.
+For the dish rack, a SAM2 video mask propagated from frame 0 enabled both
+later-frame single-view and five-view tests, but all scored worse than the
+original frame-0 candidate. `run_dish_rack_tracking.sbatch` reproduces those
+masks, and `run_dish_rack_frame120.sbatch` makes the later-frame candidates.
+
 The MV-SAM3D implementation is the authors' repository at
 https://github.com/devinli123/MV-SAM3D. Its input structure uses public video
 frames in `images/` and tracked masks encoded in RGBA alpha under each
 object's folder. `prepare_public_mvsam3d.py` records the episode, frame list,
-and mask slot in `input_manifest.json`. The current tests use the existing
-SAM3D Docker image and MV-SAM3D's default weighted inference, without
+and mask slot in `input_manifest.json`. The default tests use the existing
+SAM3D Docker image and MV-SAM3D's weighted inference without
 Depth Anything 3 pointmaps. An attempted direct two-frame mesh alignment and
-vertex blend worsened the white-pot score from 0.2850 cm to 0.2939 cm even
+vertex blend worsened the nine-pair white-pot mean from 0.2843 cm to 0.2923 cm even
 at only 10% contribution from the second view; the available object poses
 did not align the two SAM3D shapes accurately enough for direct fusion.
+`prepare_public_moge_pointmaps.py` also converts saved MoGe depth predictions
+to MV-SAM3D-compatible pointmaps for an optional depth-conditioned comparison;
+the file is MoGe-derived even though the MV-SAM3D CLI calls its input
+`--da3_output`. In the completed comparison, the depth-conditioned dust-pan
+mesh scored 0.2276 cm (versus 0.2125 cm without these pointmaps), and the
+water-pitcher mesh scored 0.7176 cm (versus the selected single-view 0.6550
+cm). The final selected public mean remained **0.31997 cm**.
 
 The separate leaderboard candidate uses a different, explicit method:
 

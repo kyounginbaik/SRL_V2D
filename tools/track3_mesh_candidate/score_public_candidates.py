@@ -34,6 +34,12 @@ def pairs():
 
 def main():
     pair_map = pairs()
+    cache = {}
+    cache_path = os.environ.get('V2D_SCORE_CACHE')
+    if cache_path:
+        with Path(cache_path).open(newline='') as stream:
+            cache = {row['mesh']: float(row['mean_cd_o_cm'])
+                     for row in csv.DictReader(stream)}
     all_rows = []
     best = {}
     for item in json.loads((ROOT / 'objects.json').read_text()):
@@ -47,13 +53,17 @@ def main():
             raise FileNotFoundError(f'no meshes for {name}')
         scores = []
         for path in paths:
-            candidate = scorer.mesh_arrays(path)
-            values = [scorer.object_chamfer_cm(reference, candidate,
-                      scorer.object_seed(episode, slot))
-                      for episode, slot in pair_map[name]]
-            mean = float(np.mean(values))
+            if str(path) in cache:
+                mean = cache[str(path)]
+                print('CACHED', name, path.parent.name, flush=True)
+            else:
+                candidate = scorer.mesh_arrays(path)
+                values = [scorer.object_chamfer_cm(reference, candidate,
+                          scorer.object_seed(episode, slot))
+                          for episode, slot in pair_map[name]]
+                mean = float(np.mean(values))
             all_rows.append({'object_name': name, 'mesh': str(path),
-                             'pairs': len(values), 'mean_cd_o_cm': mean})
+                             'pairs': len(pair_map[name]), 'mean_cd_o_cm': mean})
             scores.append((mean, path))
             print(name, path.parent.name, f'{mean:.6f} cm', flush=True)
         mean, path = min(scores)
