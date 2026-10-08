@@ -30,7 +30,9 @@ This is alternating optimization, not an exact bi-level hypergradient.
 Runtime image: sha256:85361c8fbb2158295eb4a32abe78876852da36cb59b3c34e3bcf46460281bb8f
 One Slurm-allocated GPU per episode. This cluster numbers GRES by /dev/nvidia
 minor number; allocated_gpu.py translates it to a GPU UUID for Docker.
-Do not select an unallocated device by observed free memory.
+Do not select an unallocated device by observed free memory. On node200, Docker
+also needs explicit --device entries for the allocated minor, nvidiactl and
+nvidia-uvm; passing the allocated UUID alone did not expose CUDA correctly.
 
 Site installation:
   Run directory: /data1/SRL_V2D/challenge_submissions/track3/transfer_hawor_chunk1s_20261009
@@ -68,3 +70,7 @@ Validation completed before the full batch:
   GPU pilot: 65,536 transitions, one accepted chunk reference update.
   Official pilot export: 263 frames x two objects = 526 valid roster rows.
 The pilot is a wiring test, not the final policy or a leaderboard score.
+
+The existing GitHub repository was shared only via pushed code branches; its
+visibility and collaborators were not changed. Before Kaggle upload, share it
+with Nvidia-V2D-Challenge as required by the challenge submission instructions.

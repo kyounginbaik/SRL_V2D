@@ -5,16 +5,31 @@ BASE=Path(os.environ.get('V2D_TRANSFER_RUN',Path(__file__).resolve().parent.pare
 refs=json.loads((BASE/'reference_manifest.json').read_text())
 while True:
  states=[]
- for ref in refs:
+ for index,ref in enumerate(refs):
   p=BASE/ref['episode']/'stage.json'
   try:s=json.loads(p.read_text()) if p.exists() else {'episode':ref['episode'],'stage':'queued'}
   except (OSError,json.JSONDecodeError):s={'episode':ref['episode'],'stage':'status_updating'}
+  jobs=json.loads((BASE/'training_jobs.json').read_text())
+  job=jobs.get('episode_jobs',{}).get(str(index),f'{jobs["episode_array"]}_{index}')
+  s['job_id']=job
+  log=Path('/data1/SRL_V2D/slurm_logs')/f't3_transfer_{job}.out'
+  if log.exists():
+   with log.open('rb') as f:
+    f.seek(max(0,log.stat().st_size-65536));tail=f.read().decode(errors='replace')
+   matches=re.findall(r'training progress: ([\d,]+)/([\d,]+) environment steps \(([\d.]+)%\); ([\d,]+) env steps/s; elapsed ([\d:]+); ETA ([\d:]+)',tail)
+   if matches:
+    steps,total,percent,rate,elapsed,eta=matches[-1]
+    s['progress']={'steps':int(steps.replace(',','')),'total':int(total.replace(',','')),'percent':float(percent),'steps_per_second':int(rate.replace(',','')),'elapsed':elapsed,'training_eta':eta}
   s['objects']=ref['objects'];states.append(s)
  d={'updated_utc':dt.datetime.now(dt.timezone.utc).isoformat(),'expected_episodes':20,
   'completed_rollouts':sum(s['stage']=='complete' for s in states),'episodes':states,'uploaded_to_kaggle':False}
  try:
-  q=subprocess.run(['squeue','-u','exaFLOPs','-h','-o','%i %j %T %M %R'],capture_output=True,text=True,timeout=20)
+  q=subprocess.run(['squeue','-r','-u','exaFLOPs','-h','-o','%i %j %T %M %R'],capture_output=True,text=True,timeout=20)
   d['scheduler']=q.stdout
+  scheduled={line.split()[0]:line.split()[2] for line in q.stdout.splitlines() if len(line.split())>=3}
+  for state in states:
+   if scheduled.get(state['job_id'])=='PENDING' and state['stage']=='failed':
+    state['stage']='queued_retry';state['previous_attempt_error']=state.pop('error',None)
  except Exception as e:d['scheduler_error']=str(e)
  if d['completed_rollouts']==20:
   if (BASE/'CODE_COMMIT.txt').exists():
