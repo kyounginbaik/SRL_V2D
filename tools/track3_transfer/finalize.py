@@ -12,6 +12,7 @@ commit=(BASE/'CODE_COMMIT.txt').read_text().strip()
 if not commit.startswith('https://github.com/') or '/commit/' not in commit:raise ValueError('Producing commit URL required')
 quality=[]
 reproduction=[]
+episode_quality=[]
 for r in refs:
  ep=r['episode'];state=json.loads((BASE/ep/'stage.json').read_text())
  if state['stage']!='complete':raise RuntimeError(f'{ep}: incomplete {state["stage"]}')
@@ -30,7 +31,11 @@ for r in refs:
  reproduction.append({'episode':ep,'checkpoint_sha256':hashlib.sha256(Path(state['checkpoint']).read_bytes()).hexdigest(),
   'reference_sha256':hashlib.sha256((BASE/ep/'reference.parquet').read_bytes()).hexdigest(),
   'training_command':command,'evaluation_report':report})
- metrics=report['metrics'];updates=[json.loads(line) for line in (BASE/ep/'training/upper_updates.jsonl').read_text().splitlines()]
+ metrics=report['metrics']
+ episode_quality.append({'episode':ep,'object_position_error_cm':100*metrics['object_position_error_m'],
+  'object_orientation_error_deg':metrics['object_orientation_error_deg'],'chord_sr':metrics['chord_sr'],
+  'maniptrans_sr':metrics['maniptrans_sr'],'mppe_cm':metrics['mppe_cm']})
+ updates=[json.loads(line) for line in (BASE/ep/'training/upper_updates.jsonl').read_text().splitlines()]
  for i,obj in enumerate(r['objects']):
   quality.append({'episode':ep,'object':obj,'position_error_cm':100*metrics['object_position_error_per_body_m'][i],
    'orientation_error_rad':metrics['object_orientation_error_per_body_rad'][i],
@@ -40,6 +45,10 @@ for r in refs:
  subprocess.run([sys.executable,'/data1/SRL_V2D/tools/track3_validate_trajectory.py',str(BASE/'results'/(ep+'.parquet')),'--kit',str(KIT)],check=True)
 OUT.mkdir(exist_ok=True)
 (OUT/'reproduction.json').write_text(json.dumps(reproduction,indent=2))
+quality_summary={'reference':'video reconstruction, not hidden leaderboard ground truth',
+ 'episodes':episode_quality,'mean_across_episodes':{key:sum(r[key] for r in episode_quality)/len(episode_quality)
+ for key in episode_quality[0] if key!='episode'}}
+(OUT/'local_quality_summary.json').write_text(json.dumps(quality_summary,indent=2))
 with (OUT/'local_reference_tracking.csv').open('w',newline='') as f:
  writer=csv.DictWriter(f,fieldnames=list(quality[0]));writer.writeheader();writer.writerows(quality)
 subprocess.run([sys.executable,str(KIT/'tools/pack_submission.py'),'--track','track_3','--results',str(BASE/'results'),'--code-commit',commit,'-o',str(OUT/'track3_poses.csv')],cwd=KIT,check=True)
