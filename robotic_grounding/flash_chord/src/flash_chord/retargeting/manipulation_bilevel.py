@@ -57,7 +57,7 @@ def candidate_score(metrics, wrench_weight):
 
 
 def passes_task_gate(candidate, baseline, tolerance_m=0.002):
-    return (all(np.isfinite(v) for v in candidate.values())
+    return (all(np.all(np.isfinite(v)) for v in candidate.values())
             and candidate["object_position_mean_m"] <= baseline["object_position_mean_m"] + tolerance_m
             and candidate["object_position_p95_m"] <= baseline["object_position_p95_m"] + tolerance_m
             and candidate["object_orientation_mean_rad"] <= baseline["object_orientation_mean_rad"] + 0.01
@@ -67,7 +67,8 @@ def passes_task_gate(candidate, baseline, tolerance_m=0.002):
 def assert_device_binding(env, binding):
     np.testing.assert_allclose(env.reset_table.ref_joint_q.numpy()[:, :binding.num_joint_q], binding.joint_q, atol=1e-7)
     for consumer in (env.action, env.observation_strategy):
-        np.testing.assert_allclose(consumer.reference.joint_target.numpy().reshape(binding.joint_target.shape),
+        reference = consumer.reference if hasattr(consumer, "reference") else consumer.buffers.reference
+        np.testing.assert_allclose(reference.joint_target.numpy().reshape(binding.joint_target.shape),
                                    binding.joint_target, atol=1e-7)
     keypoints = np.concatenate([binding.hand(side).keypoint_pos_w(env.objective.config.hand_keypoint_frame)
                                for side in env.objective.config.sides], axis=1)
@@ -89,8 +90,12 @@ class LocalProjector:
         scalar = self.layout.scalar_joints
         self.qids = np.asarray(scalar.q_ids)
         self.dids = np.asarray(scalar.dof_ids)
-        if len(self.qids) != baseline.num_joint_q or len(self.dids) != baseline.num_joint_dof:
-            raise ValueError("pilot requires a fixed-base all-scalar Vega/Sharpa robot")
+        self.ball_joints = [(self.builder.joint_q_start[j], self.builder.joint_qd_start[j])
+                            for j, kind in enumerate(self.builder.joint_type)
+                            if kind == newton.JointType.BALL]
+        if (len(self.qids) + 4 * len(self.ball_joints) != baseline.num_joint_q
+                or len(self.dids) + 3 * len(self.ball_joints) != baseline.num_joint_dof):
+            raise ValueError("reference editor supports scalar joints plus ball wrists")
         self.model = self.builder.finalize(device="cpu", skip_all_validations=True)
         self.state = self.model.state()
         self.state.joint_qd.zero_()
@@ -341,6 +346,11 @@ class ManipulationBilevel:
             object_position_mean_m=float(np.mean(obj_errors)), object_position_p95_m=float(np.percentile(obj_errors,95)),
             object_orientation_mean_rad=float(np.mean(angles)),
             object_success_fraction=float(np.mean((np.asarray(obj_errors)<.1)&(np.asarray(angles)<.5))))
+        object_count = env.command.body_ids_w.numpy().size // env.world_count
+        per_pos = np.asarray(obj_errors).reshape(-1, env.world_count, object_count)
+        per_angle = np.asarray(angles).reshape(-1, env.world_count, object_count)
+        metrics["per_object_position_mean_m"] = np.nan_to_num(per_pos, nan=1., posinf=1.).mean(axis=(0,1)).tolist()
+        metrics["per_object_orientation_mean_rad"] = np.nan_to_num(per_angle, nan=np.pi, posinf=np.pi).mean(axis=(0,1)).tolist()
         if study:
             from flash_chord.retargeting.ttsa_editor import robust_world_summary
             metrics.update(robust_world_summary(np.stack(position_frames), np.stack(orientation_frames),

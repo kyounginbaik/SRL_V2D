@@ -18,6 +18,7 @@ import jax.numpy as jnp
 import newton
 import numpy as np
 from scipy.ndimage import gaussian_filter1d
+from scipy.spatial.transform import Rotation
 
 from flash_chord.embodiments.binding import build_robot_reference_binding
 from flash_chord.envs.rl import RLEnv
@@ -36,6 +37,7 @@ from flash_chord.retargeting.manipulation_bilevel import (
 from flash_chord.retargeting.reference_snapshot import command_digest, save_snapshot
 from flash_chord.retargeting.penetration import VisualHullPenetration, penetration_summary
 from flash_chord.training.checkpoint_metadata import CONFIG_METADATA_KEY
+from flash_chord.retargeting.granularity import granularity_basis
 
 
 def temporal_basis(frames):
@@ -196,6 +198,13 @@ def passes_study_gate(candidate, baseline, tolerance_m=.002, *, penetration_awar
             and candidate["object_orientation_robust_rad"] <= baseline["object_orientation_robust_rad"] + .01
             and candidate["object_success_robust_fraction"] >= baseline["object_success_robust_fraction"] - .01
             and candidate["unstable_world_fraction"] <= baseline["unstable_world_fraction"])
+    for key, tolerance in (("per_object_position_mean_m", tolerance_m),
+                           ("per_object_orientation_mean_rad", .01)):
+        if key in baseline:
+            if key not in candidate:
+                return False
+            cand, base = np.asarray(candidate[key]), np.asarray(baseline[key])
+            task_gate = task_gate and cand.shape == base.shape and bool(np.all(cand <= base + tolerance))
     if not penetration_aware:
         return task_gate
     if not 0 <= rollout_penetration_tolerance_m <= .001:
@@ -259,8 +268,8 @@ class TTSAReferenceEditor(ManipulationBilevel):
         if self.penetration_weight < 0 or not np.isfinite(self.penetration_weight):
             raise ValueError("penetration_weight must be finite and nonnegative")
         self.study_variant = self.options.get("study_variant")
-        if self.study_variant not in (None, "smooth", "per_frame", "global_local"):
-            raise ValueError("study_variant must be smooth, per_frame, or global_local")
+        if self.study_variant not in (None, "smooth", "per_frame", "global_local", "episode", "timestep", "chunk"):
+            raise ValueError("unknown study_variant")
         if self.penetration_aware and self.study_variant is None:
             raise ValueError("penetration-aware editor requires a time-resolved study_variant")
         if self.penetration_aware and self.options.get("penetration_measure", "collision") not in ("collision", "visual_hull"):
@@ -280,32 +289,68 @@ class TTSAReferenceEditor(ManipulationBilevel):
         if self.projector is not None:
             names = self.projector.layout.scalar_joints.names
             rows = []
-            for side, prefix in (("left", "L_arm_"), ("right", "R_arm_")):
-                # Seven independent arm corrections, plus five finger flexion synergies.
-                for index, name in enumerate(names):
-                    if name.startswith(prefix):
-                        row = np.zeros(self.baseline.num_joint_q, np.float32)
-                        row[self.projector.qids[index]] = 1
-                        rows.append(row)
-                for digit in ("thumb", "index", "middle", "ring", "pinky"):
-                    row = np.zeros(self.baseline.num_joint_q, np.float32)
+            # The original 24-channel arm/finger basis is specific to the
+            # Vega/Sharpa pilot. For other embodiments (including G1+Dex3),
+            # give each named actuated joint one correction channel. This
+            # keeps chunk-wise reference editing usable without silently
+            # dropping legs, torso, or embodiment-specific hand joints.
+            is_vega_sharpa = any(name.startswith("L_arm_") for name in names) and any(
+                name.startswith("R_arm_") for name in names
+            )
+            if is_vega_sharpa:
+                for side, prefix in (("left", "L_arm_"), ("right", "R_arm_")):
+                    # Seven independent arm corrections, plus five finger flexion synergies.
                     for index, name in enumerate(names):
-                        if name.startswith(f"{side}_{digit}_") and not name.endswith("AA"):
+                        if name.startswith(prefix):
+                            row = np.zeros(self.baseline.num_joint_q, np.float32)
                             row[self.projector.qids[index]] = 1
-                    if not np.any(row):
-                        raise ValueError(f"missing finger synergy: {side}/{digit}")
+                            rows.append(row)
+                    for digit in ("thumb", "index", "middle", "ring", "pinky"):
+                        row = np.zeros(self.baseline.num_joint_q, np.float32)
+                        for index, name in enumerate(names):
+                            if name.startswith(f"{side}_{digit}_") and not name.endswith("AA"):
+                                row[self.projector.qids[index]] = 1
+                        if not np.any(row):
+                            raise ValueError(f"missing finger synergy: {side}/{digit}")
+                        rows.append(row)
+                self.joint_basis_kind = "vega_sharpa_arm_and_finger_synergies"
+            else:
+                for index, _name in enumerate(names):
+                    row = np.zeros(self.baseline.num_joint_q, np.float32)
+                    row[self.projector.qids[index]] = 1
+                    rows.append(row)
+                self.joint_basis_kind = "all_named_scalar_joints"
+                if self.guided_penetration_proposal:
+                    raise ValueError(
+                        "geometry-guided finger proposals require the Vega/Sharpa finger-synergy basis"
+                    )
+            if not rows:
+                raise ValueError("reference editor has no actuated joint correction channels")
+            for q_start, _ in self.projector.ball_joints:
+                for axis in range(3):
+                    row = np.zeros(self.baseline.num_joint_q, np.float32)
+                    row[q_start + axis] = 1
                     rows.append(row)
             self.joint_basis = np.stack(rows)
+            if self.projector.ball_joints:
+                self.joint_basis_kind = "floating_wrist_translation_rotation_and_fingers"
             if self.study_variant == "global_local":
                 # Keep the upper action dimension fixed. These placeholders are
                 # masked in round one and replaced only after the global stage.
                 self.basis = study_basis(self.baseline.num_frames,"global_local",
                                          local_centers=[.2,.4,.6,.8])
+            elif self.study_variant in ("episode", "timestep", "chunk"):
+                self.basis = granularity_basis(self.baseline.num_frames, self.study_variant,
+                    fps=self.baseline.fps, chunk_seconds=float(self.options.get("chunk_seconds", .5)),
+                    smoothing_seconds=float(self.options.get("temporal_smoothing_seconds", .1)),
+                    boundary_seconds=float(self.options.get("boundary_seconds", .25)))
             else:
                 self.basis = study_basis(self.baseline.num_frames, self.study_variant or "smooth")
         manifest = dict(engine="upper_flashsac_contextual_bandit", lower="FlashSAC",
             object_reference="fixed", contact_reference="fixed", warmup=self.next_update,
             lower_block_transitions=self.interval, upper_trials=self.trials,
+            joint_basis_kind=getattr(self, "joint_basis_kind", None),
+            joint_basis_names=list(self.projector.layout.scalar_joints.names) if self.projector is not None else [],
             upper_replay="cleared on lower-policy version change", lower_replay="cleared on every matched block boundary",
             publication_blend=self.blend, max_joint_offset_rad=.12, max_added_velocity_rad_s=.5,
             proposal_projection="joint_clip_then_global_contraction_v2",
@@ -315,7 +360,16 @@ class TTSAReferenceEditor(ManipulationBilevel):
                         signed_feedback_bins=16 if self.study_variant else 0,
                         per_frame_action_smoothing_sigma_frames=2 if self.study_variant=="per_frame" else 0,
                         local_center_selection="after_global_round_from_remaining_signed_error" if self.study_variant=="global_local" else None)
-        manifest.update(penetration_aware=self.penetration_aware,
+        if self.projector is not None and self.study_variant in ("episode", "timestep", "chunk"):
+            manifest.update(temporal_modes=int(self.basis.shape[1]),
+                upper_action_dimension=int(self.basis.shape[1]*self.joint_basis.shape[0]),
+                chunk_seconds=float(self.options.get("chunk_seconds", .5)) if self.study_variant=="chunk" else None,
+                temporal_smoothing_seconds=float(self.options.get("temporal_smoothing_seconds", .1)),
+                boundary_seconds=float(self.options.get("boundary_seconds", .25)))
+        manifest.update(floating_wrist_translation_bound_m=.03 if self.projector and self.projector.ball_joints else None,
+                        floating_wrist_rotation_bound_rad=.12 if self.projector and self.projector.ball_joints else None,
+                        per_object_acceptance_gate=True,
+                        penetration_aware=self.penetration_aware,
                         guided_penetration_proposal=self.guided_penetration_proposal,
                         select_best_trial=self.select_best_trial,
                         penetration_weight=self.penetration_weight,
@@ -329,6 +383,9 @@ class TTSAReferenceEditor(ManipulationBilevel):
         (self.output.parent / "ttsa_manifest.json").write_text(json.dumps(manifest, indent=2)+"\n")
 
     def candidate_joint_q(self, action):
+        if self.projector.ball_joints:
+            from flash_chord.retargeting.floating_chunk import floating_candidate
+            return floating_candidate(self, action)
         coefficients = np.asarray(action, dtype=np.float32).reshape(self.basis.shape[1], self.joint_basis.shape[0]).copy()
         if self.study_variant == "per_frame":
             coefficients = gaussian_filter1d(coefficients,2.,axis=0)
@@ -344,6 +401,8 @@ class TTSAReferenceEditor(ManipulationBilevel):
         q = self.candidate_joint_q(action)
         target = self.baseline.joint_target.copy()
         target[:,self.projector.dids] = q[:,self.projector.qids]
+        for q_start, dof_start in self.projector.ball_joints:
+            target[:, dof_start:dof_start+3] = Rotation.from_quat(q[:, q_start:q_start+4]).as_rotvec()
         return build_robot_reference_binding(self.projector.builder,self.projector.layout,q,target,self.baseline.fps)
 
     def guided_action(self):
