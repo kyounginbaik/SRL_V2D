@@ -1,0 +1,52 @@
+{
+  "purpose": "Versioned snapshot of 2026-10-08 Track 3 mesh refinement experiments",
+  "execution_layout": "Scripts retain the shared /data1 execution layout; original data, checkpoints and candidate meshes remain external inputs. This snapshot alone is not a portable end-to-end reproduction.",
+  "ground_truth_usage": "Public GT used for scoring and candidate selection only. Geometric mesh builder uses manually interpreted public RGB image dimensions.",
+  "files": [
+    {
+      "path": "smoothing_ablation/run.py",
+      "original": "/data1/SRL_V2D/challenge_reconstruction/public_mesh_benchmark/smoothing_ablation/run.py",
+      "sha256": "ad81778abce5bbc51108455dd01120a085c9e61dab3b65eb68547fc0d95f3a0f"
+    },
+    {
+      "path": "smoothing_ablation/run.sbatch",
+      "original": "/data1/SRL_V2D/challenge_reconstruction/public_mesh_benchmark/smoothing_ablation/run.sbatch",
+      "sha256": "1887617f791a6cde8ce975fea59c6d45042d03890289eaa114b2f991728c9f11"
+    },
+    {
+      "path": "packed_candidate_audit/run.py",
+      "original": "/data1/SRL_V2D/challenge_reconstruction/public_mesh_benchmark/packed_candidate_audit/run.py",
+      "sha256": "c897fecd2e6ef19f1df716dc8ca0c4118c7e6cfd0837874cf32b58fccd5be295"
+    },
+    {
+      "path": "packed_candidate_audit/consolidate.py",
+      "original": "/data1/SRL_V2D/challenge_reconstruction/public_mesh_benchmark/packed_candidate_audit/consolidate.py",
+      "sha256": "405171ca55727030a069dea240d31821dc181326cdd4bba102b504eee91a3b47"
+    },
+    {
+      "path": "packed_candidate_audit/prepare_eval_candidate.py",
+      "original": "/data1/SRL_V2D/challenge_reconstruction/public_mesh_benchmark/packed_candidate_audit/prepare_eval_candidate.py",
+      "sha256": "54e5d6c644302ba045d19a3aa35836bd51105f600c5c5484cf3702bef570878f"
+    },
+    {
+      "path": "dish_rack_additional_views/run.sbatch",
+      "original": "/data1/SRL_V2D/challenge_reconstruction/public_mesh_benchmark/dish_rack_additional_views/run.sbatch",
+      "sha256": "2fcead1d0a340cf8c1b3e5044bd38bcea1f79b4ed787607192ac2e6a6428ab55"
+    },
+    {
+      "path": "dish_rack_additional_views/score_one.py",
+      "original": "/data1/SRL_V2D/challenge_reconstruction/public_mesh_benchmark/dish_rack_additional_views/score_one.py",
+      "sha256": "c5f21ce73262c210138a9be137df2b39e9717e3cd4d9afb3ac2efa5913c713d1"
+    },
+    {
+      "path": "rack_geometric/build.py",
+      "original": "/data1/SRL_V2D/challenge_reconstruction/public_mesh_benchmark/rack_geometric/build.py",
+      "sha256": "1f7d0c992e296c01b63fdfc1c03227afa4b3e33413af0466c7c8f6f64b6c8bdd"
+    },
+    {
+      "path": "score.py",
+      "original": "/data1/SRL_V2D/challenge_reconstruction/public_mesh_benchmark/score.py",
+      "sha256": "656deaacc99eb0cf6a87b61079b60f5bc76630cf2333752ac94d0bce2e647b5b"
+    }
+  ]
+}
