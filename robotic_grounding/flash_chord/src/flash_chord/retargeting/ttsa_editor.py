@@ -171,7 +171,6 @@ def upper_cost(metrics, delta, fps, wrench_weight, *, robust=False, penetration_
     orientation = metrics["object_orientation_robust_rad"] if robust else metrics["object_orientation_mean_rad"]
     success = metrics["object_success_robust_fraction"] if robust else metrics["object_success_fraction"]
     wrench = metrics["wrench_robust_mse"] if robust else metrics["wrench_mse"]
-    tracking = metrics["robot_position_robust_mse"] if robust else metrics["robot_position_mse"]
     penetration = 0.0
     if penetration_weight:
         # The reference term is the actual UniRetarget objective; the
@@ -183,7 +182,6 @@ def upper_cost(metrics, delta, fps, wrench_weight, *, robust=False, penetration_
     return (position / .03
             + orientation / .3
             + 2 * (1 - success)
-            + .1 * tracking / .02**2
             + wrench_weight * wrench
             + penetration
             + (3 * metrics["unstable_world_fraction"] if robust else 0)
@@ -352,7 +350,7 @@ class TTSAReferenceEditor(ManipulationBilevel):
             joint_basis_kind=getattr(self, "joint_basis_kind", None),
             joint_basis_names=list(self.projector.layout.scalar_joints.names) if self.projector is not None else [],
             upper_replay="cleared on lower-policy version change", lower_replay="cleared on every matched block boundary",
-            publication_blend=self.blend, max_joint_offset_rad=.12, max_added_velocity_rad_s=.5,
+            publication_blend=self.blend, max_joint_offset_rad=float(self.options.get("finger_offset_rad",.52)) if self.projector is not None and self.projector.ball_joints else .12, max_added_velocity_rad_s=float(self.options.get("finger_correction_speed_rad_s",2.)) if self.projector is not None and self.projector.ball_joints else .5,
             proposal_projection="joint_clip_then_global_contraction_v2",
             wrench="contact-wrench SUPPORT mismatch, not measured net wrench",
             upper_evaluation_voc=0., exact_hypergradient=False)

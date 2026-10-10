@@ -24,3 +24,7 @@ The accompanying `run_episode.py` is the actual seed-42 experiment wrapper. Set 
 ## Interpretation and limitations
 
 The manually corrected grasp is an initialization correction, not a newly added contact loss or a guarantee against penetration. Mesh CD-O and policy success are distinct metrics. At the recorded status check around 62M steps, neither active seed had full-reference completions in training metrics, and VOC remained 1.0. Do not interpret a valid reference file or an attractive kinematic preview as physics success.
+
+## Object-focused upper-cost revision
+
+The revised upper objective removes robot-position tracking error. Floating wrist rotation and finger offsets default to 0.52 rad; correction-speed bounds are 1.5 rad/s and 2.0 rad/s respectively. Translation remains 3 cm per axis with 0.1 m/s correction speed. The 0.25 publication blend and lower-level policy rewards are unchanged. Existing running snapshots retain their previous objective and bounds. A separate seed42, 16-trial, 50M-step pilot uses this revision; results are pending.

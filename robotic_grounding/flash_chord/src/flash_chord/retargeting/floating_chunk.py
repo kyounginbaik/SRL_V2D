@@ -11,6 +11,13 @@ def bounded_delta(delta, bound, velocity, fps):
 
 
 def floating_candidate(editor,action):
+    # Bounds affect reference corrections, not the motor policy action range.
+    finger_bound=float(editor.options.get("finger_offset_rad", .52))
+    finger_speed=float(editor.options.get("finger_correction_speed_rad_s", 2.0))
+    rotation_bound=float(editor.options.get("wrist_rotation_offset_rad", .52))
+    rotation_speed=float(editor.options.get("wrist_rotation_correction_speed_rad_s", 1.5))
+    if min(finger_bound,finger_speed,rotation_bound,rotation_speed)<=0:
+        raise ValueError("Correction limits must be positive")
     base=editor.baseline.joint_q
     coefficients=np.asarray(action,dtype=np.float64).reshape(editor.basis.shape[1],editor.joint_basis.shape[0])
     if not np.isfinite(coefficients).all():raise ValueError('Nonfinite upper action')
@@ -18,7 +25,7 @@ def floating_candidate(editor,action):
     q=base.copy();p=editor.projector;fps=editor.baseline.fps
     for i,(name,qid) in enumerate(zip(p.layout.scalar_joints.names,p.qids)):
         translation=name.endswith(('wrist_x','wrist_y','wrist_z'))
-        bound,velocity=(.03,.10) if translation else (.12,.5)
+        bound,velocity=(.03,.10) if translation else (finger_bound,finger_speed)
         proposal=bounded_delta(raw[:,qid],bound,velocity,fps)
         delta=(1-editor.blend)*(editor.binding.joint_q[:,qid]-base[:,qid])+editor.blend*proposal
         delta=np.clip(base[:,qid]+delta,p.lower[i],p.upper[i])-base[:,qid]
@@ -26,9 +33,9 @@ def floating_candidate(editor,action):
     for start,_ in p.ball_joints:
         baseline=Rotation.from_quat(base[:,start:start+4])
         current=(Rotation.from_quat(editor.binding.joint_q[:,start:start+4])*baseline.inv()).as_rotvec()
-        proposed=bounded_delta(raw[:,start:start+3],.12/np.sqrt(3),.5/np.sqrt(3),fps)
+        proposed=bounded_delta(raw[:,start:start+3],rotation_bound/np.sqrt(3),rotation_speed/np.sqrt(3),fps)
         delta=(1-editor.blend)*current+editor.blend*proposed
-        delta=bounded_delta(delta,.12/np.sqrt(3),.5/np.sqrt(3),fps)
+        delta=bounded_delta(delta,rotation_bound/np.sqrt(3),rotation_speed/np.sqrt(3),fps)
         q[:,start:start+4]=(Rotation.from_rotvec(delta)*baseline).as_quat()
     q[[0,-1]]=base[[0,-1]]
     if not np.isfinite(q).all():raise ValueError('Nonfinite floating reference')
