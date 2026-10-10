@@ -475,11 +475,20 @@ class TTSAReferenceEditor(ManipulationBilevel):
             if feedback is None:
                 raise ValueError("study variant requires signed hand-object feedback")
             current = self.binding.joint_q-self.baseline.joint_q
-            correction_bins = np.stack([current[ids].mean(0) for ids in np.array_split(np.arange(len(current)),16)])
+            if self.study_variant == "chunk":
+                from flash_chord.retargeting.chunk_feedback import correction_chunk_means
+                correction_bins=correction_chunk_means(current,self.baseline.fps,float(self.options.get("chunk_seconds",.5)))
+                if len(correction_bins)!=len(feedback["signed_bins"]):
+                    raise ValueError("Feedback and action chunks differ")
+            else:
+                correction_bins = np.stack([current[ids].mean(0) for ids in np.array_split(np.arange(len(current)),16)])
             values = np.r_[values, np.clip(feedback["signed_bins"],-.25,.25).ravel()/.05,
                 np.clip(correction_bins,-.12,.12).ravel()/.12,
                 metrics["object_position_robust_m"]/.03, metrics["object_orientation_robust_rad"]/.3,
                 metrics["object_success_robust_fraction"],metrics["unstable_world_fraction"]]
+        if self.study_variant == "chunk":
+            counts=np.asarray(feedback["chunk_sample_counts"],dtype=float)
+            values=np.r_[values,counts/max(float(counts.sum()),1.)]
         if self.penetration_aware:
             values = np.r_[values,
                 metrics["reference_penetration_mean_m"]/.005,

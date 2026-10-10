@@ -20,9 +20,17 @@ class TestGate(unittest.TestCase):
   g=Gate(2);g.observe(good(),0);d=good();d['per_object_position_p95_m']=[0.,.08]
   self.assertFalse(g.observe(d,0)['passed']);self.assertEqual(g.streak,0);self.assertEqual(g.scale,1.)
  def test_missing_nan_and_short_rollout_block(self):
-  for change in [{'per_object_position_p95_m':[.01]}, {'per_object_orientation_p95_rad':[float('nan'),.01]}, {'full_horizon':False}, {'robot_position_rms_m':.2}, {'all_errors_finite':False}]:
+  for change in [{'per_object_position_p95_m':[.01]}, {'per_object_orientation_p95_rad':[float('nan'),.01]}, {'full_horizon':False}, {'all_errors_finite':False}]:
    g=Gate(2);d=good();d.update(change)
    for _ in range(5):self.assertFalse(g.observe(d,0)['lowered'])
+ def test_hand_position_does_not_gate_voc(self):
+  for value in [.2, 10., float('nan'), None]:
+   g=Gate(2);d=good()
+   if value is None:d.pop('robot_position_rms_m')
+   else:d['robot_position_rms_m']=value
+   for _ in range(2):self.assertFalse(g.observe(d,0)['lowered'])
+   result=g.observe(d,0)
+   self.assertTrue(result['lowered']);self.assertNotIn('hand_tracking',result['checks'])
  def test_reference_change_resets_streak(self):
   g=Gate(2);g.observe(good(),0);g.observe(good(),0)
   self.assertFalse(g.observe(good(),1)['lowered']);self.assertEqual(g.streak,1)

@@ -12,7 +12,6 @@ class PerformanceVOCGate:
     min_success: float = .9
     position_p95_m: float = .05
     orientation_p95_rad: float = math.radians(20)
-    hand_rms_m: float = .06
     index: int = 0
     streak: int = 0
     reference_version: int = -1
@@ -38,8 +37,6 @@ class PerformanceVOCGate:
             ('per_object_orientation_p95_rad',self.orientation_p95_rad,True)]:
             values=metrics.get(key,[])
             checks[key]=len(values)==self.object_count and all(math.isfinite(x) and (x<=threshold if lower else x>=threshold) for x in values)
-        hand=metrics.get('robot_position_rms_m',float('inf'))
-        checks['hand_tracking']=math.isfinite(hand) and hand<=self.hand_rms_m
         checks['full_horizon']=metrics.get('full_horizon',False) is True
         checks['finite']=metrics.get('all_errors_finite',False) is True
         passed=all(checks.values());self.streak=self.streak+1 if passed else 0

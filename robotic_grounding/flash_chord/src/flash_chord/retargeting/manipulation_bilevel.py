@@ -391,6 +391,11 @@ class ManipulationBilevel:
                             # Large mean with little world disagreement scores
                             # above large-but-opposing per-world corrections.
                             frame_scores=consensus_frame_scores(relative_error))
+            if self.options.get("study_variant") == "chunk":
+                from flash_chord.retargeting.chunk_feedback import summarize_chunks
+                feedback["signed_bins"], feedback["chunk_sample_counts"] = summarize_chunks(
+                    relative_error, np.asarray(indices), binding.num_frames, binding.fps,
+                    float(self.options.get("chunk_seconds", .5)))
             if getattr(self, "penetration_aware", False):
                 overlap = np.stack(rollout_overlap)
                 feedback["penetration_bins"] = np.stack([
