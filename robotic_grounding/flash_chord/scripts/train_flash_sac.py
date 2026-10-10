@@ -124,6 +124,11 @@ def main(cfg: DictConfig) -> None:
                 collision=collision, training=training, environment_config=environment_config,
                 checkpoint_metadata=checkpoint_metadata, output_dir=output_dir,
             )
+        voc_controller=None
+        if cfg.get("adaptive_voc") is not None:
+            if reference_update is None:raise ValueError("Adaptive VOC requires the rollout evaluator")
+            from flash_chord.lifecycle.performance_voc import PerformanceVOCController
+            voc_controller=PerformanceVOCController(reference_update,resolved_dict(cfg.adaptive_voc),output_dir)
         learner = run_training(
             jax_env,
             training,
@@ -134,6 +139,7 @@ def main(cfg: DictConfig) -> None:
             checkpoint_metadata=checkpoint_metadata,
             progress=ConsoleTrainingProgress(training.total_environment_steps, output_dir),
             reference_update=reference_update,
+            voc_controller=voc_controller,
         )
     print(f"completed {int(jax.device_get(learner.environment_steps))} environment steps; checkpoints: {output_dir}")
 

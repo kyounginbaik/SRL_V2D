@@ -1,4 +1,4 @@
-# UniRetargeting tissue-box penetration pilot (2026-10-07)
+# UniRetarget tissue-box penetration pilot (2026-10-07)
 
 This is a feasibility check, **not** a demonstrated Track 3 improvement. The
 object pose, mesh, and contact reference remain immutable. The upper editor
@@ -47,7 +47,7 @@ stronger direct-edit pilot also reduced physical overlap for seed 42, showing
 that proposal choice matters, not only edit magnitude.
 
 Reports are in `outputs/uniretargeting_tissue_20261007/online_guided_frozen_*`.
-The targeted container test suite passed (4 tests). No UniRetargeting batch is
+The targeted container test suite passed (4 tests). No UniRetarget batch is
 left running.
 
 ## Interpretation and next decision
@@ -73,5 +73,5 @@ are pilot-specific.
 task-property-specific skills and verifiers. A compatible *optional* extension
 here would retain successful verifier configurations and upper-edit proposals
 across videos to warm-start new tasks. That is different from the central
-UniRetargeting claim: lower-policy physical feedback should improve a reusable
+UniRetarget claim: lower-policy physical feedback should improve a reusable
 robot reference while preserving the demonstrated manipulation objective.

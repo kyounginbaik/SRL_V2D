@@ -2,8 +2,8 @@
 
 GPU-parallel robotic reference tracking with Newton, Warp, JAX, PPO, and FlashSAC.
 
-**UniRetargeting coworkers' guide:** [overview, run commands, upper optimization, code map, and output inspection](UNIRETARGETING.md).
-UniRetargeting adds a slow trajectory editor above the FlashSAC motor policy. Start with that
+**UniRetarget coworkers' guide:** [overview, run commands, upper optimization, code map, and output inspection](UNIRETARGETING.md).
+UniRetarget adds a slow trajectory editor above the FlashSAC motor policy. Start with that
 guide for the Vega/Sharpa tissue-box experiment; the workflow below covers general FlashCHORD use.
 
 **[Setup](#setup) → [Data](#example-data) → [View robot](#1-view-robot) → [View scene](#2-view-scene) → [Replay](#3-replay) → [Train](#4-train) → [Evaluate](#5-evaluate) → [View policy](#6-view-policy)** · **[Configuration](#configuration)**

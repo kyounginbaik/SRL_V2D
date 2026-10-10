@@ -1,4 +1,4 @@
-"""Tissue-box UniRetargeting preflight: visual-geometry proposals, physical acceptance.
+"""Tissue-box UniRetarget preflight: visual-geometry proposals, physical acceptance.
 
 This is a frozen-lower-policy upper step, not an end-to-end training result.
 It tests whether a bounded robot reference can reduce finger/box overlap while

@@ -174,7 +174,7 @@ def upper_cost(metrics, delta, fps, wrench_weight, *, robust=False, penetration_
     tracking = metrics["robot_position_robust_mse"] if robust else metrics["robot_position_mse"]
     penetration = 0.0
     if penetration_weight:
-        # The reference term is the actual UniRetargeting objective; the
+        # The reference term is the actual UniRetarget objective; the
         # rollout term prevents an editor from moving overlap into physics.
         penetration = penetration_weight * (
             metrics["reference_penetration_mean_m"] / .005

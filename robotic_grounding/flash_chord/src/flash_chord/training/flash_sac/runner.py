@@ -419,6 +419,7 @@ def _run_training(
     checkpoint_metadata: Mapping[str, object] | None = None,
     progress: TrainingProgress | None = None,
     reference_update=None,
+    voc_controller=None,
 ) -> LearnerState:
     """Run one Warp interaction followed by one donated JAX state transition until the step budget is met."""
     if log_interval <= 0:
@@ -445,6 +446,11 @@ def _run_training(
         else:
             index = config.curriculum.stage_index(environment_steps)
             stage = config.curriculum.stages[index]
+        if voc_controller is not None:
+            if voc_scale_override is not None:
+                raise ValueError("Cannot combine adaptive VOC with a VOC override")
+            index=voc_controller.index
+            stage=replace(config.curriculum.stages[0],voc_scale=voc_controller.scale)
         if voc_scale_override is not None:
             stage = replace(stage, voc_scale=voc_scale_override)
         return index, stage
@@ -658,6 +664,9 @@ def _run_training(
                 )
                 learner = learner.replace(exploration=exploration, key=key)
 
+        if voc_controller is not None:
+            voc_controller(learner, environment_steps, logger)
+
         should_save = checkpoint_dir is not None and (
             environment_steps >= next_checkpoint or environment_steps == config.total_environment_steps
         )
@@ -713,6 +722,7 @@ def run_training(
     checkpoint_metadata: Mapping[str, object] | None = None,
     progress: TrainingProgress | None = None,
     reference_update=None,
+    voc_controller=None,
 ) -> LearnerState:
     """Run FlashSAC and always close an attached external metric sink."""
     try:
@@ -726,6 +736,7 @@ def run_training(
             checkpoint_metadata=checkpoint_metadata,
             progress=progress,
             reference_update=reference_update,
+            voc_controller=voc_controller,
         )
     finally:
         if logger is not None:

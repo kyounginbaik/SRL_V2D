@@ -1,15 +1,15 @@
-# UniRetargeting
+# UniRetarget
 
 Learn a robot motion reference using feedback from a physics-trained motor policy.
 
-**UniRetargeting** is an experimental bi-level retargeting workflow.
+**UniRetarget** is an experimental bi-level retargeting workflow.
 The **lower level** trains a FlashSAC motor policy to follow a robot reference in Newton
 physics. The **upper level** edits that reference using feedback from the frozen motor
 policy, then resumes lower training with an accepted edit. The demonstrated object motion
 and contact targets stay fixed. The current manipulation pilot uses Vega arms with Sharpa
 hands on the tissue-box sequence.
 
-**[Read the UniRetargeting guide](robotic_grounding/flash_chord/UNIRETARGETING.md)**:
+**[Read the UniRetarget guide](robotic_grounding/flash_chord/UNIRETARGETING.md)**:
 [how to run](robotic_grounding/flash_chord/UNIRETARGETING.md#run-it) ·
 [upper optimization explained](robotic_grounding/flash_chord/UNIRETARGETING.md#upper-level-optimization) ·
 [code map](robotic_grounding/flash_chord/UNIRETARGETING.md#code-map) ·

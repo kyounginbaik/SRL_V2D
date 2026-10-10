@@ -245,9 +245,15 @@ class ManipulationBilevel:
         self.metadata[CONFIG_METADATA_KEY] = json.dumps(self.config, sort_keys=True)
         self.metadata["robot_reference_version"] = str(self.version)
 
-    def rollout(self, binding, learner, seed, *, return_feedback=False):
+    def rollout(self, binding, learner, seed, *, return_feedback=False, voc_probe_scale=None):
+        probe_config=deepcopy(self.eval_config)
+        if voc_probe_scale is not None:
+            from flash_chord.runtime.object_control import VOCParams
+            probe_config=replace(probe_config,
+                voc=instantiate_typed(OmegaConf.create(self.config["env"]["voc"]), VOCParams),
+                voc_scale=float(voc_probe_scale))
         env = RLEnv(replace(self.eval_setup.scene, robot_reference=binding), self.eval_setup.reference,
-                    config=deepcopy(self.eval_config))
+                    config=probe_config)
         env.reset(frame_id=0)
         env.capture_step()
         env.reset(frame_id=0)
@@ -282,6 +288,10 @@ class ManipulationBilevel:
             rollout_overlap = []
         adapter = WarpRLEnv(env, publish_diagnostics=False, publish_step_metrics=False)
         observation = jnp.array(adapter.reset(), copy=True)
+        if voc_probe_scale is not None:
+            np.testing.assert_allclose(env.object_control_scale.numpy(),voc_probe_scale,atol=1e-7)
+            if env.command.voc_body_ids_w.size != env.world_count * env.command.layout.num_objects:
+                raise AssertionError("VOC root-body count does not match the object roster")
         state = ActorInferenceState(learner.actor.params, learner.actor.batch_stats)
         key = jax.random.PRNGKey(seed)
         if self.actor is None:
@@ -349,6 +359,16 @@ class ManipulationBilevel:
         object_count = env.command.body_ids_w.numpy().size // env.world_count
         per_pos = np.asarray(obj_errors).reshape(-1, env.world_count, object_count)
         per_angle = np.asarray(angles).reshape(-1, env.world_count, object_count)
+        metrics["per_object_position_p95_m"] = np.percentile(per_pos,95,axis=(0,1)).tolist()
+        metrics["per_object_orientation_p95_rad"] = np.percentile(per_angle,95,axis=(0,1)).tolist()
+        metrics["per_object_gate_success_fraction"] = ((per_pos<=.05)&(per_angle<=np.deg2rad(20))).mean(axis=(0,1)).tolist()
+        metrics["robot_position_rms_m"] = float(np.sqrt(np.mean(np.sum(pe**2,axis=-1))))
+        metrics["all_errors_finite"] = bool(np.isfinite(per_pos).all() and np.isfinite(per_angle).all() and np.isfinite(pe).all())
+        if voc_probe_scale is not None:
+            np.testing.assert_allclose(env.object_control_scale.numpy(),voc_probe_scale,atol=1e-7)
+            metrics["probe_applied_voc_scale"] = float(env.object_control_scale.numpy()[0])
+            metrics["voc_object_count"] = int(env.command.layout.num_objects)
+        metrics["full_horizon"] = bool(len(indices)==binding.num_frames-1 and all(np.all(frame==i) for i,frame in enumerate(indices)))
         metrics["per_object_position_mean_m"] = np.nan_to_num(per_pos, nan=1., posinf=1.).mean(axis=(0,1)).tolist()
         metrics["per_object_orientation_mean_rad"] = np.nan_to_num(per_angle, nan=np.pi, posinf=np.pi).mean(axis=(0,1)).tolist()
         if study:

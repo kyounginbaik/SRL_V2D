@@ -1,6 +1,6 @@
-# UniRetargeting
+# UniRetarget
 
-UniRetargeting learns a robot motion reference together with a policy that can execute it.
+UniRetarget learns a robot motion reference together with a policy that can execute it.
 The current pilot starts from a Mink IK trajectory for Vega arms and Sharpa hands manipulating
 a tissue box. The upper level proposes bounded changes to the robot trajectory. The lower
 FlashSAC policy tests those changes in Newton physics and continues learning after an edit
@@ -402,7 +402,7 @@ directory. For a fixed-reference control, also set `bilevel.mode=fixed`, retaini
 `study_variant=smooth`. Keep budgets, seeds, and reset boundaries matched.
 
 The original cluster launchers are [the common job](../../slurm/flashchord_tissue_bilevel.sbatch)
-and [the six-run UniRetargeting array](../../slurm/flashchord_uniretargeting_tissue.sbatch).
+and [the six-run UniRetarget array](../../slurm/flashchord_uniretargeting_tissue.sbatch).
 The array compares smooth editor control versus visual-penetration-aware editor, each with
 seeds 42, 123, and 456. They contain the original `/data1/SRL_V2D` paths, partition, GPU
 allocation assumptions, and full-run W&B authentication. Adapt those before using another
