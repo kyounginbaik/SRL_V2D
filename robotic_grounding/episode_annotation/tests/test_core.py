@@ -10,7 +10,7 @@ from pathlib import Path
 from PIL import Image
 
 from episode_annotation.core import Episode, sample_frames, validate_annotations
-from episode_annotation.render import render
+from episode_annotation.render import _font, render
 
 
 def fixture_data(episode: Episode) -> dict:
@@ -40,6 +40,11 @@ def fixture_data(episode: Episode) -> dict:
 
 
 class EpisodeTests(unittest.TestCase):
+    def test_render_font_scales(self) -> None:
+        small = _font(12).getbbox("Contact labels")
+        large = _font(24).getbbox("Contact labels")
+        self.assertGreater(large[2] - large[0], small[2] - small[0])
+
     def setUp(self) -> None:
         self.temp = tempfile.TemporaryDirectory()
         self.root = Path(self.temp.name)
