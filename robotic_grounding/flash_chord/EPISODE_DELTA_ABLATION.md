@@ -86,3 +86,5 @@ The initial implementation was checked with 21 targeted tests passing (one
 optional test skipped), 26 FlashSAC learner tests passing, and a complete GPU
 search over 2,048 full-hand episode candidates. Scientific comparisons require
 all matched variants; an accepted first batch is not evidence of superiority.
+
+The completed twelve-search comparison is recorded in [the results report](EPISODE_DELTA_RESULTS.md).

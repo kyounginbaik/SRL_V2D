@@ -1,0 +1,210 @@
+[
+  {
+    "variant": "chunk_full",
+    "seed": 43,
+    "dimensions": 952,
+    "accepted": false,
+    "gate_pass_count": 196,
+    "improving_count": 429,
+    "baseline_cost": 16.424324489313694,
+    "best_raw_cost": 13.929467707526642,
+    "best_valid_cost": 14.729161817205686,
+    "seconds": 179.01389236398973,
+    "best_valid_cost_gain_percent": 10.321049570172258,
+    "confirmation_failures": [
+      "per_object_position_mean_m[1]"
+    ]
+  },
+  {
+    "variant": "chunk_full",
+    "seed": 44,
+    "dimensions": 952,
+    "accepted": false,
+    "gate_pass_count": 181,
+    "improving_count": 435,
+    "baseline_cost": 16.43388690391894,
+    "best_raw_cost": 13.748789875241087,
+    "best_valid_cost": 14.453750425535153,
+    "seconds": 181.89015571199707,
+    "best_valid_cost_gain_percent": 12.049106154622425,
+    "confirmation_failures": [
+      "object_position_robust_m[0]",
+      "object_orientation_robust_rad[0]",
+      "per_object_position_mean_m[0]",
+      "per_object_position_mean_m[1]",
+      "per_object_orientation_mean_rad[0]",
+      "per_object_orientation_mean_rad[1]",
+      "per_object_contact_proximity_mean_m[0]",
+      "per_object_contact_proximity_mean_m[1]",
+      "contact_hand_0_object_0",
+      "contact_hand_1_object_0",
+      "contact_hand_1_object_1",
+      "aggregate_contact_gain_below_1mm",
+      "robust_success_regression"
+    ]
+  },
+  {
+    "variant": "chunk_full",
+    "seed": 45,
+    "dimensions": 952,
+    "accepted": false,
+    "gate_pass_count": 61,
+    "improving_count": 1751,
+    "baseline_cost": 18.085853739078402,
+    "best_raw_cost": 13.908191032214358,
+    "best_valid_cost": 14.353119499974134,
+    "seconds": 180.35737268299272,
+    "best_valid_cost_gain_percent": 20.638971723181008,
+    "confirmation_failures": [
+      "per_object_contact_proximity_mean_m[1]",
+      "contact_hand_1_object_0",
+      "contact_hand_1_object_1"
+    ]
+  },
+  {
+    "variant": "chunk_wrist",
+    "seed": 43,
+    "dimensions": 204,
+    "accepted": false,
+    "gate_pass_count": 235,
+    "improving_count": 893,
+    "baseline_cost": 16.900969233741748,
+    "best_raw_cost": 14.020087214322094,
+    "best_valid_cost": 14.020087214322094,
+    "seconds": 182.23414942900126,
+    "best_valid_cost_gain_percent": 17.045661580568694,
+    "confirmation_failures": [
+      "contact_hand_1_object_0"
+    ]
+  },
+  {
+    "variant": "chunk_wrist",
+    "seed": 44,
+    "dimensions": 204,
+    "accepted": false,
+    "gate_pass_count": 193,
+    "improving_count": 913,
+    "baseline_cost": 16.955642105614203,
+    "best_raw_cost": 14.288918456259474,
+    "best_valid_cost": 15.104817467342478,
+    "seconds": 179.58205492600973,
+    "best_valid_cost_gain_percent": 10.915685921790574,
+    "confirmation_failures": [
+      "per_object_position_mean_m[1]"
+    ]
+  },
+  {
+    "variant": "chunk_wrist",
+    "seed": 45,
+    "dimensions": 204,
+    "accepted": false,
+    "gate_pass_count": 114,
+    "improving_count": 710,
+    "baseline_cost": 16.768280250820546,
+    "best_raw_cost": 14.230914816712723,
+    "best_valid_cost": 15.197321344797835,
+    "seconds": 176.48297890101094,
+    "best_valid_cost_gain_percent": 9.368634603693703,
+    "confirmation_failures": [
+      "per_object_orientation_mean_rad[1]",
+      "per_object_contact_proximity_mean_m[0]",
+      "contact_hand_0_object_0",
+      "aggregate_contact_gain_below_1mm"
+    ]
+  },
+  {
+    "variant": "episode_full",
+    "seed": 43,
+    "dimensions": 56,
+    "accepted": true,
+    "gate_pass_count": 166,
+    "improving_count": 646,
+    "baseline_cost": 16.54835846806644,
+    "best_raw_cost": 13.394787729992817,
+    "best_valid_cost": 14.198791176721631,
+    "seconds": 175.76678352999443,
+    "best_valid_cost_gain_percent": 14.198189481324054,
+    "confirmation_failures": []
+  },
+  {
+    "variant": "episode_full",
+    "seed": 44,
+    "dimensions": 56,
+    "accepted": false,
+    "gate_pass_count": 151,
+    "improving_count": 696,
+    "baseline_cost": 16.63350240555991,
+    "best_raw_cost": 13.384339504754506,
+    "best_valid_cost": 14.318117857113206,
+    "seconds": 179.78534961600963,
+    "best_valid_cost_gain_percent": 13.920006093682124,
+    "confirmation_failures": [
+      "per_object_position_mean_m[1]",
+      "per_object_contact_proximity_mean_m[1]",
+      "contact_hand_1_object_1"
+    ]
+  },
+  {
+    "variant": "episode_full",
+    "seed": 45,
+    "dimensions": 56,
+    "accepted": false,
+    "gate_pass_count": 88,
+    "improving_count": 835,
+    "baseline_cost": 16.74393496929245,
+    "best_raw_cost": 13.803188258995702,
+    "best_valid_cost": 14.989430189875439,
+    "seconds": 176.44778069200402,
+    "best_valid_cost_gain_percent": 10.478449555822378,
+    "confirmation_failures": [
+      "contact_hand_1_object_0"
+    ]
+  },
+  {
+    "variant": "episode_wrist",
+    "seed": 43,
+    "dimensions": 12,
+    "accepted": false,
+    "gate_pass_count": 40,
+    "improving_count": 465,
+    "baseline_cost": 16.153686668948637,
+    "best_raw_cost": 13.142615231604141,
+    "best_valid_cost": 14.365585565146493,
+    "seconds": 182.47345469299762,
+    "best_valid_cost_gain_percent": 11.069306595127381,
+    "confirmation_failures": [
+      "per_object_contact_proximity_mean_m[1]",
+      "contact_hand_1_object_1"
+    ]
+  },
+  {
+    "variant": "episode_wrist",
+    "seed": 44,
+    "dimensions": 12,
+    "accepted": false,
+    "gate_pass_count": 901,
+    "improving_count": 1751,
+    "baseline_cost": 17.99481738366276,
+    "best_raw_cost": 13.88046144467131,
+    "best_valid_cost": 14.437539781500327,
+    "seconds": 180.5410432649951,
+    "best_valid_cost_gain_percent": 19.768345109142558,
+    "confirmation_failures": [
+      "per_object_position_mean_m[1]"
+    ]
+  },
+  {
+    "variant": "episode_wrist",
+    "seed": 45,
+    "dimensions": 12,
+    "accepted": true,
+    "gate_pass_count": 68,
+    "improving_count": 458,
+    "baseline_cost": 16.120853621950587,
+    "best_raw_cost": 13.197971978375579,
+    "best_valid_cost": 14.939798957563118,
+    "seconds": 178.4513928880042,
+    "best_valid_cost_gain_percent": 7.326253882606526,
+    "confirmation_failures": []
+  }
+]
