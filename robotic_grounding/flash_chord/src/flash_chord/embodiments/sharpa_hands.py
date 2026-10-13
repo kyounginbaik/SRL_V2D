@@ -25,6 +25,7 @@ from flash_chord.embodiments.base import (
     HandLayout,
     HandLinkGeometry,
     JointControlSpec,
+    ScalarJointLayout,
     finger_joint_order,
     register_embodiment,
     resolve_joint_controls,
@@ -62,6 +63,15 @@ class SharpaHandsConfig:
     )
     exclude_contacts: list[tuple[str, str]] = field(default_factory=sharpa_excluded_contacts)
     object_contact_links: list[str] = field(default_factory=sharpa_object_contact_links)
+
+    @classmethod
+    def stronger_tracking(cls) -> "SharpaHandsConfig":
+        """Episode-1 dynamic tracking candidate; requires physics validation."""
+        cfg = cls()
+        cfg.joint_overrides = dict(cfg.joint_overrides)
+        cfg.joint_overrides[r"wrist_[xyz]$"] = dict(kp=100.0, kd=12.0, effort_limit=90.0)
+        cfg.joint_overrides[r"wrist_rotvec$"] = dict(mode="effort", kp=100.0, kd=12.0, effort_limit=90.0)
+        return cfg
 
     @classmethod
     def stiff_tracking(cls) -> "SharpaHandsConfig":
@@ -280,7 +290,15 @@ class SharpaHands:
             )
             for side in ("left", "right")
         )
-        return EmbodimentLayout(num_joint_q=len(builder.joint_q), num_joint_dof=builder.joint_dof_count, hands=hands)
+        scalar_ids = [j for j, kind in enumerate(builder.joint_type)
+                      if kind in (newton.JointType.PRISMATIC, newton.JointType.REVOLUTE)]
+        scalar = ScalarJointLayout(
+            q_ids=tuple(builder.joint_q_start[j] for j in scalar_ids),
+            dof_ids=tuple(builder.joint_qd_start[j] for j in scalar_ids),
+            names=tuple(builder.joint_label[j].split("/")[-1] for j in scalar_ids),
+        )
+        return EmbodimentLayout(num_joint_q=len(builder.joint_q), num_joint_dof=builder.joint_dof_count,
+                               hands=hands, scalar_joints=scalar)
 
     def bind_reference(
         self,

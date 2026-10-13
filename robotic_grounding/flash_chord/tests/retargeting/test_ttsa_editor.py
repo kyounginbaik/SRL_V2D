@@ -2,8 +2,19 @@ import numpy as np
 from flash_chord.retargeting.ttsa_editor import (
     temporal_basis, bounded_correction, upper_cost, study_basis, choose_local_centers,
     robust_world_summary, signed_feedback_summary, passes_study_gate,
-    consensus_frame_scores,
+    consensus_frame_scores, contact_directed_action,
 )
+
+
+def test_contact_directed_action_reaches_each_labeled_hand():
+    names = [f"{side}_wrist_{axis}" for side in ("left", "right") for axis in "xyz"]
+    directions = np.zeros((2, 2, 2, 3))
+    directions[0, 0, 1] = [.06, -.12, .03]
+    directions[1, 1, 0] = [-.24, 0, .12]
+    action = contact_directed_action(directions, names, np.arange(6), np.eye(6), .12)
+    np.testing.assert_allclose(action.reshape(2, 6)[0, :3], [.5, -1., .25])
+    np.testing.assert_allclose(action.reshape(2, 6)[1, 3:], [-1., 0., 1.])
+    np.testing.assert_allclose(action.reshape(2, 6)[0, 3:], 0.)
 
 
 def test_study_bases_share_endpoints_and_motion_bounds():
@@ -117,6 +128,25 @@ def test_wrench_is_in_reward_not_only_gate():
     assert np.isclose(upper_cost(metrics,delta,20,1)-upper_cost(metrics,delta,20,0),2.)
     worse=dict(metrics,object_position_mean_m=.2)
     assert upper_cost(worse,delta,20,0) > upper_cost(metrics,delta,20,0)
+
+
+def test_contact_proximity_ranks_no_contact_rollouts_and_gates_each_hand():
+    from flash_chord.retargeting.ttsa_editor import contact_proximity_gate
+    common = dict(object_position_robust_m=.2, object_orientation_robust_rad=.3,
+                  object_success_robust_fraction=0., wrench_robust_mse=1.,
+                  unstable_world_fraction=0.)
+    baseline = dict(common, contact_proximity_mean_m=.15,
+                    per_object_contact_proximity_mean_m=[None, .15],
+                    per_hand_object_contact_proximity_mean_m=[[None, .10], [None, .20]])
+    better = dict(baseline, contact_proximity_mean_m=.14,
+                  per_object_contact_proximity_mean_m=[None, .14],
+                  per_hand_object_contact_proximity_mean_m=[[None, .095], [None, .19]])
+    delta = np.zeros((10, 2))
+    assert upper_cost(better, delta, 20, 1., robust=True, contact_proximity_weight=5.) < \
+        upper_cost(baseline, delta, 20, 1., robust=True, contact_proximity_weight=5.)
+    assert contact_proximity_gate(better, baseline)
+    wrong_hand = dict(better, per_hand_object_contact_proximity_mean_m=[[None, .105], [None, .19]])
+    assert not contact_proximity_gate(wrong_hand, baseline)
 
 
 def test_real_upper_flashsac_updates():

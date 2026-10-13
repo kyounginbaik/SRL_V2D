@@ -17,6 +17,7 @@ hands on the tissue-box sequence.
 
 | Start with | What it explains |
 | --- | --- |
+| [Episode delta ablation](robotic_grounding/flash_chord/EPISODE_DELTA_ABLATION.md) | Frozen-policy comparison of 12/56/204/952-parameter floating-hand reference searches. |
 | [Training entry point](robotic_grounding/flash_chord/scripts/train_flash_sac.py) | Creates the scene, lower learner, and optional upper editor. |
 | [Upper trajectory editor](robotic_grounding/flash_chord/src/flash_chord/retargeting/ttsa_editor.py) | Proposal parameterization, upper actor/critic, physical reward, and acceptance gates. |
 | [Physical rollout](robotic_grounding/flash_chord/src/flash_chord/retargeting/manipulation_bilevel.py) | Runs the frozen lower policy and measures task, tracking, and contact errors. |

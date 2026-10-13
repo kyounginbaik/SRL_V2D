@@ -432,6 +432,7 @@ def compute_policy_observation(
     joint_limit_lower: wp.array(dtype=wp.float32),
     joint_limit_upper: wp.array(dtype=wp.float32),
     reference_num_frames: int,
+    reference_world_count: int,
     bodies_per_world: int,
     num_joint_q: int,
     num_joint_dof: int,
@@ -555,7 +556,8 @@ def compute_policy_observation(
                 observation[velocity_output + axis] = wrist_velocity_scale * linear_velocity_b[axis]
                 observation[velocity_output + 3 + axis] = wrist_velocity_scale * angular_velocity_b[axis]
 
-        reference_hand = frame * num_hands + hand
+        robot_frame = frame * reference_world_count + world % reference_world_count
+        reference_hand = robot_frame * num_hands + hand
         reference_quat = reference_wrist_quat_w[reference_hand]
         if make_wrist_quat_unique:
             reference_quat = unique_quat(reference_quat)
@@ -574,7 +576,7 @@ def compute_policy_observation(
         if arm_velocity_start >= 0:
             observation[output + arm_velocity_start + arm] = arm_velocity_scale * joint_qd[dof_base + arm_dof_ids[arm]]
         if arm_reference_delta_start >= 0:
-            reference_position = reference_arm_joint_pos[frame * total_arms + arm]
+            reference_position = reference_arm_joint_pos[(frame * reference_world_count + world % reference_world_count) * total_arms + arm]
             observation[output + arm_reference_delta_start + arm] = arm_reference_delta_scale * (
                 reference_position - position
             )
@@ -594,7 +596,7 @@ def compute_policy_observation(
             observation[output + finger_velocity_start + finger] = finger_velocity_scale * joint_qd[dof_base + dof_id]
         if command_finger_start >= 0:
             observation[output + command_finger_start + finger] = command_finger_scale * (
-                reference_finger_joint_pos[frame * total_fingers + finger] - position
+                reference_finger_joint_pos[(frame * reference_world_count + world % reference_world_count) * total_fingers + finger] - position
             )
 
     for object_id in range(num_objects):
@@ -824,6 +826,7 @@ class PolicyObservation:
                 self.model.joint_limit_lower,
                 self.model.joint_limit_upper,
                 self.reference.num_frames,
+                self.reference.reference_world_count,
                 self.bodies_per_world,
                 self.num_joint_q,
                 self.num_joint_dof,

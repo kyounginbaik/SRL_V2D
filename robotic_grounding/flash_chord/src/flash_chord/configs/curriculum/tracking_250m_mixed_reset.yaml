@@ -9,9 +9,9 @@ stages:
   - _target_: flash_chord.configuration.make_curriculum_stage
     voc_scale: 1.0
     objective_weights: &tracking_weights
-      object_keypoints: 20.0
-      hand_keypoints: 0.25
-      hand_joint_pos: 0.25
+      object_keypoints: ${objective.object_keypoints.weight}
+      hand_keypoints: ${objective.hand_keypoints.weight}
+      hand_joint_pos: ${objective.hand_joint_pos.weight}
       contact_wrench_support: ${objective.contact_wrench_support.weight}
       missed_contact: -1.0
       unintended_contact: -10.0

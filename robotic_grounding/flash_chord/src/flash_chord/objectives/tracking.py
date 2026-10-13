@@ -143,6 +143,7 @@ def clear_tracking_objectives(
 def gather_objective_reference(
     timestep: wp.array(dtype=wp.int32),
     num_frames: int,
+    reference_world_count: int,
     num_hands: int,
     num_keypoints: int,
     num_fingers: int,
@@ -169,11 +170,11 @@ def gather_objective_reference(
     if gather_keypoints != 0:
         count = num_hands * num_keypoints
         for index in range(count):
-            hand_keypoint_target_w[world * count + index] = ref_hand_keypoints_w[frame * count + index]
+            hand_keypoint_target_w[world * count + index] = ref_hand_keypoints_w[(frame * reference_world_count + world % reference_world_count) * count + index]
     if gather_fingers != 0:
         count = num_hands * num_fingers
         for index in range(count):
-            finger_joint_target[world * count + index] = ref_finger_joint_pos[frame * count + index]
+            finger_joint_target[world * count + index] = ref_finger_joint_pos[(frame * reference_world_count + world % reference_world_count) * count + index]
     if gather_support != 0:
         count = num_hands * num_bodies * num_basis
         for index in range(count):
@@ -254,6 +255,7 @@ class TrackingObjective:
     unintended_wrench_support: wp.array
     contact_force_history_cursor: wp.array
     contact_force_squared_history: wp.array
+    reference_world_count: int = 1
 
     @classmethod
     def build(
@@ -528,6 +530,7 @@ class TrackingObjective:
                 inputs=[
                     timestep,
                     self.num_frames,
+                    self.reference_world_count,
                     self.num_hands,
                     self.num_keypoints,
                     self.num_fingers,
@@ -580,6 +583,7 @@ class TrackingObjective:
                     self.config.hand_keypoints.var,
                     int(self.config.hand_keypoints.shape),
                     0.0,
+                    self.config.hand_keypoint_palm_weight,
                 ],
                 outputs=[self.hand_keypoint_sum],
             )
