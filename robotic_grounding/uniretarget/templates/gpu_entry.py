@@ -10,7 +10,7 @@ if a.phase in ('smoke','full'):
  subprocess.run([sys.executable,'-m','pytest','tests/retargeting/test_response_bilevel.py',
   'tests/retargeting/test_response_policy.py','tests/retargeting/test_response_metrics.py',
   'tests/retargeting/test_chord_upper.py','tests/retargeting/test_response_upper.py','tests/evaluation/test_track3_estimates.py','tests/test_adaptive_windows.py',
-  'tests/test_local_correction.py','tests/test_rejected_search_callback.py',
+  'tests/test_failure_consensus.py','tests/test_local_correction.py','tests/test_rejected_search_callback.py',
   'tests/runtime/test_wrist_limits.py','-q','-p','no:cacheprovider'],
   env={**os.environ,'JAX_PLATFORMS':'cpu'},check=True)
 for phase in (('smoke','pilot') if a.phase=='full' else (a.phase,)):
@@ -25,6 +25,13 @@ for phase in (('smoke','pilot') if a.phase=='full' else (a.phase,)):
   assert rows and all(row['lower_response_solved_for_every_candidate'] for row in rows)
   assert all(row['lower_parameter_error_bound_max']<=1e-5 for row in rows)
   for row in rows:
+   failure=row['failure_context']
+   assert failure['detector']=='baseline_onset_consensus'
+   assert failure['baseline_worlds']==16 and failure['baseline_probe_parallel']
+   assert failure['baseline_probe_distinct_resets']==16 and failure['baseline_probe_voc_scale']==0.
+   probe=np.load(run/'training/search_batches'/f'step_{row["step"]}'/'baseline_ensemble.npz')
+   assert probe['position_m'].shape[1:]==(16,len(config['episode']['objects']))
+   assert np.isfinite(probe['position_m']).all() and np.isfinite(probe['orientation_rad']).all()
    for candidate in row['candidates']:
     assert np.isfinite(candidate['cost'])
     assert candidate['metrics']['cws_frames']>0

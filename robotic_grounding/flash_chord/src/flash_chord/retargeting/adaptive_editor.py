@@ -50,7 +50,20 @@ class AdaptiveWindowEditor(LocalReferenceEditor):
     def observation(self, metrics, feedback=None):
         position = np.asarray(feedback['frame_per_object_position_m']).mean(axis=1)
         orientation = np.asarray(feedback['frame_per_object_orientation_rad']).mean(axis=1)
-        self.failure_context = failure_timing(position, orientation, self.baseline.fps, **self.timing_options)
+        if 'baseline_ensemble_position_m' in feedback:
+            from flash_chord.retargeting.failure_consensus import failure_consensus
+            ensemble_p = np.asarray(feedback['baseline_ensemble_position_m'])
+            ensemble_a = np.asarray(feedback['baseline_ensemble_orientation_rad'])
+            self.failure_context = failure_consensus(ensemble_p, ensemble_a, self.baseline.fps,
+                minimum_fraction=float(self.options.get('failure_consensus_fraction', .5)),
+                cluster_seconds=float(self.options.get('failure_consensus_cluster_seconds', .5)),
+                **self.timing_options)
+            self.failure_context.update(feedback['baseline_ensemble_metadata'])
+            # Context summarizes the unchanged-reference population; timing is
+            # computed BEFORE aggregation so large outliers cannot move the trigger.
+            position, orientation = np.median(ensemble_p, axis=1), np.median(ensemble_a, axis=1)
+        else:
+            self.failure_context = failure_timing(position, orientation, self.baseline.fps, **self.timing_options)
         self.protected_prefix_frames = self.failure_context['onset_frame'] if self.failure_context['failed'] else len(position)
         # The first baseline rollout preceded window selection. Refresh its
         # prefix metrics so baseline and every candidate use identical frames.

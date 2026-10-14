@@ -98,6 +98,12 @@ class ResponseBilevelEditor(AdaptiveWindowEditor):
             error_tolerance=float(self.options.get('response_error_tolerance',1e-5)),
             sample_stride=int(self.options.get('response_sample_stride',4)))
         self.response_rng=np.random.default_rng(self.training.seed+47000)
+        self.baseline_probe = None
+        probe_worlds = int(self.options.get('failure_baseline_worlds', 0))
+        if probe_worlds:
+            from flash_chord.retargeting.baseline_probe import BaselineFailureProbe
+            self.baseline_probe = BaselineFailureProbe(self, embodiment=kwargs['embodiment'],
+                collision=kwargs['collision'], worlds=probe_worlds)
         path=self.output.parent/'ttsa_manifest.json'
         manifest=json.loads(path.read_text())
         manifest.update(engine='response_bilevel',lower_response='candidate_conditioned_convex_mean_head',
@@ -112,6 +118,11 @@ class ResponseBilevelEditor(AdaptiveWindowEditor):
             cws_weight=self.wrench_weight,cws_tolerance=self.wrench_tolerance,
             contact_location_penalty=False,contact_location_gate=False,
             cws_contact_regression_tolerance=float(self.options.get('cws_contact_regression_tolerance',.02)))
+        if self.baseline_probe is not None:
+            manifest.update(window_selection='baseline_onset_consensus_and_sampled_history',
+                failure_baseline_worlds=probe_worlds, failure_baseline_parallel=True,
+                failure_consensus_fraction=float(self.options.get('failure_consensus_fraction', .5)),
+                failure_consensus_cluster_seconds=float(self.options.get('failure_consensus_cluster_seconds', .5)))
         if self.proposal_learner:
             manifest['upper_flashsac_config'] = self.proposal_learner.configuration()
         path.write_text(json.dumps(manifest,indent=2)+'\n')
@@ -159,6 +170,15 @@ class ResponseBilevelEditor(AdaptiveWindowEditor):
         started=time.perf_counter();previous_steps=self.validation_steps
         seed=self.training.seed+step
         baseline,_,_,feedback=self.rollout(self.binding,learner,seed,return_feedback=True)
+        if self.baseline_probe is not None:
+            probe_seed = int(np.random.SeedSequence([self.training.seed, self.upper_round, 81001]).generate_state(1)[0])
+            p, a, deltas, probe_metadata = self.baseline_probe(self, learner, probe_seed)
+            feedback.update(baseline_ensemble_position_m=p, baseline_ensemble_orientation_rad=a,
+                            baseline_ensemble_metadata=probe_metadata)
+            probe_path = self.output.parent/'search_batches'/f'step_{step}'
+            probe_path.mkdir(parents=True, exist_ok=True)
+            np.savez_compressed(probe_path/'baseline_ensemble.npz', position_m=p, orientation_rad=a,
+                                initial_joint_delta=deltas, seed=probe_seed)
         observation = self.observation(baseline,feedback)
         # Both modes have Gaussian support; the SAC mode learns its contextual
         # mean/covariance. Feasible projection and lower responses are identical.

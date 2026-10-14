@@ -60,8 +60,8 @@ def main():
     run_id = f'{os.environ.get("UNIRETARGET_RUN_TAG", "chord100m")}-{args.phase}-{args.episode}-{args.variant}-s{args.seed}'
     config = json.loads(config_path.read_text())
     run = wandb.init(entity=os.environ.get('WANDB_ENTITY', 'DexDreamer'), project=os.environ.get('WANDB_PROJECT', 'v2d-track3-uniretarget'),
-                     group=f'chord-response-20261014-{args.phase}', id=run_id,
-                     name=f'chord-response-{config.get("upper_optimizer", "gaussian")}-d56-c{64 if args.phase == "smoke" else 2048}-{args.phase}-{args.episode}-s{args.seed}',
+                     group=f'chord-consensus16-20261015-{args.phase}', id=run_id,
+                     name=f'chord-consensus16-{config.get("upper_optimizer", "gaussian")}-d56-c{64 if args.phase == "smoke" else 2048}-{args.phase}-{args.episode}-s{args.seed}',
                      resume='allow', dir=str(work), config=config)
     run.define_metric('environment_steps')
     run.define_metric('*', step_metric='environment_steps')
@@ -109,6 +109,10 @@ def main():
                     failure = record.pop('failure_context', {})
                     record['failure_time_seconds'] = failure.get('failure_seconds')
                     record['error_onset_seconds'] = failure.get('onset_seconds')
+                    for key in ('consensus_fraction', 'consensus_reached', 'baseline_failure_fraction',
+                                'baseline_probe_worlds', 'baseline_probe_seconds', 'selected_object_index'):
+                        if key in failure:
+                            record[key] = failure[key]
                     record['windows_tested'] = len(record.pop('windows', []))
                     record.pop('window_results', None)
                     attempts = record.pop('confirmation_attempts', [])

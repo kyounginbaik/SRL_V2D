@@ -24,6 +24,13 @@ def main():
  config['experiment_interpretation']='Full training experiment; increased edit magnitude and more upper updates do not establish improved task success.'
  config['robust_confirmation']='up to 4 candidates with window diversity; paired 1mm wrist and 0.5deg finger reset perturbations; both objects and successful prefix protected; contact nonregression; object-pose cost and full cost improve on at least 2/3 pairs and their means'
  config['window_selection']={'max_windows':4,'window_seconds':1.0,'shoulder_seconds':0.5,'failure_position_m':0.05,'failure_orientation_deg':20,'failure_persistence_seconds':0.15,'selection':'before error growth, before threshold failure, sampled earlier history','both_hands':True}
+ cmd.extend(['+bilevel.failure_baseline_worlds=16','+bilevel.failure_consensus_fraction=0.5',
+             '+bilevel.failure_consensus_cluster_seconds=0.5'])
+ config['window_selection'].update(detector='baseline_onset_consensus', baseline_worlds=16,
+     parallel=True, minimum_fraction=0.5, cluster_seconds=0.5,
+     reset_translation_m=0.001, reset_finger_degrees=0.5,
+     weak_consensus_fallback='largest onset cluster; earliest on ties',
+     selection='earliest repeatable onset, earlier error growth, sampled earlier history')
  config['rejected_search_preserves_lower_replay']=True
  config['voc_rotation_inertia']='full inertia tensor'
  config['voc_reset_on_reference_change']=False

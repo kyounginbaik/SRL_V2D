@@ -1,4 +1,4 @@
-Portable CHORD-response UniRetargeting (2026-10-14)
+Portable CHORD-response UniRetargeting (2026-10-15)
 
 Included: current FlashCHORD implementation, all five frozen references (episodes
 1, 3, 5, 6, 35), submitted visual meshes, convex collision pieces, object URDFs,
@@ -89,8 +89,23 @@ Method and scope
 ----------------
 The lower learner is full-hand FlashSAC with a finger PCA exploration basis.
 The upper proposes a local 56D correction (both wrists and all fingers), using
-windows chosen from the first persistent object-tracking failure and earlier
-error growth/history. Object trajectories remain fixed. Every candidate gets
+windows chosen from repeatable object-tracking failure onsets and earlier
+error growth/history. Sixteen parallel baseline worlds use the unchanged current
+reference/controller, VOC=0, and independent reset perturbations (up to 1 mm
+wrist translation and 0.5 degrees in scalar finger joints, clipped to limits).
+Each world's first sustained crossing is recorded separately for each object:
+position error >5 cm OR orientation error >20 degrees for 0.15 seconds. Choose
+the earliest onset cluster on the same object supported by at least 8/16 worlds
+within 0.5 seconds; successful worlds remain in that denominator. Its median
+failure frame and lower-quartile error-growth frame guide the earlier windows.
+If no cluster qualifies, choose the largest cluster, earliest on ties, and log
+weak consensus. No failures falls back to full-episode window exploration.
+These are tunable search heuristics, not Track 3's official scoring thresholds
+or causal diagnoses. All baseline traces/reset deltas are saved per search in
+baseline_ensemble.npz; W&B upper charts report agreement, failing fraction and
+probe duration. The 16 probes are additional to the unchanged 2048 candidate
+budget. Automatic stopping after all failures disappear is not implemented.
+Object trajectories remain fixed. Every candidate gets
 its own solved, strongly convex policy-head response before physical evaluation.
 The accepted reference and adapted head are published together. Rejected edits
 preserve replay, and keep the adapted no-edit head. CHORD-style wrench support
