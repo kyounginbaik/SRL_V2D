@@ -1,0 +1,156 @@
+{
+  "episode": "episode_000035",
+  "frames": 421,
+  "fps": 20.0,
+  "runtime_sha256": "5a7de322536ec31f6e0c17dc1e6deb217407c408954f4da2364f8d4d3c4928bb",
+  "approved_sha256": "5a7de322536ec31f6e0c17dc1e6deb217407c408954f4da2364f8d4d3c4928bb",
+  "source_reference_sha256": "b07258764df70ba3182b9aa2d52e361368d9a3694eaa950ea233f41d20275431",
+  "source_bundle": "/data1/SRL_V2D/challenge_reconstruction/final_recon/episode_000035",
+  "reference_description": "Requested final_recon bundle; numerical trajectories and contact labels unchanged; asset paths relocated into frozen copy",
+  "mass_kg": {
+    "wooden_spoon": 0.1
+  },
+  "objects": [
+    "wooden_spoon"
+  ],
+  "contact_schedule": [
+    {
+      "start_seconds": 1.0,
+      "hand_index": 0,
+      "object_index": 0,
+      "focus": "left_wooden_spoon"
+    },
+    {
+      "start_seconds": 0.0,
+      "hand_index": 1,
+      "object_index": 0,
+      "focus": "right_wooden_spoon"
+    },
+    {
+      "start_seconds": 4.0,
+      "hand_index": 0,
+      "object_index": 0,
+      "focus": "left_wooden_spoon"
+    },
+    {
+      "start_seconds": 6.0,
+      "hand_index": 1,
+      "object_index": 0,
+      "focus": "right_wooden_spoon"
+    },
+    {
+      "start_seconds": 6.0,
+      "hand_index": 0,
+      "object_index": 0,
+      "focus": "left_wooden_spoon"
+    },
+    {
+      "start_seconds": 8.0,
+      "hand_index": 1,
+      "object_index": 0,
+      "focus": "right_wooden_spoon"
+    },
+    {
+      "start_seconds": 11.0,
+      "hand_index": 0,
+      "object_index": 0,
+      "focus": "left_wooden_spoon"
+    },
+    {
+      "start_seconds": 12.0,
+      "hand_index": 1,
+      "object_index": 0,
+      "focus": "right_wooden_spoon"
+    },
+    {
+      "start_seconds": 17.0,
+      "hand_index": 0,
+      "object_index": 0,
+      "focus": "left_wooden_spoon"
+    },
+    {
+      "start_seconds": 14.0,
+      "hand_index": 1,
+      "object_index": 0,
+      "focus": "right_wooden_spoon"
+    },
+    {
+      "start_seconds": 19.0,
+      "hand_index": 0,
+      "object_index": 0,
+      "focus": "left_wooden_spoon"
+    },
+    {
+      "start_seconds": 16.0,
+      "hand_index": 1,
+      "object_index": 0,
+      "focus": "right_wooden_spoon"
+    }
+  ],
+  "contact_schedule_rule": "Alternate active hand/object pairs at six quantiles of contact frames; both hands target the single wooden spoon",
+  "contact_intervals_summary": [
+    {
+      "hand_index": 0,
+      "side": "left",
+      "object_index": 0,
+      "object_name": "wooden_spoon",
+      "contact_frames": 250,
+      "bins": [
+        1,
+        4,
+        6,
+        11,
+        17,
+        19
+      ]
+    },
+    {
+      "hand_index": 1,
+      "side": "right",
+      "object_index": 0,
+      "object_name": "wooden_spoon",
+      "contact_frames": 242,
+      "bins": [
+        0,
+        6,
+        8,
+        12,
+        14,
+        16
+      ]
+    }
+  ],
+  "asset_sha256": {
+    "assets/asset_report.json": "3e8daf9678649b3866286e853baa00e37ffb4ddf6892562b9ccb83ebd0f9b365",
+    "assets/wooden_spoon.obj": "c9ab88e33e5c78bfbd5e492d12565effafa8cd2c26d14fe6600e7fb0c1c5d904",
+    "assets/wooden_spoon.ply": "fe34103df06db1b3bd822729d2b5c8cc8871f6f65b9aa22b0e52313854926553",
+    "assets/wooden_spoon.urdf": "22fa48af8d8cb4f3e340056fce637e25343f5e5460faf1a5fc67cb0d11b261fb",
+    "assets/wooden_spoon_convex/part_000.obj": "a64710c1b98e2db53e4dc225311d89a8f955fc29f5a2ace5b0d3470444035b24",
+    "assets/wooden_spoon_convex/part_001.obj": "944edc76e466e3503539866bc336336314757fa630ac4b8d5ce6515bce2b30ba",
+    "assets/wooden_spoon_convex/part_002.obj": "aa89f8191e8665f69d71414dae1001638d8659fc3b691c237b4d5b3cc1f45a3a",
+    "assets/wooden_spoon_convex/part_003.obj": "92ed3664640fccbf34171d9d2a967a09cdfe0a85e6cd3280080b5a1915b86fb2",
+    "assets/wooden_spoon_convex/part_004.obj": "eb7ebbab1d59c6113ade3d0363d69cfde51935e581d200677cbd83e713a2b6a9",
+    "assets/wooden_spoon_convex/part_005.obj": "49d5a38db42fe15fc2a11b27a326fb12e5e417d5d374a6b14e6f9c120521e8cd",
+    "assets/wooden_spoon_convex/part_006.obj": "182b89f113d0803da94a07a4a49f812aa4cbc0c792a20ed969ca7a21d1e17ea0",
+    "assets/wooden_spoon_convex/part_007.obj": "fc01d2c105296cdc06560ea82e147a93430543b8ac5dac386cf1bdf1a6e1c632",
+    "assets/wooden_spoon_convex/part_008.obj": "ee25ac0e25bb542d8b3f3c02214ee7ba0553be9afe5f29845cd3ca94be4a2e23",
+    "assets/wooden_spoon_convex/part_009.obj": "32b7dd4b60d05eadd3d5f2538703703ec9e64aff2004cca55dec8f99ea441b58",
+    "assets/wooden_spoon_convex/part_010.obj": "2b6826c7b454129a5ca4ee01e7ec811c6da9f2636d8af50c13ad83972715c95f",
+    "assets/wooden_spoon_convex/part_011.obj": "b2a767c8d9888c5cda7ccc7a537f7356b3985d9c3d57947ef88abde0b246bfe2",
+    "assets/wooden_spoon_convex/part_012.obj": "57aa9a1d001b66cc5a3b6fabc98906ddd63b9d04c188c01f21a0ccec07796942",
+    "assets/wooden_spoon_convex/part_013.obj": "0a7187c1bbb37a188a3af1400e05145c55c89cdc2fd829d6745416acadd00b3a",
+    "assets/wooden_spoon_convex/part_014.obj": "a03524e4efb2f7f7e999785a61f4ff0362ed80751891962aefaaadcbd0377783",
+    "assets/wooden_spoon_convex/part_015.obj": "a27309912186a5151e9ec263262ca9aa3ead83f87bfd8a7693ed55b9d1417ee4",
+    "assets/wooden_spoon_convex/part_016.obj": "a32030ca922a7582bde37b5638c7e50e0a4ddb9d886ab9f927faf12480532cc8",
+    "assets/wooden_spoon_convex/part_017.obj": "56c3201af2dd45a4980dcdc330ae63c8f819a5dfd2c08c8a05f8eaedc589794a",
+    "assets/wooden_spoon_convex/part_018.obj": "62d38dcf398c375c9a4f227cb2c6bdd7dd3eb5305604a513bdaadf96b2bfb86c",
+    "assets/wooden_spoon_convex/part_019.obj": "5ef1b42be024479861a6247a559c985628eb30c0cede1a22288c41cbd1e4e331",
+    "assets/wooden_spoon_convex/part_020.obj": "b9657c8edbd87cc7dba046a223a4932c06fb543e3ed4fcb0d2ac0e1735c92321",
+    "assets/wooden_spoon_convex/part_021.obj": "057580d358685deeb044de487707d3bbf3c1f709169930c37bc0fbaf572f04ee",
+    "assets/wooden_spoon_convex/part_022.obj": "9e5c2bc0a1f627080e7bf0dadcbe9b631ab5bf762b94714fa534ab4b3fcd1fcb",
+    "assets/wooden_spoon_convex/part_023.obj": "c4cc818f5338909bb5a391480cb70b9f16edb49700d87c95cdc36e03271505fb",
+    "assets/wooden_spoon_convex/part_024.obj": "f891153afaa3e9f511b87333eec62557a2236b3395b85376fd970a2a555cf1e2",
+    "assets/wooden_spoon_convex/part_025.obj": "a5da160482daec999dcce4e644f75a258fd10f891b4c67b47261dae6fad9c90f",
+    "assets/wooden_spoon_visual.obj": "c9ab88e33e5c78bfbd5e492d12565effafa8cd2c26d14fe6600e7fb0c1c5d904"
+  }
+}

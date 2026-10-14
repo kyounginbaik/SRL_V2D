@@ -111,14 +111,17 @@ def _object_control(
             object_bid = world * bodies_per_world + object_body_ids[body_index]
             mass += body_mass[object_bid]
         inertia = body_inertia[bid]
-        inertia_eff = (inertia[0, 0] + inertia[1, 1] + inertia[2, 2]) / 3.0
 
         force = k_lin * (target_pos[i] - pos) - d_lin * lin_vel
         q_err = wp.mul(target_quat[i], wp.quat_inverse(quat))
         torque = k_ang * quat_to_rotvec(q_err) - d_ang * ang_vel
         if mass_normalized_gains:
             force = mass * force
-            torque = inertia_eff * torque
+            # Angular error/velocity are world-frame vectors; body_inertia is
+            # the full local tensor. A trace/3 scalar over-damps the thin axis
+            # of elongated objects and can destabilize explicit VOC forces.
+            acceleration_body = wp.quat_rotate_inv(quat, torque)
+            torque = wp.quat_rotate(quat, inertia * acceleration_body)
         force = force + wp.vec3(0.0, 0.0, gravity * mass)
 
         force = wp.vec3(

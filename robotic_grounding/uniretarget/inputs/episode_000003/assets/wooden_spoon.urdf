@@ -1,0 +1,145 @@
+<?xml version='1.0' encoding='utf-8'?>
+<robot name="wooden_spoon">
+  <link name="object">
+    <inertial>
+      <origin xyz="-0.00012454816576966976 -0.00016239089796627617 0.0004171484889181198" rpy="0 0 0" />
+      <mass value="0.1" />
+      <inertia ixx="1.5924904818150586e-05" ixy="-3.6892073078100043e-07" ixz="-3.944123835447441e-06" iyy="0.0008140136007663359" iyz="1.2274437360956393e-07" izz="0.0008235149603786241" />
+    </inertial>
+    <visual>
+      <geometry>
+        <mesh filename="wooden_spoon_visual.obj" />
+      </geometry>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh filename="wooden_spoon_convex/part_000.obj" />
+      </geometry>
+    </collision>
+    <collision>
+      <geometry>
+        <mesh filename="wooden_spoon_convex/part_001.obj" />
+      </geometry>
+    </collision>
+    <collision>
+      <geometry>
+        <mesh filename="wooden_spoon_convex/part_002.obj" />
+      </geometry>
+    </collision>
+    <collision>
+      <geometry>
+        <mesh filename="wooden_spoon_convex/part_003.obj" />
+      </geometry>
+    </collision>
+    <collision>
+      <geometry>
+        <mesh filename="wooden_spoon_convex/part_004.obj" />
+      </geometry>
+    </collision>
+    <collision>
+      <geometry>
+        <mesh filename="wooden_spoon_convex/part_005.obj" />
+      </geometry>
+    </collision>
+    <collision>
+      <geometry>
+        <mesh filename="wooden_spoon_convex/part_006.obj" />
+      </geometry>
+    </collision>
+    <collision>
+      <geometry>
+        <mesh filename="wooden_spoon_convex/part_007.obj" />
+      </geometry>
+    </collision>
+    <collision>
+      <geometry>
+        <mesh filename="wooden_spoon_convex/part_008.obj" />
+      </geometry>
+    </collision>
+    <collision>
+      <geometry>
+        <mesh filename="wooden_spoon_convex/part_009.obj" />
+      </geometry>
+    </collision>
+    <collision>
+      <geometry>
+        <mesh filename="wooden_spoon_convex/part_010.obj" />
+      </geometry>
+    </collision>
+    <collision>
+      <geometry>
+        <mesh filename="wooden_spoon_convex/part_011.obj" />
+      </geometry>
+    </collision>
+    <collision>
+      <geometry>
+        <mesh filename="wooden_spoon_convex/part_012.obj" />
+      </geometry>
+    </collision>
+    <collision>
+      <geometry>
+        <mesh filename="wooden_spoon_convex/part_013.obj" />
+      </geometry>
+    </collision>
+    <collision>
+      <geometry>
+        <mesh filename="wooden_spoon_convex/part_014.obj" />
+      </geometry>
+    </collision>
+    <collision>
+      <geometry>
+        <mesh filename="wooden_spoon_convex/part_015.obj" />
+      </geometry>
+    </collision>
+    <collision>
+      <geometry>
+        <mesh filename="wooden_spoon_convex/part_016.obj" />
+      </geometry>
+    </collision>
+    <collision>
+      <geometry>
+        <mesh filename="wooden_spoon_convex/part_017.obj" />
+      </geometry>
+    </collision>
+    <collision>
+      <geometry>
+        <mesh filename="wooden_spoon_convex/part_018.obj" />
+      </geometry>
+    </collision>
+    <collision>
+      <geometry>
+        <mesh filename="wooden_spoon_convex/part_019.obj" />
+      </geometry>
+    </collision>
+    <collision>
+      <geometry>
+        <mesh filename="wooden_spoon_convex/part_020.obj" />
+      </geometry>
+    </collision>
+    <collision>
+      <geometry>
+        <mesh filename="wooden_spoon_convex/part_021.obj" />
+      </geometry>
+    </collision>
+    <collision>
+      <geometry>
+        <mesh filename="wooden_spoon_convex/part_022.obj" />
+      </geometry>
+    </collision>
+    <collision>
+      <geometry>
+        <mesh filename="wooden_spoon_convex/part_023.obj" />
+      </geometry>
+    </collision>
+    <collision>
+      <geometry>
+        <mesh filename="wooden_spoon_convex/part_024.obj" />
+      </geometry>
+    </collision>
+    <collision>
+      <geometry>
+        <mesh filename="wooden_spoon_convex/part_025.obj" />
+      </geometry>
+    </collision>
+  </link>
+</robot>

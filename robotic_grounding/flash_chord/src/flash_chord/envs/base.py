@@ -34,6 +34,7 @@ from flash_chord.runtime.joint_drive import (
     JointPositionIntegralConfig,
     ScaledJointTargetDrive,
 )
+from flash_chord.runtime.wrist_limits import FloatingWristVelocityLimits
 from flash_chord.runtime.object_control import VOCParams, apply_object_control
 from flash_chord.runtime.sim import SimConfig, build_force_contacts, build_solver
 from flash_chord.scene.builder import Scene
@@ -50,6 +51,8 @@ class BaseEnvConfig:
     voc_scale: float = 1.0
     arm_position_integral: JointPositionIntegralConfig = field(default_factory=JointPositionIntegralConfig)
     enforce_joint_velocity_limits: bool = False
+    wrist_linear_speed_limit_m_s: float = 0.0
+    wrist_angular_speed_limit_rad_s: float = 0.0
 
 
 @wp.kernel
@@ -167,6 +170,12 @@ class BaseEnv:
                 config=self.config.arm_position_integral,
                 device=self.device,
             )
+        self.wrist_velocity_limits = None
+        if self.config.wrist_linear_speed_limit_m_s != 0.0 or self.config.wrist_angular_speed_limit_rad_s != 0.0:
+            self.wrist_velocity_limits = FloatingWristVelocityLimits.build(
+                self.model, scene.layout, self.world_count,
+                self.config.wrist_linear_speed_limit_m_s,
+                self.config.wrist_angular_speed_limit_rad_s, device=self.device)
         self.joint_actuator_limits = None
         if self.config.enforce_joint_velocity_limits:
             scalar = scene.layout.scalar_joints
@@ -307,6 +316,9 @@ class BaseEnv:
             self.solver.step(self.state_0, self.state_1, self.control, self.contacts, self.sim_dt)
             if self.joint_actuator_limits is not None:
                 self.joint_actuator_limits.enforce_velocity(self.state_1)
+            if self.wrist_velocity_limits is not None:
+                self.wrist_velocity_limits.enforce_velocity(self.state_1)
+            if self.joint_actuator_limits is not None or self.wrist_velocity_limits is not None:
                 newton.eval_fk(
                     self.model,
                     self.state_1.joint_q,

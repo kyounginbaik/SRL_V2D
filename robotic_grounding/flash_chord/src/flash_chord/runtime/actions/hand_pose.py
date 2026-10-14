@@ -210,6 +210,7 @@ def process_residual_action(
     action: wp.array(dtype=wp.float32),
     timestep: wp.array(dtype=wp.int32),
     num_frames: int,
+    reference_world_count: int,
     ref_wrist_pos_w: wp.array(dtype=wp.vec3),
     ref_wrist_quat_w: wp.array(dtype=wp.quat),
     ref_finger_joint_pos: wp.array(dtype=wp.float32),
@@ -270,7 +271,8 @@ def process_residual_action(
         hand_action = hand_action_starts[hand]
         filtered_base = action_base + hand_action
         processed_base = world * processed_dim + hand_processed_starts[hand]
-        reference_hand = frame * num_hands + hand
+        robot_frame = frame * reference_world_count + world % reference_world_count
+        reference_hand = robot_frame * num_hands + hand
 
         target_pos_w = ref_wrist_pos_w[reference_hand] + wp.vec3(
             filtered_action[filtered_base],
@@ -299,7 +301,7 @@ def process_residual_action(
 
         finger_start = hand_finger_starts[hand]
         num_fingers = finger_counts[hand]
-        reference_finger_base = frame * total_fingers + finger_start
+        reference_finger_base = robot_frame * total_fingers + finger_start
         for finger in range(num_fingers):
             reference_target = ref_finger_joint_pos[reference_finger_base + finger]
             target = reference_target + filtered_action[filtered_base + 6 + finger]
@@ -455,6 +457,7 @@ class ActionBuffers:
                 action,
                 timestep,
                 self.reference.num_frames,
+                self.reference.reference_world_count,
                 self.reference.wrist_pos_w,
                 self.reference.wrist_quat_w,
                 self.reference.finger_joint_pos,

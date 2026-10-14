@@ -18,6 +18,7 @@ import jax.numpy as jnp
 import newton
 import numpy as np
 from scipy.ndimage import gaussian_filter1d
+from scipy.spatial.transform import Rotation
 
 from flash_chord.embodiments.binding import build_robot_reference_binding
 from flash_chord.envs.rl import RLEnv
@@ -36,6 +37,7 @@ from flash_chord.retargeting.manipulation_bilevel import (
 from flash_chord.retargeting.reference_snapshot import command_digest, save_snapshot
 from flash_chord.retargeting.penetration import VisualHullPenetration, penetration_summary
 from flash_chord.training.checkpoint_metadata import CONFIG_METADATA_KEY
+from flash_chord.retargeting.granularity import granularity_basis
 
 
 def temporal_basis(frames):
@@ -138,6 +140,38 @@ def signed_feedback_summary(residual, *, bins=16):
     return np.asarray(pooled, dtype=np.float32)  # bins x (mean,std) x hand x xyz
 
 
+def contact_directed_action(direction_bins, joint_names, qids, joint_basis, translation_bound):
+    """Put measured contact directions into the editable wrist channels.
+
+    Each proposal still goes through the usual smoothing, bounds, physical
+    rollout, and independent publication gate. This supplies an informative
+    trial when a high-dimensional random upper action cannot find the object.
+    """
+    directions = np.asarray(direction_bins, dtype=np.float64)
+    if directions.ndim != 4 or directions.shape[1] != 2 or directions.shape[3] != 3:
+        raise ValueError("expected chunk x hand x object x xyz contact directions")
+    if directions.shape[0] < 1 or not np.isfinite(directions).all() or translation_bound <= 0:
+        raise ValueError("invalid contact directions or wrist bound")
+    coefficients = np.zeros((len(directions), len(joint_basis)), dtype=np.float32)
+    for hand, side in enumerate(("left", "right")):
+        for axis, letter in enumerate("xyz"):
+            name = f"{side}_wrist_{letter}"
+            if name not in joint_names:
+                raise ValueError(f"missing floating wrist channel: {name}")
+            qid = qids[joint_names.index(name)]
+            channels = np.flatnonzero(np.asarray(joint_basis)[:, qid])
+            if len(channels) != 1:
+                raise ValueError(f"ambiguous wrist action channel: {name}")
+            for chunk in range(len(directions)):
+                vectors = directions[chunk, hand]
+                active = np.linalg.norm(vectors, axis=-1) > 1e-8
+                if active.any():
+                    displacement = vectors[active].mean(axis=0)[axis]
+                    coefficients[chunk, channels[0]] = np.clip(
+                        displacement / translation_bound, -1.0, 1.0)
+    return coefficients.reshape(-1)
+
+
 def consensus_frame_scores(residual):
     """Signed systematic error discounted by cross-world disagreement."""
     error=np.asarray(residual,dtype=np.float64)
@@ -163,30 +197,54 @@ def bounded_correction(action, basis, joint_basis, *, bound, fps, max_velocity):
     return delta
 
 
-def upper_cost(metrics, delta, fps, wrench_weight, *, robust=False, penetration_weight=0.0):
+def upper_cost(metrics, delta, fps, wrench_weight, *, robust=False, penetration_weight=0.0,
+               contact_proximity_weight=0.0):
     """Dimensionless task cost, with the SAME fixed scales in both adaptive arms."""
     position = metrics["object_position_robust_m"] if robust else metrics["object_position_mean_m"]
     orientation = metrics["object_orientation_robust_rad"] if robust else metrics["object_orientation_mean_rad"]
     success = metrics["object_success_robust_fraction"] if robust else metrics["object_success_fraction"]
     wrench = metrics["wrench_robust_mse"] if robust else metrics["wrench_mse"]
-    tracking = metrics["robot_position_robust_mse"] if robust else metrics["robot_position_mse"]
     penetration = 0.0
     if penetration_weight:
-        # The reference term is the actual UniRetargeting objective; the
+        # The reference term is the actual UniRetarget objective; the
         # rollout term prevents an editor from moving overlap into physics.
         penetration = penetration_weight * (
             metrics["reference_penetration_mean_m"] / .005
             + .5 * metrics["rollout_penetration_mean_m"] / .005
         )
+    proximity = 0.0
+    if contact_proximity_weight:
+        proximity = contact_proximity_weight * metrics["contact_proximity_mean_m"] / .05
     return (position / .03
             + orientation / .3
             + 2 * (1 - success)
-            + .1 * tracking / .02**2
             + wrench_weight * wrench
+            + proximity
             + penetration
             + (3 * metrics["unstable_world_fraction"] if robust else 0)
             + .05 * float(np.mean((delta / .12)**2))
             + .05 * float(np.mean((np.diff(delta, axis=0) * fps / .5)**2)))
+
+
+def contact_proximity_gate(candidate, baseline, minimum_gain_m=.001, per_object_tolerance_m=.002):
+    if candidate["contact_proximity_mean_m"] > baseline["contact_proximity_mean_m"] - minimum_gain_m:
+        return False
+    for after, before in zip(candidate["per_object_contact_proximity_mean_m"],
+                             baseline["per_object_contact_proximity_mean_m"], strict=True):
+        if before is None:
+            if after is not None:
+                return False
+        elif after is None or after > before + per_object_tolerance_m:
+            return False
+    for after_hand, before_hand in zip(candidate["per_hand_object_contact_proximity_mean_m"],
+                                       baseline["per_hand_object_contact_proximity_mean_m"], strict=True):
+        for after, before in zip(after_hand, before_hand, strict=True):
+            if before is None:
+                if after is not None:
+                    return False
+            elif after is None or after > before + per_object_tolerance_m:
+                return False
+    return True
 
 
 def passes_study_gate(candidate, baseline, tolerance_m=.002, *, penetration_aware=False,
@@ -196,6 +254,13 @@ def passes_study_gate(candidate, baseline, tolerance_m=.002, *, penetration_awar
             and candidate["object_orientation_robust_rad"] <= baseline["object_orientation_robust_rad"] + .01
             and candidate["object_success_robust_fraction"] >= baseline["object_success_robust_fraction"] - .01
             and candidate["unstable_world_fraction"] <= baseline["unstable_world_fraction"])
+    for key, tolerance in (("per_object_position_mean_m", tolerance_m),
+                           ("per_object_orientation_mean_rad", .01)):
+        if key in baseline:
+            if key not in candidate:
+                return False
+            cand, base = np.asarray(candidate[key]), np.asarray(baseline[key])
+            task_gate = task_gate and cand.shape == base.shape and bool(np.all(cand <= base + tolerance))
     if not penetration_aware:
         return task_gate
     if not 0 <= rollout_penetration_tolerance_m <= .001:
@@ -243,7 +308,7 @@ class TTSAReferenceEditor(ManipulationBilevel):
     def publish(self, step):
         path=self.output/f"reference_{self.version:04d}.npz"
         checksum=save_snapshot(path,self.binding,self.setup.scene.layout,provenance=dict(
-            mode=self.mode,engine="ttsa_flashsac",version=self.version,environment_steps=step,
+            mode=self.mode,engine=self.options.get("engine", "ttsa_flashsac"),version=self.version,environment_steps=step,
             source_parquet=self.config["task"]["parquet"],object_contact_sha256=self.command_sha256))
         self.config["task"]["robot_reference_path"]=str(path)
         self.config["task"]["robot_reference_sha256"]=checksum
@@ -256,11 +321,17 @@ class TTSAReferenceEditor(ManipulationBilevel):
         self.guided_penetration_proposal = bool(self.options.get("guided_penetration_proposal", False))
         self.select_best_trial = bool(self.options.get("select_best_trial", False))
         self.penetration_weight = float(self.options.get("penetration_weight", 1.0)) if self.penetration_aware else 0.0
+        self.contact_proximity_weight = float(self.options.get("contact_proximity_weight", 0.0))
+        self.guided_contact_proposal = bool(self.options.get("guided_contact_proposal", False))
+        if not np.isfinite(self.contact_proximity_weight) or self.contact_proximity_weight < 0:
+            raise ValueError("contact_proximity_weight must be finite and nonnegative")
         if self.penetration_weight < 0 or not np.isfinite(self.penetration_weight):
             raise ValueError("penetration_weight must be finite and nonnegative")
         self.study_variant = self.options.get("study_variant")
-        if self.study_variant not in (None, "smooth", "per_frame", "global_local"):
-            raise ValueError("study_variant must be smooth, per_frame, or global_local")
+        if self.guided_contact_proposal and (not self.contact_proximity_weight or self.study_variant != "chunk"):
+            raise ValueError("contact-guided proposal requires chunked contact proximity")
+        if self.study_variant not in (None, "smooth", "per_frame", "global_local", "episode", "timestep", "chunk"):
+            raise ValueError("unknown study_variant")
         if self.penetration_aware and self.study_variant is None:
             raise ValueError("penetration-aware editor requires a time-resolved study_variant")
         if self.penetration_aware and self.options.get("penetration_measure", "collision") not in ("collision", "visual_hull"):
@@ -280,34 +351,76 @@ class TTSAReferenceEditor(ManipulationBilevel):
         if self.projector is not None:
             names = self.projector.layout.scalar_joints.names
             rows = []
-            for side, prefix in (("left", "L_arm_"), ("right", "R_arm_")):
-                # Seven independent arm corrections, plus five finger flexion synergies.
-                for index, name in enumerate(names):
-                    if name.startswith(prefix):
-                        row = np.zeros(self.baseline.num_joint_q, np.float32)
-                        row[self.projector.qids[index]] = 1
-                        rows.append(row)
-                for digit in ("thumb", "index", "middle", "ring", "pinky"):
-                    row = np.zeros(self.baseline.num_joint_q, np.float32)
+            # The original 24-channel arm/finger basis is specific to the
+            # Vega/Sharpa pilot. For other embodiments (including G1+Dex3),
+            # give each named actuated joint one correction channel. This
+            # keeps chunk-wise reference editing usable without silently
+            # dropping legs, torso, or embodiment-specific hand joints.
+            is_vega_sharpa = any(name.startswith("L_arm_") for name in names) and any(
+                name.startswith("R_arm_") for name in names
+            )
+            if is_vega_sharpa:
+                for side, prefix in (("left", "L_arm_"), ("right", "R_arm_")):
+                    # Seven independent arm corrections, plus five finger flexion synergies.
                     for index, name in enumerate(names):
-                        if name.startswith(f"{side}_{digit}_") and not name.endswith("AA"):
+                        if name.startswith(prefix):
+                            row = np.zeros(self.baseline.num_joint_q, np.float32)
                             row[self.projector.qids[index]] = 1
-                    if not np.any(row):
-                        raise ValueError(f"missing finger synergy: {side}/{digit}")
+                            rows.append(row)
+                    for digit in ("thumb", "index", "middle", "ring", "pinky"):
+                        row = np.zeros(self.baseline.num_joint_q, np.float32)
+                        for index, name in enumerate(names):
+                            if name.startswith(f"{side}_{digit}_") and not name.endswith("AA"):
+                                row[self.projector.qids[index]] = 1
+                        if not np.any(row):
+                            raise ValueError(f"missing finger synergy: {side}/{digit}")
+                        rows.append(row)
+                self.joint_basis_kind = "vega_sharpa_arm_and_finger_synergies"
+            else:
+                for index, _name in enumerate(names):
+                    row = np.zeros(self.baseline.num_joint_q, np.float32)
+                    row[self.projector.qids[index]] = 1
                     rows.append(row)
+                self.joint_basis_kind = "all_named_scalar_joints"
+                if self.guided_penetration_proposal:
+                    raise ValueError(
+                        "geometry-guided finger proposals require the Vega/Sharpa finger-synergy basis"
+                    )
+            if not rows:
+                raise ValueError("reference editor has no actuated joint correction channels")
+            for q_start, _ in self.projector.ball_joints:
+                for axis in range(3):
+                    row = np.zeros(self.baseline.num_joint_q, np.float32)
+                    row[q_start + axis] = 1
+                    rows.append(row)
+            if self.options.get("edit_scope") == "wrists_only":
+                wrist_ids = {self.projector.qids[i] for i,name in enumerate(names)
+                             if name.endswith(("wrist_x", "wrist_y", "wrist_z"))}
+                wrist_ids.update(q_start+axis for q_start,_ in self.projector.ball_joints for axis in range(3))
+                rows = [row for row in rows if set(np.flatnonzero(row)).issubset(wrist_ids)]
+                if len(rows) != 12: raise ValueError("Expected 12 floating-wrist correction channels")
             self.joint_basis = np.stack(rows)
+            if self.projector.ball_joints:
+                self.joint_basis_kind = "floating_wrist_only" if self.options.get("edit_scope") == "wrists_only" else "floating_wrist_translation_rotation_and_fingers"
             if self.study_variant == "global_local":
                 # Keep the upper action dimension fixed. These placeholders are
                 # masked in round one and replaced only after the global stage.
                 self.basis = study_basis(self.baseline.num_frames,"global_local",
                                          local_centers=[.2,.4,.6,.8])
+            elif self.study_variant in ("episode", "timestep", "chunk"):
+                self.basis = granularity_basis(self.baseline.num_frames, self.study_variant,
+                    fps=self.baseline.fps, chunk_seconds=float(self.options.get("chunk_seconds", .5)),
+                    smoothing_seconds=float(self.options.get("temporal_smoothing_seconds", .1)),
+                    boundary_seconds=float(self.options.get("boundary_seconds", .25)))
             else:
                 self.basis = study_basis(self.baseline.num_frames, self.study_variant or "smooth")
         manifest = dict(engine="upper_flashsac_contextual_bandit", lower="FlashSAC",
             object_reference="fixed", contact_reference="fixed", warmup=self.next_update,
             lower_block_transitions=self.interval, upper_trials=self.trials,
+            joint_basis_kind=getattr(self, "joint_basis_kind", None),
+            joint_basis_names=list(self.projector.layout.scalar_joints.names) if self.projector is not None else [],
             upper_replay="cleared on lower-policy version change", lower_replay="cleared on every matched block boundary",
-            publication_blend=self.blend, max_joint_offset_rad=.12, max_added_velocity_rad_s=.5,
+            publication_blend=self.blend, max_joint_offset_rad=float(self.options.get("finger_offset_rad",.52)) if self.projector is not None and self.projector.ball_joints else .12, max_added_velocity_rad_s=float(self.options.get("finger_correction_speed_rad_s",2.)) if self.projector is not None and self.projector.ball_joints else .5,
             proposal_projection="joint_clip_then_global_contraction_v2",
             wrench="contact-wrench SUPPORT mismatch, not measured net wrench",
             upper_evaluation_voc=0., exact_hypergradient=False)
@@ -315,7 +428,22 @@ class TTSAReferenceEditor(ManipulationBilevel):
                         signed_feedback_bins=16 if self.study_variant else 0,
                         per_frame_action_smoothing_sigma_frames=2 if self.study_variant=="per_frame" else 0,
                         local_center_selection="after_global_round_from_remaining_signed_error" if self.study_variant=="global_local" else None)
-        manifest.update(penetration_aware=self.penetration_aware,
+        if self.projector is not None and self.study_variant in ("episode", "timestep", "chunk"):
+            manifest.update(temporal_modes=int(self.basis.shape[1]),
+                upper_action_dimension=int(self.basis.shape[1]*self.joint_basis.shape[0]),
+                chunk_seconds=float(self.options.get("chunk_seconds", .5)) if self.study_variant=="chunk" else None,
+                temporal_smoothing_seconds=float(self.options.get("temporal_smoothing_seconds", .1)),
+                boundary_seconds=float(self.options.get("boundary_seconds", .25)))
+        manifest.update(floating_wrist_translation_bound_m=float(self.options.get("wrist_translation_offset_m", .03)) if self.projector and self.projector.ball_joints else None,
+                        floating_wrist_rotation_bound_rad=float(self.options.get("wrist_rotation_offset_rad", .52)) if self.projector and self.projector.ball_joints else None,
+                        per_object_acceptance_gate=True,
+                        penetration_aware=self.penetration_aware,
+                        contact_proximity_weight=self.contact_proximity_weight,
+                        contact_proximity_geometry="labeled object-attached points to intended hand fingertips" if self.contact_proximity_weight else None,
+                        contact_proximity_cap_m=2.0 if self.contact_proximity_weight else None,
+                        contact_proximity_pooling="equal active hand/object" if self.contact_proximity_weight else None,
+                        contact_direction_feedback="per chunk, hand, object, xyz" if self.contact_proximity_weight else None,
+                        guided_contact_proposal=self.guided_contact_proposal,
                         guided_penetration_proposal=self.guided_penetration_proposal,
                         select_best_trial=self.select_best_trial,
                         penetration_weight=self.penetration_weight,
@@ -329,6 +457,9 @@ class TTSAReferenceEditor(ManipulationBilevel):
         (self.output.parent / "ttsa_manifest.json").write_text(json.dumps(manifest, indent=2)+"\n")
 
     def candidate_joint_q(self, action):
+        if self.projector.ball_joints:
+            from flash_chord.retargeting.floating_chunk import floating_candidate
+            return floating_candidate(self, action)
         coefficients = np.asarray(action, dtype=np.float32).reshape(self.basis.shape[1], self.joint_basis.shape[0]).copy()
         if self.study_variant == "per_frame":
             coefficients = gaussian_filter1d(coefficients,2.,axis=0)
@@ -344,6 +475,8 @@ class TTSAReferenceEditor(ManipulationBilevel):
         q = self.candidate_joint_q(action)
         target = self.baseline.joint_target.copy()
         target[:,self.projector.dids] = q[:,self.projector.qids]
+        for q_start, dof_start in self.projector.ball_joints:
+            target[:, dof_start:dof_start+3] = Rotation.from_quat(q[:, q_start:q_start+4]).as_rotvec()
         return build_robot_reference_binding(self.projector.builder,self.projector.layout,q,target,self.baseline.fps)
 
     def guided_action(self):
@@ -418,11 +551,27 @@ class TTSAReferenceEditor(ManipulationBilevel):
             if feedback is None:
                 raise ValueError("study variant requires signed hand-object feedback")
             current = self.binding.joint_q-self.baseline.joint_q
-            correction_bins = np.stack([current[ids].mean(0) for ids in np.array_split(np.arange(len(current)),16)])
+            if self.study_variant == "chunk":
+                from flash_chord.retargeting.chunk_feedback import correction_chunk_means
+                correction_bins=correction_chunk_means(current,self.baseline.fps,float(self.options.get("chunk_seconds",.5)))
+                if len(correction_bins)!=len(feedback["signed_bins"]):
+                    raise ValueError("Feedback and action chunks differ")
+            else:
+                correction_bins = np.stack([current[ids].mean(0) for ids in np.array_split(np.arange(len(current)),16)])
             values = np.r_[values, np.clip(feedback["signed_bins"],-.25,.25).ravel()/.05,
                 np.clip(correction_bins,-.12,.12).ravel()/.12,
                 metrics["object_position_robust_m"]/.03, metrics["object_orientation_robust_rad"]/.3,
                 metrics["object_success_robust_fraction"],metrics["unstable_world_fraction"]]
+        if self.study_variant == "chunk":
+            counts=np.asarray(feedback["chunk_sample_counts"],dtype=float)
+            values=np.r_[values,counts/max(float(counts.sum()),1.)]
+        if self.contact_proximity_weight:
+            values=np.r_[values, metrics["contact_proximity_mean_m"]/.05,
+                [0.0 if value is None else value/.05 for value in metrics["per_object_contact_proximity_mean_m"]],
+                [0.0 if value is None else value/.05 for row in metrics["per_hand_object_contact_proximity_mean_m"]
+                 for value in row],
+                np.clip(feedback["contact_direction_bins"], -.25, .25).ravel()/.05,
+                feedback["contact_direction_counts"] / max(float(feedback["contact_direction_counts"].sum()), 1.)]
         if self.penetration_aware:
             values = np.r_[values,
                 metrics["reference_penetration_mean_m"]/.005,
@@ -432,15 +581,16 @@ class TTSAReferenceEditor(ManipulationBilevel):
         return jnp.asarray(values[None], dtype=jnp.float32)
 
     def prepare_upper(self, obs):
-        context = jnp.asarray([[0.,0.,1.]], dtype=jnp.float32)
+        worlds = getattr(self, "upper_worlds", 1)
+        context = jnp.tile(jnp.asarray([[0.,0.,1.]], dtype=jnp.float32), (worlds, 1))
         if self.upper is None:
-            self.upper_config = TrainingConfig(seed=self.training.seed+20000, world_count=1,
-                total_environment_steps=100000, updates_per_collection=2, mixed_precision=False,
+            self.upper_config = TrainingConfig(seed=self.training.seed+20000, world_count=worlds,
+                total_environment_steps=((100000 + worlds - 1)//worlds)*worlds, updates_per_collection=int(self.options.get("upper_updates", 2)), mixed_precision=False,
                 network=NetworkConfig(actor_blocks=2,actor_hidden_dim=64,critic_blocks=2,critic_hidden_dim=128,
-                    actor_head_mode="residual",residual_mean_head="zero_dense",initial_normalized_std=.15),
+                    actor_head_mode="residual",residual_mean_head="zero_dense",initial_normalized_std=float(self.options.get("upper_initial_std", .15))),
                 optimization=OptimizationConfig(learning_rate_initial=1e-4,learning_rate_peak=1e-4,learning_rate_end=1e-4,
                     learning_rate_schedule_updates=100000),
-                replay=ReplayConfig(capacity=1024,minimum_size=4,batch_size=16,n_step=1),
+                replay=ReplayConfig(capacity=max(1024, worlds*2),minimum_size=4,batch_size=min(256, max(16, worlds)),n_step=1),
                 exploration=ExplorationConfig(warmup_action="policy",maximum_noise_repeat=1),
                 reward_normalization=RewardNormalizationConfig(enabled=False,normalized_return_bound=10.))
             self.upper,self.executables = create_learner(self.upper_config, obs, context,
@@ -451,7 +601,7 @@ class TTSAReferenceEditor(ManipulationBilevel):
         else:
             # The learner donates its state. Never alias its observation/context
             # with the separately supplied Transition buffers at a TTSA boundary.
-            self.upper = self.upper.replace(replay=clear_replay(self.upper.replay),
+            self.upper = self.upper.replace(replay=self.upper.replay if self.options.get("keep_frozen_replay", False) else clear_replay(self.upper.replay),
                 observation=jnp.array(obs,copy=True),critic_context=jnp.array(context,copy=True))
         action, exploration, key = self.executables.initial_action(self.upper.actor.params,self.upper.actor.batch_stats,
             self.upper.replay.size,obs,self.upper.exploration,self.upper.key)
@@ -480,13 +630,16 @@ class TTSAReferenceEditor(ManipulationBilevel):
             baseline,_,_=self.rollout(self.binding,learner,seed)
         weight=float(self.options.get("wrench_weight",1.)) if self.mode=="reactor_wrench" else 0.
         baseline_cost=upper_cost(baseline,self.binding.joint_q-self.baseline.joint_q,self.baseline.fps,weight,
-                                 robust=bool(self.study_variant),penetration_weight=self.penetration_weight)
+                                 robust=bool(self.study_variant),penetration_weight=self.penetration_weight,
+                                 contact_proximity_weight=self.contact_proximity_weight)
         record=dict(step=step,mode=self.mode,engine="upper_flashsac_contextual_bandit",
             version_before=self.version,baseline=baseline,candidates=[],upper_round=self.upper_round,
             lower_policy_frozen=True,object_contact_sha256=self.command_sha256)
         if self.study_variant:
             record.update(study_variant=self.study_variant, local_centers=self.local_centers,
                           signed_feedback_bins=feedback["signed_bins"].tolist())
+            if self.contact_proximity_weight:
+                record["contact_direction_bins"] = feedback["contact_direction_bins"].tolist()
         accepted=False
         best_trial = None
         best_trial_cost = baseline_cost
@@ -499,6 +652,14 @@ class TTSAReferenceEditor(ManipulationBilevel):
                 record["guided_search"] = search
                 if guided is not None:
                     action = jnp.asarray(guided[None], dtype=jnp.float32)
+            if self.guided_contact_proposal:
+                guided = contact_directed_action(
+                    feedback["contact_direction_bins"],
+                    list(self.projector.layout.scalar_joints.names), self.projector.qids,
+                    self.joint_basis,
+                    float(self.options.get("wrist_translation_offset_m", .03)),
+                )
+                action = jnp.asarray(guided[None], dtype=jnp.float32)
         # Fixed control matches rollout/reset overhead, but never modifies its reference.
         for trial in range(self.trials):
             if self.study_variant == "global_local" and self.upper_round == 1:
@@ -514,15 +675,20 @@ class TTSAReferenceEditor(ManipulationBilevel):
                 rejection=str(error)
             metrics,_,_=self.rollout(candidate,learner,seed)
             cost=upper_cost(metrics,candidate.joint_q-self.baseline.joint_q,self.baseline.fps,weight,
-                            robust=bool(self.study_variant),penetration_weight=self.penetration_weight)
+                            robust=bool(self.study_variant),penetration_weight=self.penetration_weight,
+                            contact_proximity_weight=self.contact_proximity_weight)
             reward=float(np.clip(baseline_cost-cost,-5.,5.))
             if rejection is not None:
                 reward=-5.0
             row=dict(trial=trial,reward=reward,metrics=metrics,cost=cost)
-            if trial == 0 and self.guided_penetration_proposal:
+            if trial == 0 and self.guided_contact_proposal:
+                row["proposal_kind"] = "contact_direction"
+            elif trial == 0 and self.guided_penetration_proposal:
                 row["proposal_kind"] = "guided" if guided is not None else "actor"
             if self.select_best_trial and rejection is None and cost < best_trial_cost:
                 trial_gate = passes_study_gate(metrics,baseline,penetration_aware=self.penetration_aware)
+                if self.contact_proximity_weight:
+                    trial_gate = trial_gate and contact_proximity_gate(metrics,baseline)
                 if trial_gate:
                     best_trial = (candidate, trial)
                     best_trial_cost = cost
@@ -543,6 +709,10 @@ class TTSAReferenceEditor(ManipulationBilevel):
                            updates=int(self.upper.global_update_step))
             record["candidates"].append(row)
             print(f"[ttsa] step={step} upper_trial={trial+1}/{self.trials} reward={reward:.5f}",flush=True)
+        if self.contact_proximity_weight:
+            distances=[row["metrics"]["contact_proximity_mean_m"] for row in record["candidates"]]
+            record["contact_proximity_candidate_spread_m"]=float(np.ptp(distances))
+            record["contact_proximity_baseline_m"]=baseline["contact_proximity_mean_m"]
         if self.mode!="fixed":
             rejection = None
             if self.select_best_trial and best_trial is not None:
@@ -561,12 +731,23 @@ class TTSAReferenceEditor(ManipulationBilevel):
             gate = passes_study_gate if self.study_variant else passes_task_gate
             gate_passes = (gate(check,control,penetration_aware=self.penetration_aware)
                            if self.study_variant else gate(check,control))
+            if self.contact_proximity_weight:
+                # Publish only a contact-reaching edit; never trade away either
+                # object's reach merely to improve another score component.
+                gate_passes = gate_passes and contact_proximity_gate(check,control)
             accepted=(rejection is None and gate_passes and
                 upper_cost(check,candidate.joint_q-self.baseline.joint_q,self.baseline.fps,weight,
-                           robust=bool(self.study_variant),penetration_weight=self.penetration_weight)<
+                           robust=bool(self.study_variant),penetration_weight=self.penetration_weight,
+                           contact_proximity_weight=self.contact_proximity_weight)<
                 upper_cost(control,self.binding.joint_q-self.baseline.joint_q,self.baseline.fps,weight,
-                           robust=bool(self.study_variant),penetration_weight=self.penetration_weight))
+                           robust=bool(self.study_variant),penetration_weight=self.penetration_weight,
+                           contact_proximity_weight=self.contact_proximity_weight))
             record["validation"]=dict(baseline=control,candidate=check,proposal_source=proposal_source)
+            if self.contact_proximity_weight:
+                record["validation"]["contact_proximity_gain_m"]=(
+                    control["contact_proximity_mean_m"]-check["contact_proximity_mean_m"]
+                )
+                record["validation"]["contact_proximity_gate_passed"]=contact_proximity_gate(check,control)
             if rejection is not None:
                 record["validation"]["rejected"]=rejection
             differences=jax.tree.leaves(jax.tree.map(lambda a,b:np.max(np.abs(np.asarray(a)-b)),self.upper.actor.params,original_params))

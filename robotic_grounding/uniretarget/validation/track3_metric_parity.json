@@ -1,0 +1,22 @@
+[
+  {
+    "objects": 1,
+    "symmetry": false,
+    "max_absolute_difference": 0.0
+  },
+  {
+    "objects": 1,
+    "symmetry": true,
+    "max_absolute_difference": 7.105427357601002e-15
+  },
+  {
+    "objects": 2,
+    "symmetry": false,
+    "max_absolute_difference": 2.842170943040401e-14
+  },
+  {
+    "objects": 2,
+    "symmetry": true,
+    "max_absolute_difference": 7.105427357601002e-15
+  }
+]

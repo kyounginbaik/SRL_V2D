@@ -803,7 +803,7 @@ def test_policy_warmup_remains_policy_driven_after_stage_clear_below_minimum():
     )
 
 
-def test_nonfinite_critic_skips_only_adam_but_keeps_attempt_side_effects():
+def test_nonfinite_critic_preserves_optimizer_and_normalization_state():
     jax, jnp = _dependencies()
 
     from flash_chord.training.flash_sac.config import OptimizationConfig
@@ -854,10 +854,7 @@ def test_nonfinite_critic_skips_only_adam_but_keeps_attempt_side_effects():
         not np.array_equal(np.asarray(actual), before)
         for actual, before in zip(jax.tree.leaves(state.actor.batch_stats), actor_batch_stats, strict=True)
     )
-    assert any(
-        not np.array_equal(np.asarray(actual), before)
-        for actual, before in zip(jax.tree.leaves(state.target_critic.batch_stats), target_batch_stats, strict=True)
-    )
+    _assert_tree_equal(jax, state.target_critic.batch_stats, target_batch_stats)
     assert any(np.any(np.asarray(value) != 0.0) for value in jax.tree.leaves(state.target_critic.params))
 
 
@@ -895,3 +892,24 @@ def test_compiled_transition_validation_rejects_shape():
 
     with pytest.raises(ValueError, match="transition action"):
         _consume(state, executables, transition, jnp)
+
+
+def test_nonfinite_actor_does_not_poison_normalization_or_temperature():
+    jax, jnp = _dependencies()
+    state, executables = _create(_config(updates_per_collection=1.0,
+                                         reward_normalization=False), jnp)
+    state, action = _first_action(state, executables)
+    actor_before = _tree_numpy(jax, state.actor.batch_stats)
+    temperature_value = np.array(state.temperature.log_temperature)
+    temperature_optimizer = _tree_numpy(jax, state.temperature.optimizer_state)
+    transition = _transition(jnp, action)
+    transition = transition.replace(next_observation=jnp.full_like(transition.next_observation, jnp.nan))
+    state, _, metrics = _consume(state, executables, transition, jnp)
+    assert float(metrics.actor_skipped_fraction) == 1.0
+    _assert_tree_equal(jax, state.actor.batch_stats, actor_before)
+    # The schedule clock still counts attempted updates; values and Adam moments stay intact.
+    for leaf in jax.tree.leaves(state.actor.batch_stats):
+        assert np.isfinite(np.asarray(leaf)).all()
+    np.testing.assert_array_equal(np.asarray(state.temperature.log_temperature), temperature_value)
+    _assert_tree_equal(jax, state.temperature.optimizer_state, temperature_optimizer)
+    assert np.isfinite(np.asarray(state.loss_scale.scale)).all()

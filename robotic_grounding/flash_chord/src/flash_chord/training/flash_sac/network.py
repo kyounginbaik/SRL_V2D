@@ -24,6 +24,7 @@ class ActorDistribution:
     mean: jax.Array
     log_std: jax.Array
     std: jax.Array
+    scale_tril: jax.Array | None = None
 
 
 @flax.struct.dataclass
@@ -360,7 +361,23 @@ class Actor(nn.Module):
         log_std = self.config.log_std_min + (
             (self.config.log_std_max - self.config.log_std_min) * 0.5 * (1.0 + jnp.tanh(raw_log_std))
         )
-        return ActorDistribution(mean=mean, log_std=log_std, std=jnp.exp(log_std))
+        scale_tril = None
+        if self.config.eigen_basis_path is not None:
+            from flash_chord.training.flash_sac.eigen import load_basis, correlated_scale_tril
+            if self.action_dim != 56:
+                raise ValueError("Sharpa eigen basis requires the verified 56-action layout")
+            basis = jnp.asarray(load_basis(self.config.eigen_basis_path, self.config.eigen_basis_sha256))
+            fraction = self.config.eigen_variance_fraction
+            # The 44 finger dimensions split their initial variance between IID
+            # and eigen components. Wrist marginals retain the original actor std.
+            for start in (6, 34):
+                log_std = log_std.at[..., start:start+22].add(0.5 * math.log(1-fraction))
+            eigen_log_std = self.param("eigen_log_std",
+                nn.initializers.constant(math.log(self.config.initial_normalized_std * math.sqrt(fraction))),
+                (basis.shape[1],), jnp.float32)
+            factor = basis * jnp.exp(jnp.clip(eigen_log_std, -10., 0.))[None, :]
+            scale_tril = correlated_scale_tril(jnp.exp(log_std), factor)
+        return ActorDistribution(mean=mean, log_std=log_std, std=jnp.exp(log_std), scale_tril=scale_tril)
 
 
 class Critic(nn.Module):
@@ -450,8 +467,19 @@ def policy_sample_from_noise(
         raise ValueError(f"unsupported action transform {action_transform!r}")
     if not math.isfinite(action_scale) or action_scale <= 0.0:
         raise ValueError(f"action_scale must be positive and finite, got {action_scale}")
-    raw_action = distribution.mean + distribution.std * noise
-    normal_log_probability = -0.5 * (jnp.square(noise) + 2.0 * distribution.log_std + math.log(2.0 * math.pi))
+    if distribution.scale_tril is None:
+        raw_action = distribution.mean + distribution.std * noise
+        log_diagonal = distribution.log_std
+    else:
+        # Preserve the covariance used by the analytic log density on GPU too.
+        raw_action = distribution.mean + jnp.einsum(
+            "...ij,...j->...i", distribution.scale_tril, noise,
+            precision=jax.lax.Precision.HIGHEST,
+        )
+        log_diagonal = jnp.log(jnp.diagonal(distribution.scale_tril, axis1=-2, axis2=-1))
+    # noise is standard Gaussian before the Cholesky transform. Its density and
+    # log|L| give the full correlated Gaussian density, then tanh adds its Jacobian.
+    normal_log_probability = -0.5 * (jnp.square(noise) + math.log(2.0 * math.pi)) - log_diagonal
     if action_transform == "tanh":
         action = jnp.tanh(raw_action) * action_scale
         log_jacobian = safe_tanh_log_det_jacobian(raw_action) + math.log(action_scale)

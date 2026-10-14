@@ -1,0 +1,4 @@
+ARG BASE_IMAGE=flash_chord:chord100m-base
+FROM ${BASE_IMAGE}
+RUN uv pip install --python /opt/venv/bin/python --no-deps opencv-python-headless==4.11.0.86
+RUN python -c "import cv2, imageio_ffmpeg, wandb, jax, pyarrow; print('retargeting dependencies ready')"

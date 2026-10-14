@@ -14,6 +14,10 @@ from flash_chord.lifecycle.curriculum import FixedCurriculum
 class NetworkConfig:
     """Actor and distributional double-critic architecture."""
 
+    eigen_basis_path: str | None = None
+    eigen_basis_sha256: str | None = None
+    eigen_rank_per_hand: int = 9
+    eigen_variance_fraction: float = 0.5
     actor_blocks: int = 2
     actor_hidden_dim: int = 128
     actor_head_mode: str = "upstream"
@@ -34,6 +38,8 @@ class NetworkConfig:
     projection_epsilon: float = 1.0e-8
 
     def __post_init__(self) -> None:
+        if self.eigen_basis_path is not None and (self.actor_head_mode != "residual" or self.eigen_rank_per_hand != 9 or not 0 < self.eigen_variance_fraction < 1):
+            raise ValueError("Eigen exploration requires residual actor and variance fraction in (0,1)")
         positive_counts = {
             "actor_blocks": self.actor_blocks,
             "actor_hidden_dim": self.actor_hidden_dim,

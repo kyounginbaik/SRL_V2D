@@ -1,0 +1,14 @@
+{
+  "cpu_tests_passed": 102,
+  "source_snapshot": "CHORD response with optional upper FlashSAC",
+  "portable_checks": [
+    "five episodes relocated with all numerical fields unchanged",
+    "108 robot mesh references match cluster assets",
+    "20 Gaussian/FlashSAC smoke/full configs resolve",
+    "Docker input preparation succeeds",
+    "Git LFS fsck succeeds"
+  ],
+  "gpu_status": "Gaussian episode1 seed43 smoke running on node01; full 2048-world and upper-FlashSAC GPU validation pending",
+  "official_metric_kit_url": "https://nvidia-isaac.github.io/video_to_data/v2d_challenge/assets/v2d_submission_kit.zip",
+  "official_metric_kit_sha256": "8d2bce64ecab6da4eee938fe2859bd60e767535af30068b386e2dc20a72cf43e"
+}

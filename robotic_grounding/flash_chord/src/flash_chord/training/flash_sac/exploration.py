@@ -68,6 +68,7 @@ def apply_repeated_noise(
     candidate_repeat_length: jax.Array,
     *,
     noise_scale: float,
+    scale_tril: jax.Array | None = None,
     action_transform: str = "tanh",
     action_scale: float = 1.0,
 ) -> tuple[jax.Array, ExplorationState]:
@@ -91,7 +92,8 @@ def apply_repeated_noise(
     noise = jnp.where(renew, candidate_noise, state.noise)
     repeat_length = jnp.where(renew, candidate_repeat_length, state.repeat_length).astype(jnp.int32)
     repeat_count = jnp.where(renew, jnp.zeros_like(state.repeat_count), state.repeat_count) + 1
-    raw_action = mean + standard_deviation * noise * noise_scale
+    perturbation = standard_deviation * noise if scale_tril is None else jnp.einsum("...ij,...j->...i", scale_tril, noise)
+    raw_action = mean + perturbation * noise_scale
     if action_transform == "tanh":
         action = jnp.tanh(raw_action) * action_scale
     elif action_transform == "identity":
@@ -142,6 +144,7 @@ def collection_action(
         candidate_noise,
         candidate_repeat_length,
         noise_scale=noise_scale,
+        scale_tril=distribution.scale_tril,
         action_transform=action_transform,
         action_scale=action_scale,
     )

@@ -6,3 +6,5 @@
 !.gitignore
 !configuration.md
 !package_structure.md
+
+!response_bilevel.txt

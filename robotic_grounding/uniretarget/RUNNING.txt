@@ -1,0 +1,142 @@
+Portable CHORD-response UniRetargeting (2026-10-14)
+
+Included: current FlashCHORD implementation, all five frozen references (episodes
+1, 3, 5, 6, 35), submitted visual meshes, convex collision pieces, object URDFs,
+Sharpa hand URDF/meshes in flash_chord/assets, and the finger PCA prior. Git LFS
+materializes binary inputs. No ComPose, reconstruction models, or old experiment
+folders are needed to train from these frozen references. Training checkpoints,
+replays, videos, caches and credentials are deliberately runtime outputs.
+
+From the cloned repository root:
+
+  git lfs install
+  git lfs pull
+  docker build -f robotic_grounding/flash_chord/docker/Dockerfile \
+    -t flash_chord:chord100m-base robotic_grounding/flash_chord
+  docker build -f robotic_grounding/uniretarget/Dockerfile.media \
+    -t uniretarget:chord100m robotic_grounding/uniretarget
+
+Linux with NVIDIA Container Toolkit and a compatible NVIDIA driver is required;
+the pinned environment uses JAX CUDA 13 (driver >= 580). The tested cluster uses
+48GB L40S and B200 GPUs. Reserve one GPU, 12 CPUs and 96GB host RAM per full run.
+The Docker image installs Python and all scientific dependencies; the host only
+needs Python 3, Git LFS and Docker. See flash_chord/docker/Dockerfile and uv.lock.
+
+First validate input preparation (no GPU required):
+
+  python3 robotic_grounding/uniretarget/launch.py --prepare-only
+
+For online W&B, authenticate in the environment (never commit credentials):
+
+  export WANDB_MODE=online
+  export WANDB_ENTITY=DexDreamer
+  export WANDB_PROJECT=v2d-track3-uniretarget
+  # Set WANDB_API_KEY through your shell/secret manager.
+  # WANDB_BASE_URL is forwarded when using a private W&B instance.
+
+Without WANDB_MODE=online, portable runs log offline. Local media/metrics are
+always retained. Run IDs include a host/output-path hash to avoid collisions.
+Set UNIRETARGET_RUN_TAG before launch to choose an explicit experiment tag.
+
+  python3 robotic_grounding/uniretarget/launch.py --episode 1 --seed 43 --gpu 0
+
+The default phase is full: a separate 64-world smoke (65,536 steps) validates
+integration, then fresh 2048-world training runs for 100,663,296 steps. A failed
+smoke blocks full training. Full phase is named pilot in output paths/W&B for
+compatibility; its budget is the full 100.7M. Search every 501,760 steps (~500K),
+2048 candidates, one world per candidate; about 200 upper rounds. Checkpoints,
+physics videos and six-metric reports every 1,003,520 steps, plus the final save.
+Three seeds: 43, 44, 45. Repeat for episodes 1, 3, 5, 6 and 35.
+
+Matched upper optimizer ablation:
+
+  python3 robotic_grounding/uniretarget/launch.py --episode 1 --seed 43 --gpu 0 --upper gaussian
+  python3 robotic_grounding/uniretarget/launch.py --episode 1 --seed 43 --gpu 0 --upper flashsac
+
+Default output roots are separate for gaussian/flashsac. Both use the same 2048
+candidate physics budget, candidate-specific lower solves, adaptive windows and
+acceptance gates. Gaussian proposes independent N(0,0.5^2) increments. FlashSAC
+learns a contextual Gaussian mean/std with an identity action transform (the same
+local feasible projection bounds actual robot edits). Its initial std is 0.5.
+It performs 32 critic and 16 actor updates per search round, with 256-sample batches
+(64 in smoke), actor/critic widths 64/128, two blocks each, learning rate 1e-4.
+Upper reward = clip(adapted no-edit cost - candidate solved-response cost, -5,5).
+All transitions are terminal: no bootstrap crosses reference/lower-policy changes.
+Upper replay is cleared each round; actor/critic/optimizer parameters persist.
+Upper checkpoints and actor/critic change diagnostics are saved at every search.
+The learned proposal distribution does not change the lower-response error bound
+or establish whole-loop/global convergence. Compare VOC=0 object metrics, accepted
+edit quality and GPU-hours; more edits alone do not establish better performance.
+
+--phase smoke runs only integration validation. --phase pilot skips smoke.
+--run-root /absolute/output/path changes the output location; --image changes
+the image tag. --dry-run prints the Docker command. One GPU ID or UUID is accepted.
+No complete bilevel resume is implemented: use a fresh run-root for retries after
+training starts, or for changed code. Each root is checksum-locked to its inputs,
+code and launch templates. Concurrent seeds may share a root; preparation is locked.
+
+Optional Slurm (submit from the repository root):
+
+  sbatch --partition=YOUR_PARTITION robotic_grounding/uniretarget/train.sbatch 1 43 gaussian
+  sbatch --partition=YOUR_PARTITION robotic_grounding/uniretarget/train.sbatch 1 43 flashsac
+
+Override partition, nodelist, time and output with sbatch options. The portable
+script has no node01/node100/node200 assumption and requests 40 hours per job.
+Docker access must be configured on compute nodes; do not bypass scheduler GPU
+allocation. The default script resolves the allocated GPU to its UUID.
+
+Method and scope
+----------------
+The lower learner is full-hand FlashSAC with a finger PCA exploration basis.
+The upper proposes a local 56D correction (both wrists and all fingers), using
+windows chosen from the first persistent object-tracking failure and earlier
+error growth/history. Object trajectories remain fixed. Every candidate gets
+its own solved, strongly convex policy-head response before physical evaluation.
+The accepted reference and adapted head are published together. Rejected edits
+preserve replay, and keep the adapted no-edit head. CHORD-style wrench support
+replaces contact-position guidance in the upper score/gates. Fresh paired reset
+confirmations protect every object and the successful prefix.
+
+See ../flash_chord/docs/response_bilevel.txt for equations, residual bounds and
+assumptions. Bounds concern the explicit per-stage convex head surrogate, not a
+global optimum of full neural SAC or whole-training convergence. The upper uses
+finite candidate search; no implicit-function hypergradient is implemented.
+
+Physics: pot 0.2kg, lid/spoon 0.1kg; full object inertia tensors. Wrist kp=100,
+kd=12, effort cap=90, matching the earlier successful s44 controller; no added
+wrist speed cap. Hand-keypoint weight=2, finger-joint weight=0.25. VOC starts at
+1 and decreases only when both/all objects pass the performance gate repeatedly.
+A matching training budget does not guarantee a fixed wall-clock runtime; search
+and synchronous checkpoint rendering are included in the allocation time.
+
+W&B and evidence
+----------------
+track3_estimated/{auc,sp_sr,mp_sr,mppe_cm,rpe_cm,cd_o_cm} uses VOC=0 rollouts.
+track3_assisted_estimated/* uses the current training VOC and is separate.
+Scores use immutable reconstructed object poses as proxy ground truth, with one
+initial scene alignment, reconstructed mesh centroids/samples, and the public
+lid half-turn symmetry. The lid normal is estimated from proxy-mesh surface PCA.
+AUC/SP-SR/MP-SR are fractions [0,1] (higher better); MPPE/RPE/CD-O are centimetres
+(lower better). Single-object RPE is zero by definition, not evidence of success.
+CD-O compares the supplied mesh with itself, so it is identically zero and cannot
+measure reconstruction quality against the hidden scan. Confidential mesh samples,
+anchors, axes and true poses are unavailable: these are estimates, not leaderboard
+scores. The five pose formulas were checked against the official 2026-10-06 scorer.
+
+The pose recording is taken after each action and before episode reset, matching
+the evaluator's timing. Every reference frame must be present. No extra rollout
+is added: existing unassisted/assisted checkpoint videos supply the poses.
+reference_overlay keeps original hands at 45% opacity with current hands solid,
+plus closeups; checkpoint and overlay versions retain their W&B history.
+
+Outputs live under RUN_ROOT/episode_XXXXXX/runs/{smoke,pilot}/episode_XXXXXX/chunk/
+seed_N/: training/upper_updates.jsonl and search_batches retain acceptance, windows,
+correction magnitudes and lower-solve evidence; checkpoint_videos/step_*/ contains
+object_poses.npz, track3_estimates.json and physics MP4. voc_checkpoint_videos has
+assisted results. reference_overlays retains each accepted reference version.
+
+Validation: 102 targeted CPU tests passed before queueing the 100.7M batch;
+randomized 1/2-object, 1/3-world score comparisons agreed with official formulas
+within 3e-14. New GPU integration is enforced by each job's smoke, and has not yet
+run while the cluster is fully occupied. A full Docker rebuild on a second server
+has not been exercised here; the CPU checks use the cluster's pinned runtime image.

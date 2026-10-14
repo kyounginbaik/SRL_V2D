@@ -1,140 +1,67 @@
 # UniRetargeting
 
-Learn a robot motion reference using feedback from a physics-trained motor policy.
+Refine robot reference trajectories using feedback from a physics-trained policy.
+The current Track 3 experiment uses two floating Sharpa hands, FlashSAC at the lower
+level, and adaptive local corrections to both wrists and finger joints at the upper
+level. Five prepared episodes and their object/collision assets are included through
+Git LFS, so training can run on another GPU server without the reconstruction folders.
 
-**UniRetargeting** is an experimental bi-level retargeting workflow.
-The **lower level** trains a FlashSAC motor policy to follow a robot reference in Newton
-physics. The **upper level** edits that reference using feedback from the frozen motor
-policy, then resumes lower training with an accepted edit. The demonstrated object motion
-and contact targets stay fixed. The current manipulation pilot uses Vega arms with Sharpa
-hands on the tissue-box sequence.
-
-**[Read the UniRetargeting guide](robotic_grounding/flash_chord/UNIRETARGETING.md)**:
-[how to run](robotic_grounding/flash_chord/UNIRETARGETING.md#run-it) ·
-[upper optimization explained](robotic_grounding/flash_chord/UNIRETARGETING.md#upper-level-optimization) ·
-[code map](robotic_grounding/flash_chord/UNIRETARGETING.md#code-map) ·
-[results and videos](robotic_grounding/flash_chord/UNIRETARGETING.md#inspect-a-run).
-
-| Start with | What it explains |
-| --- | --- |
-| [Training entry point](robotic_grounding/flash_chord/scripts/train_flash_sac.py) | Creates the scene, lower learner, and optional upper editor. |
-| [Upper trajectory editor](robotic_grounding/flash_chord/src/flash_chord/retargeting/ttsa_editor.py) | Proposal parameterization, upper actor/critic, physical reward, and acceptance gates. |
-| [Physical rollout](robotic_grounding/flash_chord/src/flash_chord/retargeting/manipulation_bilevel.py) | Runs the frozen lower policy and measures task, tracking, and contact errors. |
-| [Lower training loop](robotic_grounding/flash_chord/src/flash_chord/training/flash_sac/runner.py) | Trains FlashSAC, invokes the upper editor, and switches reference versions. |
-| [Pilot findings](robotic_grounding/flash_chord/UNIRETARGETING_PENETRATION_PILOT.md) | What the tissue-box experiments established and what remains unproven. |
-
-The implementation uses alternating two-time-scale learning with simulator-scored proposals.
-It does not differentiate through simulation or a converged lower policy. The pilot demonstrates
-runnable reference editing; reliable physical-overlap and end-to-end performance gains remain
-to be established. Experiment data and checkpoints must be supplied separately from Git.
-
-## How it works
-
-```mermaid
-flowchart LR
-    A[Original Mink robot trajectory] --> B[Train lower FlashSAC policy]
-    B --> C[Freeze policy and measure execution]
-    C --> D[Upper editor proposes trajectory corrections]
-    D --> E[Score candidates in Newton physics]
-    E --> F{Validation gates pass?}
-    F -->|Yes: publish reference| B
-    F -->|No: retain reference| B
-```
-
-1. **Train the lower policy.** FlashSAC learns residual joint-position commands around
-   the current robot reference. Object tracking and contact objectives define the task.
-2. **Freeze and measure.** Pause lower learning and evaluate physical execution without
-   virtual object control (VOC) assistance.
-3. **Optimize the upper editor.** Each upper action proposes a correction to the entire
-   trajectory. A small FlashSAC actor/critic learns from the candidate's physical cost
-   improvement. An optional geometry search proposes a finger edit for the first trial.
-4. **Validate the candidate.** Check object tracking, stability, overlap, and total cost
-   against the current reference using fresh physical rollouts.
-5. **Publish and continue.** Save an accepted reference with its checksum, rebuild its
-   consumers, and resume lower learning. Clear lower replay at every upper boundary.
-
-### Upper optimization at a glance
-
-| Component | Current implementation |
-| --- | --- |
-| Observation | Original trajectory statistics, current correction, object/task errors, and 16 temporal bins of signed hand/object feedback; overlap feedback when enabled. |
-| Action | Whole-trajectory coefficients: three smooth temporal modes × 24 Vega/Sharpa joint channels = 72 values for the `smooth` editor. |
-| Other bases | `per_frame` provides smoothed interior-frame corrections; `global_local` adds four localized temporal windows. |
-| Bounds | At most 0.12 rad joint offset and 0.5 rad/s added velocity, joint limits enforced, first/last configurations preserved. |
-| Blending | Default 25% proposed correction plus 75% current correction, anchored to the original trajectory. |
-| Reward | Current cost minus candidate cost, clipped to [-5, 5]. Each physical trial is one terminal upper transition. |
-| Cost | Object position/orientation error, success fraction, robot tracking, optional wrench support and penetration, instability, and edit regularization. |
-| Selection | Best eligible trial when enabled; otherwise deterministic upper actor output. Fresh validation must pass the gates and strictly improve cost. |
-| Schedule | Full pilot: 3,276,800 lower transitions per block, eight upper trials, four upper-evaluation worlds. |
-
-See the [detailed upper optimization walkthrough](robotic_grounding/flash_chord/UNIRETARGETING.md#upper-level-optimization)
-for equations, exact gates, network settings, and links to each corresponding function.
-The [lower-level walkthrough](robotic_grounding/flash_chord/UNIRETARGETING.md#lower-level-and-reference-updates)
-explains reference publication, replay clearing, and checkpoint metadata.
-
-## How to run
-
-Use Linux, Docker with NVIDIA GPU support, Git LFS, and the
-[FlashCHORD container prerequisites](robotic_grounding/flash_chord/README.md#setup).
-Full pilot training is configured for a 48 GiB GPU.
+**[Portable setup and launch instructions](robotic_grounding/uniretarget/RUNNING.txt)**
 
 ```bash
-# From the repository root.
 git lfs install
 git lfs pull
-cd robotic_grounding/flash_chord
-docker/run.sh build
-
-# Supply the materialized tissue-box asset tree before starting the container.
-export V2D_ASSETS_DIR=/absolute/path/to/tissue_box
-docker/run.sh start latest 0
+docker build -f robotic_grounding/flash_chord/docker/Dockerfile \
+  -t flash_chord:chord100m-base robotic_grounding/flash_chord
+docker build -f robotic_grounding/uniretarget/Dockerfile.media \
+  -t uniretarget:chord100m robotic_grounding/uniretarget
+python3 robotic_grounding/uniretarget/launch.py --episode 1 --seed 43 --gpu 0
 ```
 
-The asset tree must contain the tuned Vega/Sharpa parquet, its object meshes, and support
-assets. It is mounted at `/v2d/assets`; the original experiment tree is
-`/data1/SRL_V2D/.e2e/tissue_box`. These experiment assets are supplied separately from Git.
+Configure `WANDB_MODE=online`, `WANDB_API_KEY`, `WANDB_ENTITY`, and `WANDB_PROJECT`
+for online logging; the portable launcher defaults to offline logging. See the guide
+for Slurm, input preparation, fresh output directories and the required GPU driver.
 
-Run the commands in the guide inside the container at `/workspace`:
-
-| Run | Instructions |
+| Setting | Current experiment |
 | --- | --- |
-| Prepare data | [Expected input paths and sequence requirements](robotic_grounding/flash_chord/UNIRETARGETING.md#1-prepare-the-container-and-sequence-assets) |
-| Check the online loop | [32-world, 4,096-transition smoke test](robotic_grounding/flash_chord/UNIRETARGETING.md#2-run-a-short-online-wiring-test) |
-| Train both levels | [Full 98,304,000-transition schedule and matched controls](robotic_grounding/flash_chord/UNIRETARGETING.md#3-run-the-full-lowerupper-schedule) |
-| Reuse a trained policy | [Frozen lower-policy editing pilot](robotic_grounding/flash_chord/UNIRETARGETING.md#4-test-an-edit-against-an-existing-frozen-lower-policy) |
-| Evaluate and visualize | [Unassisted evaluation, MP4 rendering, and penetration diagnostics](robotic_grounding/flash_chord/UNIRETARGETING.md#inspect-a-run) |
+| Episodes | 000001, 000003, 000005, 000006, 000035 |
+| Seeds | 43, 44, 45 |
+| Full training | 100,663,296 environment steps; 2048 worlds |
+| Upper search | Every 501,760 steps; 2048 candidates |
+| Upper optimizer ablation | Independent Gaussian proposals vs learned FlashSAC proposals |
+| Reference action | 56D local increments: both wrists and all finger joints |
+| Window selection | Persistent object error, earlier error onset, and sampled history |
+| Upper objective | Object motion and CHORD-style wrench support, plus stability/edit penalties |
+| Lower response per candidate | Solved regularized policy-head surrogate; frozen critic/backbone during search |
+| Validation | Fresh paired resets; every object and successful prefix protected |
+| Physics | Pot 200g, lid/spoon 100g; s44 wrist controller settings |
 
-Set `bilevel.engine=ttsa_flashsac` to select the neural upper editor. Historical mode names
-`fixed`, `reactor`, and `reactor_wrench` select the control/upper-wrench condition;
-the mode name alone does not select the optimization algorithm.
+An accepted update publishes the reference and adapted policy head together. Replay
+is cleared when the reference changes. After a rejected edit, replay remains and the
+adapted no-edit head is retained. VOC starts at 1 and decreases through a performance
+gate. Each full launch first runs an integration smoke in the same GPU allocation.
 
-## Where to see results
+The explicit per-stage lower problem is strongly convex and has a checked numerical
+residual bound. This does not establish global convergence of neural SAC or of the
+complete alternating loop. The upper evaluates a finite candidate population, proposed by independent Gaussian
+sampling or a learned FlashSAC actor (`--upper gaussian` / `--upper flashsac`).
+Both retain the same candidate-specific lower solve and acceptance gates.
+[Equations and guarantee scope](robotic_grounding/flash_chord/docs/response_bilevel.txt).
 
-Runs are saved under `robotic_grounding/flash_chord/outputs/` on the host:
+W&B records training, accepted corrections, historical checkpoint videos, and original
+hands overlaid at 45% opacity. Six Track 3 curves use reconstructed poses as proxy ground
+truth under `track3_estimated/*`, evaluated with VOC=0. Assisted scores are separate.
+CD-O is a labelled mesh self-comparison (zero); hidden-scan reconstruction accuracy
+cannot be estimated from object poses alone. Single-object RPE is also zero by definition.
 
-| Artifact | What it shows |
+| Code | Purpose |
 | --- | --- |
-| `ttsa_manifest.json` | Upper-loop settings, bounds, basis, and penetration configuration. |
-| `upper_updates.jsonl` | Baseline and candidate scores, validation results, accepted edits, reference versions, and upper simulation budget. |
-| `references/reference_NNNN.npz` | Original and accepted robot-reference snapshots. |
-| `policy_STEP.safetensors` | Lower policy with metadata identifying its reference snapshot. |
-| `upper/` | Saved upper learner state and replay artifacts. |
-| `evaluation_unassisted.json` | Metrics produced by the evaluation command. |
-| `rollout.mp4` | Physical execution produced by the video command. |
-| `guided_report.json` | Frozen-policy pilot comparison. |
+| [Portable workflow](robotic_grounding/uniretarget/) | Inputs, preparation, Docker and Slurm launchers |
+| [Response editor](robotic_grounding/flash_chord/src/flash_chord/retargeting/response_editor.py) | Candidate-specific lower responses and paired acceptance |
+| [Adaptive windows](robotic_grounding/flash_chord/src/flash_chord/retargeting/failure_windows.py) | Failure/onset detection and window selection |
+| [Convex lower response](robotic_grounding/flash_chord/src/flash_chord/retargeting/response_bilevel.py) | Ridge solve and residual/error bounds |
+| [Track 3 estimates](robotic_grounding/flash_chord/src/flash_chord/evaluation/track3_estimates.py) | Six-metric checkpoint reporting and proxy assumptions |
+| [Historical guide](robotic_grounding/flash_chord/UNIRETARGETING.md) | Earlier Vega/tissue-box method and experiments |
 
-Copy reference snapshots together with checkpoints when sharing runs. Full joint
-upper/lower training resume is currently unsupported.
-
-## Current status
-
-The [penetration pilot report](robotic_grounding/flash_chord/UNIRETARGETING_PENETRATION_PILOT.md)
-records runnable upper editing and reduced kinematic reference overlap. Reliable improvements
-in physical overlap and end-to-end task performance still need to be demonstrated.
-
-The current visual proxy assumes one rigid object and uses its convex hull. Joint bounds
-and relative acceptance gates do not certify collision-free or dynamically feasible motion.
-Study evaluation uses a deterministic lower actor and a fixed reset seed, so fresh validation
-rollouts do not establish performance on independent reset conditions. See the
-[implementation limitations](robotic_grounding/flash_chord/UNIRETARGETING.md#current-evidence-and-limitations)
-before interpreting pilot results.
+The queued 100.7M batch passed 102 targeted CPU tests; full GPU integration remains gated
+by each job's smoke. Current experiments have not yet established improved task success.

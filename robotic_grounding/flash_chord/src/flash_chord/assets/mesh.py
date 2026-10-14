@@ -84,16 +84,24 @@ def convex_decompose(
     if cache_file.exists():
         return _load_cache(cache_file)
 
-    import coacd  # lazy: importing this module must not require the decomposition backend
+    # Different episodes can share a collision mesh. Serialize identical cache
+    # keys so parallel scene builds neither duplicate work nor race on tmp files.
+    import fcntl
+    cache_root.mkdir(parents=True, exist_ok=True)
+    with cache_file.with_suffix(".lock").open("a") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        if cache_file.exists():
+            return _load_cache(cache_file)
+        import coacd  # lazy: importing this module must not require the decomposition backend
 
-    coacd.set_log_level("error")
-    parts = coacd.run_coacd(coacd.Mesh(vertices, faces), **params)
-    hulls = [
-        ConvexHull(np.ascontiguousarray(v, dtype=np.float32), np.ascontiguousarray(f, dtype=np.int32).reshape(-1, 3))
-        for v, f in parts
-    ]
-    _save_cache(cache_file, hulls)
-    return hulls
+        coacd.set_log_level("error")
+        parts = coacd.run_coacd(coacd.Mesh(vertices, faces), **params)
+        hulls = [
+            ConvexHull(np.ascontiguousarray(v, dtype=np.float32), np.ascontiguousarray(f, dtype=np.int32).reshape(-1, 3))
+            for v, f in parts
+        ]
+        _save_cache(cache_file, hulls)
+        return hulls
 
 
 def decompose_mesh_file(path: str | os.PathLike, **kwargs) -> list[ConvexHull]:

@@ -14,3 +14,6 @@ Datagen_Checkpoints/
 # Local reconstruction-to-GR00T runs and active-run pointer
 .e2e/
 .ablation_lab/
+
+# Local UniRetargeting training runs
+/.uniretarget/
