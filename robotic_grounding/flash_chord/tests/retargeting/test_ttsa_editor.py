@@ -157,6 +157,7 @@ def test_real_upper_flashsac_updates():
     from flash_chord.training.flash_sac.learner import Transition
     editor=object.__new__(TTSAReferenceEditor)
     editor.upper=None
+    editor.options={}
     editor.training=SimpleNamespace(seed=42)
     editor.basis=np.zeros((10,3))
     editor.joint_basis=np.eye(2)

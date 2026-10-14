@@ -251,7 +251,7 @@ class ManipulationBilevel:
         self.metadata[CONFIG_METADATA_KEY] = json.dumps(self.config, sort_keys=True)
         self.metadata["robot_reference_version"] = str(self.version)
 
-    def rollout(self, binding, learner, seed, *, return_feedback=False, voc_probe_scale=None):
+    def rollout(self, binding, learner, seed, *, return_feedback=False, voc_probe_scale=None, initial_q_delta=None):
         probe_config=deepcopy(self.eval_config)
         if voc_probe_scale is not None:
             from flash_chord.runtime.object_control import VOCParams
@@ -294,7 +294,16 @@ class ManipulationBilevel:
             rollout_overlap = []
         adapter = WarpRLEnv(env, publish_diagnostics=False, publish_step_metrics=False)
         from flash_chord.runtime.jax import to_jax
-        observation = jnp.array(to_jax(env.reset(frame_id=0), (env.world_count, env.observation_dim)), copy=True)
+        initial_observation = env.reset(frame_id=0)
+        if initial_q_delta is not None:
+            initial_q = env.state_0.joint_q.numpy().reshape(env.world_count,-1)
+            initial_q[:,:binding.num_joint_q] += np.asarray(initial_q_delta)[None,:]
+            initial_q[:,self.projector.qids] = np.clip(initial_q[:,self.projector.qids],self.projector.lower,self.projector.upper)
+            for state in (env.state_0,env.state_1):
+                state.joint_q.assign(initial_q.reshape(-1))
+                newton.eval_fk(env.model,state.joint_q,state.joint_qd,state)
+            initial_observation = env.observation_strategy.compute(env.state_0)
+        observation = jnp.array(to_jax(initial_observation, (env.world_count, env.observation_dim)), copy=True)
         if voc_probe_scale is not None:
             np.testing.assert_allclose(env.object_control_scale.numpy(),voc_probe_scale,atol=1e-7)
             if env.command.voc_body_ids_w.size != env.world_count * env.command.layout.num_objects:

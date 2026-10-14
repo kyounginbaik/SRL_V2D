@@ -135,7 +135,10 @@ def main(cfg: DictConfig) -> None:
             if cfg.bilevel.get("engine") == "ttsa_flashsac":
                 from flash_chord.retargeting.ttsa_editor import TTSAReferenceEditor
                 update_class = TTSAReferenceEditor
-            if cfg.bilevel.get("engine") == "parallel_flashsac":
+            if cfg.bilevel.get("engine") == "local_flashsac":
+                from flash_chord.retargeting.local_editor import LocalReferenceEditor
+                update_class = LocalReferenceEditor
+            elif cfg.bilevel.get("engine") == "parallel_flashsac":
                 from flash_chord.retargeting.parallel_editor import ParallelReferenceEditor
                 update_class = ParallelReferenceEditor
             reference_update = update_class(

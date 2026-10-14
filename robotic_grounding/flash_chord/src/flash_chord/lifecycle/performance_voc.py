@@ -15,6 +15,7 @@ class PerformanceVOCGate:
     index: int = 0
     streak: int = 0
     reference_version: int = -1
+    reset_on_reference_change: bool = True
 
     def __post_init__(self):
         if self.object_count < 1 or self.required_passes < 1:
@@ -29,7 +30,8 @@ class PerformanceVOCGate:
 
     def observe(self, metrics, reference_version):
         if self.reference_version != reference_version:
-            self.streak=0;self.reference_version=reference_version
+            if self.reset_on_reference_change:self.streak=0
+            self.reference_version=reference_version
         checks={}
         for key,threshold,lower in [
             ('per_object_gate_success_fraction',self.min_success,False),
@@ -46,6 +48,12 @@ class PerformanceVOCGate:
         return dict(passed=passed,lowered=lowered,scale_before=previous,probe_scale=probe,
                     scale_after=self.scale,consecutive_passes=self.streak,checks=checks)
 
+def gate_from_options(object_count, options):
+    return PerformanceVOCGate(object_count=object_count,
+        required_passes=int(options.get('required_passes',3)),
+        scales=tuple(float(x) for x in options.get('scales', PerformanceVOCGate.scales)),
+        reset_on_reference_change=bool(options.get('reset_on_reference_change', True)))
+
 class PerformanceVOCController:
     def __init__(self, editor, options, output_dir):
         if editor.training.resume:
@@ -58,7 +66,7 @@ class PerformanceVOCController:
         import pyarrow.parquet as pq
         row=pq.read_table(editor.config['task']['parquet']).to_pylist()[0]
         self.object_names=list(row['object_body_names'])
-        self.gate=PerformanceVOCGate(object_count=len(self.object_names),required_passes=int(options.get('required_passes',3)))
+        self.gate=gate_from_options(len(self.object_names), options)
         self.output=Path(output_dir)
         (self.output/'voc_gate_manifest.json').write_text(json.dumps({'objects':self.object_names,'interval':self.interval,
           'gate':asdict(self.gate),'probe':'full video at next lower VOC, explicit frame-zero reset, no reset assistance',

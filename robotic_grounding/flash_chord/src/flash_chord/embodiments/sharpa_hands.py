@@ -74,6 +74,14 @@ class SharpaHandsConfig:
         return cfg
 
     @classmethod
+    def moderated_tracking(cls) -> "SharpaHandsConfig":
+        """20% lower wrist stiffness/effort than stronger_tracking; retain damping."""
+        cfg = cls.stronger_tracking()
+        cfg.joint_overrides[r"wrist_[xyz]$"] = dict(kp=80.0, kd=12.0, effort_limit=72.0)
+        cfg.joint_overrides[r"wrist_rotvec$"] = dict(mode="effort", kp=80.0, kd=12.0, effort_limit=72.0)
+        return cfg
+
+    @classmethod
     def stiff_tracking(cls) -> "SharpaHandsConfig":
         """A stiff-wrist variant for kinematic-fidelity replay (collision-free): the wrist tracks the
         reference to sub-cm instead of lagging under the soft default gains. Fingers unchanged. Gains tuned

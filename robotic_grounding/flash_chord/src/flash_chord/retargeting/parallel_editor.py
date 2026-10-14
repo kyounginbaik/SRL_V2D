@@ -21,6 +21,9 @@ from flash_chord.retargeting.parallel_rollout import rollout_candidates
 class ParallelReferenceEditor(TTSAReferenceEditor):
     def __init__(self, **kwargs):
         options = dict(kwargs['options'])
+        if options.get('defer_acceptance_gates_to_confirmation',False) and (
+                not hasattr(self,'confirm_candidate') or not options.get('robust_confirmation',True)):
+            raise ValueError('deferred screening requires paired robust confirmation')
         worlds = int(options.get('eval_worlds', 2048))
         if worlds != int(options.get('upper_trials', worlds)):
             raise ValueError('parallel search requires one candidate per evaluation world')
@@ -79,11 +82,13 @@ class ParallelReferenceEditor(TTSAReferenceEditor):
                 list(self.projector.layout.scalar_joints.names), self.projector.qids,
                 self.joint_basis, float(self.options.get('wrist_translation_offset_m', .03)))
             action = action.at[0].set(jnp.asarray(guided))
+        if self.options.get('include_noop', False):
+            action = action.at[0].set(0.)
         actions = np.asarray(action)
         qs, targets, rejections = [], [], {}
         for world, proposal in enumerate(actions):
             try:
-                q = self.candidate_joint_q(proposal)
+                q = self.binding.joint_q.copy() if world == 0 and self.options.get('include_noop',False) else self.candidate_joint_q(proposal)
             except ProposalRejected as error:
                 q = self.binding.joint_q.copy()
                 rejections[world] = str(error)
@@ -108,7 +113,16 @@ class ParallelReferenceEditor(TTSAReferenceEditor):
         self.upper, _, losses = self.executables.consume_transition(self.upper,transition,
             jnp.ones(1,jnp.float32),jnp.float32(1),jnp.float32(0),jnp.bool_(False),jnp.bool_(True))
         jax.block_until_ready(self.upper)
-        selected = int(np.argmin(np.where(valid, costs, np.inf))) if valid.any() else None
+        selection_mask = valid.copy()
+        if self.options.get('defer_acceptance_gates_to_confirmation', False):
+            # Single-world and batched contact solvers differ slightly; enforce
+            # strict acceptance only on the paired confirmation cohort.
+            selection_mask = np.asarray([i not in rejections and m['all_errors_finite'] and m['full_horizon'] and np.isfinite(c)
+                for i,(m,c) in enumerate(zip(metrics,costs))])
+        if self.options.get('include_noop',False): selection_mask[0] = False
+        ranked = np.argsort(np.where(selection_mask, costs, np.inf))
+        shortlist = [int(i) for i in ranked if selection_mask[i] and costs[i]<baseline_cost][:int(self.options.get('confirmation_top_k',1))]
+        selected = shortlist[0] if shortlist else None
         accepted = False
         record = dict(step=step, engine='parallel_flashsac', upper_round=self.upper_round,
             version_before=self.version, baseline=baseline, lower_policy_frozen=True,
@@ -116,25 +130,39 @@ class ParallelReferenceEditor(TTSAReferenceEditor):
             object_contact_sha256=self.command_sha256,
             candidates=[dict(trial=i,cost=float(c),reward=float(r),metrics=m,gate_passed=bool(v),
                              rejected=rejections.get(i)) for i,(c,r,m,v) in enumerate(zip(costs,rewards,metrics,valid))])
+        record['gate_diagnostics'] = dict(
+            improving_candidates=int(np.sum(costs < baseline_cost)),
+            task_gate_pass=int(sum(passes_study_gate(m,baseline) for m in metrics)),
+            contact_gate_pass=int(sum(contact_proximity_gate(m,baseline) for m in metrics)),
+            all_gates_pass=int(valid.sum()), baseline_cost=float(baseline_cost),
+            noop_cost=float(costs[0]) if self.options.get('include_noop',False) else None)
+        proposal_diagnostics = self.proposal_diagnostics(actions,qs) if hasattr(self, 'proposal_diagnostics') else {}
         evidence = self.output.parent/'search_batches'/f'step_{step}'
         evidence.mkdir(parents=True,exist_ok=True)
         # Preserve all proposals for reproducible later comparisons, not only the winner.
         np.savez_compressed(evidence/'proposals.npz',actions=actions,joint_q=qs,joint_target=targets,costs=costs)
-        if selected is not None and costs[selected] < baseline_cost:
+        record['confirmation_attempts'] = []
+        for selected in shortlist:
             candidate = build_robot_reference_binding(self.projector.builder,self.projector.layout,
                 qs[selected],targets[selected],self.baseline.fps)
             check, _, _ = self.rollout(candidate,learner,seed)
             accepted = gate(check,baseline) and cost(check,candidate.joint_q) < baseline_cost
+            if hasattr(self, 'confirm_candidate') and self.options.get('robust_confirmation', True):
+                accepted, record['robust_confirmation'] = self.confirm_candidate(candidate,learner,seed,baseline,check)
             save_snapshot(evidence/'selected_reference.npz',candidate,self.setup.scene.layout,
                           provenance=dict(step=step,trial=selected,accepted=bool(accepted),object_contact_sha256=self.command_sha256))
             record['validation'] = dict(baseline=baseline,candidate=check,
                 proposal_source=f'upper_trial_{selected}',deterministic_confirmation=True)
+            record['confirmation_attempts'].append(dict(trial=selected,nominal=record['validation'],
+                robust=record.get('robust_confirmation'),accepted=bool(accepted)))
             if accepted:
                 self.binding=candidate;self.version+=1;self.publish(step)
+                break
         save_learner_checkpoint(self.output.parent/'upper',self.upper,
             metadata={'lower_step':step,'engine':'parallel_flashsac'},save_replay=True)
         if command_digest(self.setup.reference)!=self.command_sha256:
             raise RuntimeError('upper editor mutated immutable object/contact commands')
+        record.update(proposal_diagnostics)
         record.update(accepted=bool(accepted),version_after=self.version,selected_trial=selected,
             upper_optimizer_updates=int(self.upper.global_update_step),seconds=time.perf_counter()-started,
             upper_simulation_transitions=self.validation_steps-previous_steps,

@@ -1,0 +1,635 @@
+{
+  "experiment": "/data1/SRL_V2D/challenge_reconstruction/uniretarget_local_refinement_20261014",
+  "probe_jobs": {
+    "old_chunk": 46777,
+    "local_u2": 46779,
+    "local_u32": 46778
+  },
+  "cancelled_startup_jobs": [
+    46775,
+    46776
+  ],
+  "probe_search_seed": 43,
+  "rounds": 3,
+  "candidates_per_round": 2048,
+  "frozen_checkpoint": "/data1/SRL_V2D/challenge_reconstruction/uniretarget_submission_mesh_ablation_20261013/chunk_full/runs/pilot/episode_000001/chunk/seed_43/training/policy_50331648.safetensors",
+  "probe_voc": [
+    0.0,
+    0.95,
+    1.0
+  ],
+  "paired_perturbations": {
+    "count": 3,
+    "wrist_m": 0.001,
+    "finger_deg": 0.5
+  },
+  "controller_unchanged": true,
+  "meshes_unchanged": true,
+  "fresh_training_seeds": [
+    43,
+    44,
+    45
+  ],
+  "training_steps": 50331648,
+  "intended_search_interval": 501760,
+  "status": "training_queued_after_final_probe",
+  "onset_probe_jobs": {
+    "local_onset_u32": 46786,
+    "local_onset_u2": 46787
+  },
+  "smoke_job": 46782,
+  "initial_probes_result": {
+    "old_chunk": {
+      "variant": "old_chunk",
+      "seed": 43,
+      "dimensions": 952,
+      "accepted": false,
+      "accepted_total": 0,
+      "rounds": 3,
+      "gate_pass_count": 8,
+      "improving_count": 1325,
+      "baseline_cost": 20.751965972557997,
+      "best_raw_cost": 17.269216197378803,
+      "best_valid_cost": 18.975191444238604,
+      "seconds": 145.68409761600196,
+      "baseline": {
+        "robot_position_mse": 0.004186796024441719,
+        "robot_rotation_mse": 0.934690203686567,
+        "wrench_mse": 0.9911721571200136,
+        "object_position_mean_m": 0.10003126019885217,
+        "object_position_p95_m": 0.2471332758665085,
+        "object_orientation_mean_rad": 0.7383835699290134,
+        "object_success_fraction": 0.3787425149700599,
+        "contact_proximity_mean_m": 0.12180708780058606,
+        "per_object_contact_proximity_mean_m": [
+          0.11865629999258664,
+          0.19593774705619374
+        ],
+        "per_hand_object_contact_proximity_mean_m": [
+          [
+            0.12330248722331837,
+            null
+          ],
+          [
+            0.04618102912224609,
+            0.19593774705619374
+          ]
+        ],
+        "contact_proximity_active_labels": 4412,
+        "per_object_position_p95_m": [
+          0.1150623723864553,
+          0.24925676211714742
+        ],
+        "per_object_orientation_p95_rad": [
+          0.6405024128899374,
+          1.2701372242539566
+        ],
+        "per_object_gate_success_fraction": [
+          0.10778443113772455,
+          0.09281437125748503
+        ],
+        "robot_position_rms_m": 0.1120731309056282,
+        "all_errors_finite": true,
+        "full_horizon": true,
+        "per_object_position_mean_m": [
+          0.04184150028957088,
+          0.15822102010813346
+        ],
+        "per_object_orientation_mean_rad": [
+          0.43803809203997796,
+          1.0387290478180486
+        ],
+        "object_position_robust_m": 0.10003125993674342,
+        "object_orientation_robust_rad": 0.7383835699290136,
+        "wrench_robust_mse": 0.9911721571200136,
+        "object_success_robust_fraction": 0.10778443113772455,
+        "unstable_world_fraction": 0.0,
+        "robot_position_robust_mse": 0.0027349789161235094
+      },
+      "confirmation": {
+        "baseline": {
+          "robot_position_mse": 0.004186796024441719,
+          "robot_rotation_mse": 0.934690203686567,
+          "wrench_mse": 0.9911721571200136,
+          "object_position_mean_m": 0.10003126019885217,
+          "object_position_p95_m": 0.2471332758665085,
+          "object_orientation_mean_rad": 0.7383835699290134,
+          "object_success_fraction": 0.3787425149700599,
+          "contact_proximity_mean_m": 0.12180708780058606,
+          "per_object_contact_proximity_mean_m": [
+            0.11865629999258664,
+            0.19593774705619374
+          ],
+          "per_hand_object_contact_proximity_mean_m": [
+            [
+              0.12330248722331837,
+              null
+            ],
+            [
+              0.04618102912224609,
+              0.19593774705619374
+            ]
+          ],
+          "contact_proximity_active_labels": 4412,
+          "per_object_position_p95_m": [
+            0.1150623723864553,
+            0.24925676211714742
+          ],
+          "per_object_orientation_p95_rad": [
+            0.6405024128899374,
+            1.2701372242539566
+          ],
+          "per_object_gate_success_fraction": [
+            0.10778443113772455,
+            0.09281437125748503
+          ],
+          "robot_position_rms_m": 0.1120731309056282,
+          "all_errors_finite": true,
+          "full_horizon": true,
+          "per_object_position_mean_m": [
+            0.04184150028957088,
+            0.15822102010813346
+          ],
+          "per_object_orientation_mean_rad": [
+            0.43803809203997796,
+            1.0387290478180486
+          ],
+          "object_position_robust_m": 0.10003125993674342,
+          "object_orientation_robust_rad": 0.7383835699290136,
+          "wrench_robust_mse": 0.9911721571200136,
+          "object_success_robust_fraction": 0.10778443113772455,
+          "unstable_world_fraction": 0.0,
+          "robot_position_robust_mse": 0.0027349789161235094
+        },
+        "candidate": {
+          "robot_position_mse": 0.004684807732701302,
+          "robot_rotation_mse": 0.9571014384996404,
+          "wrench_mse": 0.9840180666550346,
+          "object_position_mean_m": 0.10237116447906427,
+          "object_position_p95_m": 0.2525440827012062,
+          "object_orientation_mean_rad": 0.5804005734262356,
+          "object_success_fraction": 0.4805389221556886,
+          "contact_proximity_mean_m": 0.12613381469034074,
+          "per_object_contact_proximity_mean_m": [
+            0.11026960593141232,
+            0.21430278360189103
+          ],
+          "per_hand_object_contact_proximity_mean_m": [
+            [
+              0.1141356963326057,
+              null
+            ],
+            [
+              0.04996296413652547,
+              0.21430278360189103
+            ]
+          ],
+          "contact_proximity_active_labels": 4412,
+          "per_object_position_p95_m": [
+            0.11506567373871779,
+            0.2547205626964569
+          ],
+          "per_object_orientation_p95_rad": [
+            0.56369392451965,
+            1.01700176078307
+          ],
+          "per_object_gate_success_fraction": [
+            0.24850299401197604,
+            0.09880239520958084
+          ],
+          "robot_position_rms_m": 0.1185513585805893,
+          "all_errors_finite": true,
+          "full_horizon": true,
+          "per_object_position_mean_m": [
+            0.04218965916598807,
+            0.1625526697921405
+          ],
+          "per_object_orientation_mean_rad": [
+            0.3646687935303527,
+            0.7961323533221187
+          ],
+          "object_position_robust_m": 0.1023711643793793,
+          "object_orientation_robust_rad": 0.5804005734262356,
+          "wrench_robust_mse": 0.9840180666550346,
+          "object_success_robust_fraction": 0.1497005988023952,
+          "unstable_world_fraction": 0.0,
+          "robot_position_robust_mse": 0.003136920742690563
+        },
+        "proposal_source": "upper_trial_1136",
+        "deterministic_confirmation": true
+      },
+      "selected_trial": 1136,
+      "published_finger_rms_rad": 0.0
+    },
+    "local_u2": {
+      "variant": "local_u2",
+      "seed": 43,
+      "dimensions": 56,
+      "accepted": false,
+      "accepted_total": 0,
+      "rounds": 3,
+      "gate_pass_count": 41,
+      "improving_count": 716,
+      "baseline_cost": 20.20905461909104,
+      "best_raw_cost": 17.268285380073795,
+      "best_valid_cost": 17.37945189010218,
+      "seconds": 149.40075367409736,
+      "baseline": {
+        "robot_position_mse": 0.004379800986498594,
+        "robot_rotation_mse": 0.9028131812354581,
+        "wrench_mse": 0.985723801713059,
+        "object_position_mean_m": 0.10809596973920274,
+        "object_position_p95_m": 0.26493228524923323,
+        "object_orientation_mean_rad": 0.6220518135899059,
+        "object_success_fraction": 0.5014970059880239,
+        "contact_proximity_mean_m": 0.11852014999330907,
+        "per_object_contact_proximity_mean_m": [
+          0.08882221340269493,
+          0.21791230477525603
+        ],
+        "per_hand_object_contact_proximity_mean_m": [
+          [
+            0.09156189677859555,
+            null
+          ],
+          [
+            0.046086248426075636,
+            0.21791230477525603
+          ]
+        ],
+        "contact_proximity_active_labels": 4412,
+        "per_object_position_p95_m": [
+          0.11985538825392703,
+          0.2670969799160957
+        ],
+        "per_object_orientation_p95_rad": [
+          0.4977847557850401,
+          1.2183639438901512
+        ],
+        "per_object_gate_success_fraction": [
+          0.5449101796407185,
+          0.09281437125748503
+        ],
+        "robot_position_rms_m": 0.11462723463773727,
+        "all_errors_finite": true,
+        "full_horizon": true,
+        "per_object_position_mean_m": [
+          0.04601185131834786,
+          0.1701800881600576
+        ],
+        "per_object_orientation_mean_rad": [
+          0.2883759051334276,
+          0.9557277220463842
+        ],
+        "object_position_robust_m": 0.10809596982912835,
+        "object_orientation_robust_rad": 0.6220518135899059,
+        "wrench_robust_mse": 0.985723801713059,
+        "object_success_robust_fraction": 0.15269461077844312,
+        "unstable_world_fraction": 0.0,
+        "robot_position_robust_mse": 0.0028820582665503025
+      },
+      "confirmation": {
+        "baseline": {
+          "robot_position_mse": 0.004379800986498594,
+          "robot_rotation_mse": 0.9028131812354581,
+          "wrench_mse": 0.985723801713059,
+          "object_position_mean_m": 0.10809596973920274,
+          "object_position_p95_m": 0.26493228524923323,
+          "object_orientation_mean_rad": 0.6220518135899059,
+          "object_success_fraction": 0.5014970059880239,
+          "contact_proximity_mean_m": 0.11852014999330907,
+          "per_object_contact_proximity_mean_m": [
+            0.08882221340269493,
+            0.21791230477525603
+          ],
+          "per_hand_object_contact_proximity_mean_m": [
+            [
+              0.09156189677859555,
+              null
+            ],
+            [
+              0.046086248426075636,
+              0.21791230477525603
+            ]
+          ],
+          "contact_proximity_active_labels": 4412,
+          "per_object_position_p95_m": [
+            0.11985538825392703,
+            0.2670969799160957
+          ],
+          "per_object_orientation_p95_rad": [
+            0.4977847557850401,
+            1.2183639438901512
+          ],
+          "per_object_gate_success_fraction": [
+            0.5449101796407185,
+            0.09281437125748503
+          ],
+          "robot_position_rms_m": 0.11462723463773727,
+          "all_errors_finite": true,
+          "full_horizon": true,
+          "per_object_position_mean_m": [
+            0.04601185131834786,
+            0.1701800881600576
+          ],
+          "per_object_orientation_mean_rad": [
+            0.2883759051334276,
+            0.9557277220463842
+          ],
+          "object_position_robust_m": 0.10809596982912835,
+          "object_orientation_robust_rad": 0.6220518135899059,
+          "wrench_robust_mse": 0.985723801713059,
+          "object_success_robust_fraction": 0.15269461077844312,
+          "unstable_world_fraction": 0.0,
+          "robot_position_robust_mse": 0.0028820582665503025
+        },
+        "candidate": {
+          "robot_position_mse": 0.004499436821788549,
+          "robot_rotation_mse": 0.9633290372399036,
+          "wrench_mse": 0.9901882101228272,
+          "object_position_mean_m": 0.10100339569115152,
+          "object_position_p95_m": 0.2534654691815376,
+          "object_orientation_mean_rad": 0.6430745641198213,
+          "object_success_fraction": 0.38922155688622756,
+          "contact_proximity_mean_m": 0.12679028318745925,
+          "per_object_contact_proximity_mean_m": [
+            0.12246434803268413,
+            0.20221122661682633
+          ],
+          "per_hand_object_contact_proximity_mean_m": [
+            [
+              0.12703792618369325,
+              null
+            ],
+            [
+              0.05112169676185822,
+              0.20221122661682633
+            ]
+          ],
+          "contact_proximity_active_labels": 4412,
+          "per_object_position_p95_m": [
+            0.11059304736554594,
+            0.2556487739086151
+          ],
+          "per_object_orientation_p95_rad": [
+            0.6404337671730271,
+            1.1051125087013236
+          ],
+          "per_object_gate_success_fraction": [
+            0.23053892215568864,
+            0.09281437125748503
+          ],
+          "robot_position_rms_m": 0.11618223041296005,
+          "all_errors_finite": true,
+          "full_horizon": true,
+          "per_object_position_mean_m": [
+            0.039702725195197644,
+            0.1623040661871054
+          ],
+          "per_object_orientation_mean_rad": [
+            0.4181759214333779,
+            0.8679732068062658
+          ],
+          "object_position_robust_m": 0.1010033954827193,
+          "object_orientation_robust_rad": 0.6430745641198213,
+          "wrench_robust_mse": 0.9901882101228272,
+          "object_success_robust_fraction": 0.10479041916167664,
+          "unstable_world_fraction": 0.0,
+          "robot_position_robust_mse": 0.0030183803755789995
+        },
+        "proposal_source": "upper_trial_1803",
+        "deterministic_confirmation": true
+      },
+      "selected_trial": 1803,
+      "published_finger_rms_rad": 0.0
+    },
+    "local_u32": {
+      "variant": "local_u32",
+      "seed": 43,
+      "dimensions": 56,
+      "accepted": false,
+      "accepted_total": 0,
+      "rounds": 3,
+      "gate_pass_count": 29,
+      "improving_count": 1357,
+      "baseline_cost": 20.78549847116537,
+      "best_raw_cost": 17.53069706581579,
+      "best_valid_cost": 20.038626180592658,
+      "seconds": 151.68939041998237,
+      "baseline": {
+        "robot_position_mse": 0.004573183134198189,
+        "robot_rotation_mse": 0.9726630692397641,
+        "wrench_mse": 0.9878001984046854,
+        "object_position_mean_m": 0.10149677520029492,
+        "object_position_p95_m": 0.25208805948495866,
+        "object_orientation_mean_rad": 0.6202088190111049,
+        "object_success_fraction": 0.39520958083832336,
+        "contact_proximity_mean_m": 0.12742319285713163,
+        "per_object_contact_proximity_mean_m": [
+          0.12376175923601047,
+          0.20318026645487997
+        ],
+        "per_hand_object_contact_proximity_mean_m": [
+          [
+            0.12844939643605868,
+            null
+          ],
+          [
+            0.05063991568045622,
+            0.20318026645487997
+          ]
+        ],
+        "contact_proximity_active_labels": 4412,
+        "per_object_position_p95_m": [
+          0.11255836635827991,
+          0.254274982213974
+        ],
+        "per_object_orientation_p95_rad": [
+          0.6389792080097829,
+          1.0711672682451088
+        ],
+        "per_object_gate_success_fraction": [
+          0.25149700598802394,
+          0.09580838323353294
+        ],
+        "robot_position_rms_m": 0.11713048070669174,
+        "all_errors_finite": true,
+        "full_horizon": true,
+        "per_object_position_mean_m": [
+          0.04083421469030311,
+          0.16215933571028673
+        ],
+        "per_object_orientation_mean_rad": [
+          0.41305374691898805,
+          0.8273638911032213
+        ],
+        "object_position_robust_m": 0.10149677513546483,
+        "object_orientation_robust_rad": 0.6202088190111049,
+        "wrench_robust_mse": 0.9878001984046854,
+        "object_success_robust_fraction": 0.19760479041916168,
+        "unstable_world_fraction": 0.0,
+        "robot_position_robust_mse": 0.0030742166563868523
+      },
+      "confirmation": {
+        "baseline": {
+          "robot_position_mse": 0.004573183134198189,
+          "robot_rotation_mse": 0.9726630692397641,
+          "wrench_mse": 0.9878001984046854,
+          "object_position_mean_m": 0.10149677520029492,
+          "object_position_p95_m": 0.25208805948495866,
+          "object_orientation_mean_rad": 0.6202088190111049,
+          "object_success_fraction": 0.39520958083832336,
+          "contact_proximity_mean_m": 0.12742319285713163,
+          "per_object_contact_proximity_mean_m": [
+            0.12376175923601047,
+            0.20318026645487997
+          ],
+          "per_hand_object_contact_proximity_mean_m": [
+            [
+              0.12844939643605868,
+              null
+            ],
+            [
+              0.05063991568045622,
+              0.20318026645487997
+            ]
+          ],
+          "contact_proximity_active_labels": 4412,
+          "per_object_position_p95_m": [
+            0.11255836635827991,
+            0.254274982213974
+          ],
+          "per_object_orientation_p95_rad": [
+            0.6389792080097829,
+            1.0711672682451088
+          ],
+          "per_object_gate_success_fraction": [
+            0.25149700598802394,
+            0.09580838323353294
+          ],
+          "robot_position_rms_m": 0.11713048070669174,
+          "all_errors_finite": true,
+          "full_horizon": true,
+          "per_object_position_mean_m": [
+            0.04083421469030311,
+            0.16215933571028673
+          ],
+          "per_object_orientation_mean_rad": [
+            0.41305374691898805,
+            0.8273638911032213
+          ],
+          "object_position_robust_m": 0.10149677513546483,
+          "object_orientation_robust_rad": 0.6202088190111049,
+          "wrench_robust_mse": 0.9878001984046854,
+          "object_success_robust_fraction": 0.19760479041916168,
+          "unstable_world_fraction": 0.0,
+          "robot_position_robust_mse": 0.0030742166563868523
+        },
+        "candidate": {
+          "robot_position_mse": 0.00410399679094553,
+          "robot_rotation_mse": 0.9223413294426807,
+          "wrench_mse": 0.9882176298162212,
+          "object_position_mean_m": 0.09854345577650475,
+          "object_position_p95_m": 0.2429804675281048,
+          "object_orientation_mean_rad": 0.7480554271099716,
+          "object_success_fraction": 0.37574850299401197,
+          "contact_proximity_mean_m": 0.11773172323461452,
+          "per_object_contact_proximity_mean_m": [
+            0.11472325916999689,
+            0.18826385426700576
+          ],
+          "per_hand_object_contact_proximity_mean_m": [
+            [
+              0.11914245070012791,
+              null
+            ],
+            [
+              0.04578886473670991,
+              0.18826385426700576
+            ]
+          ],
+          "contact_proximity_active_labels": 4412,
+          "per_object_position_p95_m": [
+            0.11390354186296438,
+            0.24506953209638596
+          ],
+          "per_object_orientation_p95_rad": [
+            0.645376904067859,
+            1.3222044693153805
+          ],
+          "per_object_gate_success_fraction": [
+            0.2215568862275449,
+            0.09281437125748503
+          ],
+          "robot_position_rms_m": 0.11095941066741943,
+          "all_errors_finite": true,
+          "full_horizon": true,
+          "per_object_position_mean_m": [
+            0.04120295194415431,
+            0.15588395960885518
+          ],
+          "per_object_orientation_mean_rad": [
+            0.42701202476017164,
+            1.0690988294597707
+          ],
+          "object_position_robust_m": 0.09854345552310972,
+          "object_orientation_robust_rad": 0.7480554271099716,
+          "wrench_robust_mse": 0.9882176298162212,
+          "object_success_robust_fraction": 0.10479041916167664,
+          "unstable_world_fraction": 0.0,
+          "robot_position_robust_mse": 0.0026431588921695948
+        },
+        "proposal_source": "upper_trial_907",
+        "deterministic_confirmation": true
+      },
+      "selected_trial": 907,
+      "published_finger_rms_rad": 0.0
+    }
+  },
+  "local_projection": {
+    "translation_step_m_per_axis": 0.02,
+    "cumulative_translation_m_per_axis": 0.03,
+    "shoulder_seconds": 0.5,
+    "outside_interval": "bitwise unchanged",
+    "full_hand_action_dim": 56,
+    "finger_step_rad": 0.2,
+    "cumulative_finger_rad": 0.52
+  },
+  "reproduction": "Frozen-policy probes: scripts/probe_local_refinement.py --checkpoint PATH --output FRESH_PATH --variant old_chunk|local_u2|local_u32|local_onset_u2|local_onset_u32 --seed 43. Local training launcher uses the existing repository data paths; assets and checkpoints are excluded from Git.",
+  "smoke_passed": true,
+  "final_probe_job": 46793,
+  "unit_validation": {
+    "initial_suite": "21 passed, 1 skipped",
+    "final_local_suite": "6 passed"
+  },
+  "source_hashes": {
+    "src/flash_chord/retargeting/local_correction.py": "c2c408b40a73182c228b135bfe5050b1464d088b7418b65bdc3af83965c6babf",
+    "src/flash_chord/retargeting/local_editor.py": "5747dd24bc5118903cd99fd1c00a122ad95047744f180cc86eccfca72d65dcb5",
+    "src/flash_chord/retargeting/parallel_editor.py": "39239e38f71e283a7ec9ae6aa5a328151cbb2414a2499f650dffe43857740f12",
+    "src/flash_chord/retargeting/ttsa_editor.py": "f4dd9e11850fe34b428fb3c5898facbefc339ae114f1f41336437a7905611738",
+    "src/flash_chord/retargeting/manipulation_bilevel.py": "a3c6f8d59df63f2c4a53570eac477d1aab05d99f23dc47b3d275dde4aaafc0c7",
+    "src/flash_chord/lifecycle/performance_voc.py": "53d2c138b7266956775e1ad40015e0399a6f5d05b13b77835f168b01e66db905",
+    "scripts/train_flash_sac.py": "0ba5620818d9412468c13b012f76b383ebbe29b200ce8f43270188fe66a765a0",
+    "tests/test_local_correction.py": "0ea310b7813aadeee950164a74fb75587826b20fb20d7dbbe512f779f2b6afb8",
+    "tests/retargeting/test_ttsa_editor.py": "af04df15d654ebee61477814eeb93cbf0708404ddc3ec2deebd70f7a86ad5638"
+  },
+  "training_jobs": {
+    "43": 46795,
+    "44": 46796,
+    "45": 46797
+  },
+  "training_dependency": 46793,
+  "contact_tolerance_revision": {
+    "old_m": 0.002,
+    "new_m": 0.01,
+    "target_contact_must_improve": true,
+    "both_object_pose_gates_unchanged": true,
+    "posthoc_on_exploratory_probe_data": true
+  },
+  "tests": {
+    "core_suite": "21 passed, 1 skipped",
+    "final_local_suite": "7 passed",
+    "gpu_smoke": "46782 completed, training/evaluation/3 videos/W&B sync passed"
+  },
+  "source_manifest_sha256": "a7183ce1598e5b0d3da9405b14aec569c724f0b1aa41f2b45a5bff0973f54f80"
+}

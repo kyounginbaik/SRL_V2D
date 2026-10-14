@@ -585,9 +585,9 @@ class TTSAReferenceEditor(ManipulationBilevel):
         context = jnp.tile(jnp.asarray([[0.,0.,1.]], dtype=jnp.float32), (worlds, 1))
         if self.upper is None:
             self.upper_config = TrainingConfig(seed=self.training.seed+20000, world_count=worlds,
-                total_environment_steps=((100000 + worlds - 1)//worlds)*worlds, updates_per_collection=2, mixed_precision=False,
+                total_environment_steps=((100000 + worlds - 1)//worlds)*worlds, updates_per_collection=int(self.options.get("upper_updates", 2)), mixed_precision=False,
                 network=NetworkConfig(actor_blocks=2,actor_hidden_dim=64,critic_blocks=2,critic_hidden_dim=128,
-                    actor_head_mode="residual",residual_mean_head="zero_dense",initial_normalized_std=.15),
+                    actor_head_mode="residual",residual_mean_head="zero_dense",initial_normalized_std=float(self.options.get("upper_initial_std", .15))),
                 optimization=OptimizationConfig(learning_rate_initial=1e-4,learning_rate_peak=1e-4,learning_rate_end=1e-4,
                     learning_rate_schedule_updates=100000),
                 replay=ReplayConfig(capacity=max(1024, worlds*2),minimum_size=4,batch_size=min(256, max(16, worlds)),n_step=1),
@@ -601,7 +601,7 @@ class TTSAReferenceEditor(ManipulationBilevel):
         else:
             # The learner donates its state. Never alias its observation/context
             # with the separately supplied Transition buffers at a TTSA boundary.
-            self.upper = self.upper.replace(replay=clear_replay(self.upper.replay),
+            self.upper = self.upper.replace(replay=self.upper.replay if self.options.get("keep_frozen_replay", False) else clear_replay(self.upper.replay),
                 observation=jnp.array(obs,copy=True),critic_context=jnp.array(context,copy=True))
         action, exploration, key = self.executables.initial_action(self.upper.actor.params,self.upper.actor.batch_stats,
             self.upper.replay.size,obs,self.upper.exploration,self.upper.key)
