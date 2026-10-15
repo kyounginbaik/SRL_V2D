@@ -1,11 +1,12 @@
 RUN UNIRETARGET ON ANOTHER GPU SERVER
-Current method: wrench_hypergradient (updated 2026-10-15)
+Current method: wrench_hypergradient, measured-feedback bounded validation (2026-10-16)
 
 Repository: https://github.com/kyounginbaik/SRL_V2D
 Agent handoff: AGENT_HANDOFF.txt in this directory
 Method/math: ../flash_chord/docs/wrench_hypergradient.txt
-Implementation baseline: 721cf423fec736430b158db1d3009c3824b856ea or a later
-main commit containing these instructions. Record the actual checkout commit.
+Use a main commit containing the measured trial feedback and bounded-window adaptation
+changes described here. Record the actual checkout commit; older 2026-10-15 code
+does not contain this feedback loop.
 
 Always pass --upper wrench_hypergradient. The CLI's default is still the older
 Gaussian candidate-search method. These instructions reproduce the NEW method.
@@ -17,8 +18,8 @@ episodes are 3, 5, 6 and 35. Each invocation uses one allocated GPU.
 Use Linux, NVIDIA Container Toolkit and Docker access. The pinned Dockerfile
 requires a compatible NVIDIA driver >=580. Reserve one GPU, 12 CPUs and 96GB
 host RAM per job, as in the submitted smoke recipe. The existing cluster uses
-L40S 48GB and B200 GPUs; the new full-training memory fit/runtime must still be
-validated. Inspect disk space before downloading inputs and building images.
+L40S 48GB and B200 GPUs. The smoke now uses the full 2,048-world shape
+to validate memory fit and the new feedback loop before full training. Inspect disk space before downloading inputs and building images.
 Host Python 3 only needs the standard library; dependencies run in Docker.
 
   nvidia-smi
@@ -68,7 +69,7 @@ The original cluster's flash_chord:mixed-ep01-media tag is not required elsewher
 
 Choose a NEW root on persistent storage. This example stays inside the checkout:
 
-  export UNIRETARGET_RUN_ROOT="$PWD/.uniretarget/wrench-hypergradient-run1"
+  export UNIRETARGET_RUN_ROOT="$PWD/.uniretarget/wrench-feedback-fast-run1"
   export UNIRETARGET_IMAGE=uniretarget:chord100m
 
 Seeds and episodes may share this root; each has a separate run directory and
@@ -125,12 +126,26 @@ Repeat for seeds 44 and 45 on separate allocated GPUs, or sequentially on one.
 Use the scheduler alternative below when available. For a standalone server,
 keep the launch process in a persistent session and retain stdout/stderr.
 
-The smoke runs targeted CPU tests, then 64-world training for 131,072 MAIN
-environment transitions. It performs one upper round at 65,536 and saves final
-checkpoint videos. Full lower adaptation is retained: episode 1 uses matched
-checkpoints of 50,048 / 100,032 / 200,000 transitions PER branch, separate from
-main training. One unchanged control is trained and reused across up to four
-candidate windows. Main training pauses during these comparisons.
+The smoke runs targeted CPU tests, then 2,048-world training for 524,288 MAIN
+environment transitions. It uses the same batch 1,024 and replay settings as
+full training, performs one upper round at 501,760, and saves final videos.
+Matched complete FlashSAC adaptation uses three checkpoints per branch. The
+first checkpoint is the later of 64 vector steps or the scoring interval end
+plus 16 steps; the next checkpoints add 32 steps each. A strict cap of 448
+vector steps applies, including all checkpoints. Episode 1 fits within the cap.
+
+For an early scoring interval this can be 64 / 96 / 128 vector steps, or
+131,072 / 196,608 / 262,144 transitions per branch. Later windows receive more
+time but never exceed 917,504 transitions per branch at 2,048 worlds. Actual
+coverage and lower actor/critic learning are checked, not assumed from a budget.
+One unchanged control curve is reused across up to four candidate windows.
+All selected proposals are still tested. Main training pauses for this work.
+
+After each candidate/control checkpoint, the unassisted evaluation gives actual
+cost labels to the upper critic. Complete rollout segments yield discounted
+Monte Carlo targets alongside matching-branch TD targets. This happens even
+for rejected candidates. Each dataset remains tied to its exact reference and
+lower actor, and is never inserted into the current-reference actor replay.
 
 Require process exit code zero AND this report to contain passed=true:
 
@@ -140,6 +155,8 @@ Require process exit code zero AND this report to contain passed=true:
 
 The validator requires actual learned proposals, nonzero lower actor/critic
 learning, finite saved state, identical initial-state audits and saved media.
+It also requires measured feedback for every candidate/control checkpoint,
+nonzero upper-critic parameter updates, and adaptation within the configured cap.
 A completed training stage alone is insufficient: the validator runs afterward.
 Zero accepted edits can pass integration; report that outcome honestly and do
 not infer task improvement merely from a nonzero upper gradient.
@@ -164,11 +181,13 @@ smoke followed automatically by fresh full training in the same allocation.
 A failed smoke prevents full training. Do not use full after already running
 smoke for that same episode/seed/root; rerunning smoke rejects existing outputs.
 
-Full episode-1 adaptation checkpoints are 684,032 / 1,368,064 / 2,736,128 EXTRA
-transitions per branch. Up to one control plus four candidates are trained per
-upper round. These counts are not included in the 100.7M main budget, so runtime
-can greatly exceed older runs. Comparisons extend while changing and reject
-inconclusive edits at the cap. Budget depends on episode length/world count.
+Full training uses the SAME bounded adaptation settings as the smoke. These
+extra transitions are separate from the 100.7M main budget. At most one control
+plus four candidates are trained per upper round. Later failure windows take
+more work than early windows. Comparisons extend only to the three scheduled
+checkpoints and reject inconclusive edits at the cap; the empirical stability
+and physical guards still apply. Faster validation may reject an edit whose
+benefit requires more lower training. No lower-convergence claim is made.
 There are no 2,048 upper candidates: there is one learned proposal per window.
 
 7. SLURM: THREE SMOKE JOBS
@@ -216,15 +235,19 @@ Evidence inside that directory:
   wandb_sync/run.json                      actual W&B URL
 
 Expected W&B smoke names:
-  wrench-hypergradient-full-d56-w64-smoke-episode_000001-s43
-  wrench-hypergradient-full-d56-w64-smoke-episode_000001-s44
-  wrench-hypergradient-full-d56-w64-smoke-episode_000001-s45
+  wrench-feedback-fast-full-d56-w2048-smoke-episode_000001-s43
+  wrench-feedback-fast-full-d56-w2048-smoke-episode_000001-s44
+  wrench-feedback-fast-full-d56-w2048-smoke-episode_000001-s45
 Here "full-d56" means full-hand edits, not full-length training.
 
 Useful panels:
   hypergradient/accepted, hypergradient/critic_heldout_td_mae
   hypergradient/gradient_norm, hypergradient/response_gradient_norm
   hypergradient/predicted_wrench_return_gain, hypergradient/actual_local_cost_gain
+  upper_feedback/trial_feedback_complete_rows
+  upper_feedback/trial_critic_parameter_delta_l2_max
+  upper_feedback/trial_critic_heldout_return_mae_before
+  upper_feedback/trial_critic_heldout_return_mae_after
   adaptation/*, reference_change/*
   progress/current_first_failure_seconds, progress/best_success_prefix_seconds
   videos/physics_checkpoint, videos/assisted_voc, videos/reference_overlay
@@ -256,10 +279,10 @@ hand-keypoint reward weight=2 and finger-joint tracking weight=0.25. VOC starts
 at 1 and decreases by performance gates. Upper evaluations remain VOC=0.
 Object trajectories/contact targets are immutable during refinement.
 
-As of initial submission (2026-10-15), 31 focused core CPU tests, four launcher
-tests and three exact composed launch configurations passed. A fresh Docker
-build, GPU integration, memory fit and actual refinement must be checked on the
-destination server. Prior experiments do not establish this method's success.
+Run the focused CPU checks and full-shape GPU smoke on the destination server.
+The smoke validates the measured feedback connection and bounded adaptation;
+it does not prove critic accuracy, convergence, or successful reference edits.
+Record the measured round duration rather than extrapolating from main steps.
 
 Legacy --upper gaussian / --upper flashsac remain available for the earlier
 candidate-search/convex-head-response ablation. They use different algorithms

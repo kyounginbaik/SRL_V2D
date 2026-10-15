@@ -31,11 +31,18 @@ class AdaptationConfig:
     position_tolerance_m: float = .003
     orientation_tolerance_rad: float = .03
     success_tolerance: float = .02
+    budget_mode: str = 'reference_passes'
+    minimum_vector_steps: int = 64
+    checkpoint_stride_vector_steps: int = 32
+    maximum_vector_steps: int = 256
+    window_tail_vector_steps: int = 16
 
     def __post_init__(self):
         counts = (*self.checkpoints, *self.minimum_reference_passes, self.replay_capacity,
                   self.replay_minimum_size, self.minimum_actor_updates,
-                  self.minimum_critic_updates, self.minimum_window_samples, self.stable_comparisons)
+                  self.minimum_critic_updates, self.minimum_window_samples, self.stable_comparisons,
+                  self.minimum_vector_steps, self.checkpoint_stride_vector_steps,
+                  self.maximum_vector_steps, self.window_tail_vector_steps)
         if any(isinstance(v, bool) or int(v) != v or v <= 0 for v in counts):
             raise ValueError('positive integer adaptation counts required')
         if (len(self.checkpoints) < 2 or len(self.checkpoints) != len(self.minimum_reference_passes)
@@ -48,17 +55,66 @@ class AdaptationConfig:
                       self.orientation_tolerance_rad, self.success_tolerance)
         if any(not np.isfinite(v) or v <= 0 for v in tolerances):
             raise ValueError('finite positive adaptation stability tolerances required')
+        if self.budget_mode not in ('reference_passes', 'bounded_window'):
+            raise ValueError('adaptation budget_mode must be reference_passes or bounded_window')
+        if (self.budget_mode == 'bounded_window' and self.maximum_vector_steps <
+                self.minimum_vector_steps+(len(self.checkpoints)-1)*self.checkpoint_stride_vector_steps):
+            raise ValueError('bounded adaptation must fit all distinct checkpoints inside its hard cap')
 
-    def budgets(self, worlds, frames):
-        """Aggregate transitions; enough vector steps to span the demonstration.
+    def budgets(self, worlds, frames, *, region=None):
+        """Aggregate transitions for equally budgeted candidate/control branches.
 
-        These are nominal opportunities, not claims that failed worlds actually
-        reached the end. Observed frame coverage is checked separately.
+        Legacy reference-pass budgets span whole demonstrations. Bounded-window
+        budgets instead allow one visit to the shared scoring interval plus a
+        short tail, followed by nearby checkpoints. Neither schedule guarantees
+        coverage: failed worlds can reset before the interval. Readiness always
+        checks observed frame samples, and the bounded mode never silently grows
+        its vector-step cap to reach a late interval.
         """
-        if worlds < 1 or frames < 2:
+        if (isinstance(worlds, bool) or isinstance(frames, bool) or
+                int(worlds) != worlds or int(frames) != frames or worlds < 1 or frames < 2):
             raise ValueError('positive world count and at least two reference frames required')
+        worlds, frames = int(worlds), int(frames)
+        if self.budget_mode == 'bounded_window':
+            stop = self._region_stop(region, frames)
+            warmup = (self.replay_minimum_size+worlds-1)//worlds
+            desired_first = max(self.minimum_vector_steps, stop+self.window_tail_vector_steps,
+                                warmup+self.window_tail_vector_steps)
+            last_first = self.maximum_vector_steps-(len(self.checkpoints)-1)*self.checkpoint_stride_vector_steps
+            first = min(desired_first, last_first)
+            if first <= warmup:
+                raise ValueError('bounded adaptation cap cannot fit replay warmup before the first checkpoint')
+            return tuple((first+i*self.checkpoint_stride_vector_steps)*worlds
+                         for i in range(len(self.checkpoints)))
         return tuple(int(np.ceil(max(request, passes*(frames-1)*worlds)/worlds))*worlds
                      for request, passes in zip(self.checkpoints, self.minimum_reference_passes))
+
+    @staticmethod
+    def _region_stop(region, frames):
+        if region is None:
+            raise ValueError('bounded-window adaptation requires the shared scoring region')
+        start, stop = region['start_frame'], region['stop_frame_exclusive']
+        if (isinstance(start, bool) or isinstance(stop, bool) or int(start) != start or int(stop) != stop
+                or not 0 <= start < stop <= frames):
+            raise ValueError('adaptation scoring region must be a nonempty interval inside the reference')
+        return int(stop)
+
+    def budget_report(self, worlds, frames, *, region=None):
+        """Expose the cap and nominal coverage without claiming actual readiness."""
+        budgets = self.budgets(worlds, frames, region=region)
+        vectors = tuple(b//worlds for b in budgets)
+        report = dict(mode=self.budget_mode, environment_steps=list(budgets),
+                      vector_steps=list(vectors), world_count=int(worlds))
+        if self.budget_mode == 'bounded_window':
+            stop = self._region_stop(region, frames)
+            report.update(maximum_vector_steps=self.maximum_vector_steps,
+                scoring_stop_frame_exclusive=stop,
+                required_vector_steps_with_tail=stop+self.window_tail_vector_steps,
+                first_checkpoint_can_reach_scoring_end=vectors[0] >= stop,
+                final_checkpoint_can_reach_scoring_end=vectors[-1] >= stop,
+                final_checkpoint_includes_requested_tail=vectors[-1] >= stop+self.window_tail_vector_steps,
+                cap_reached=vectors[-1] == self.maximum_vector_steps)
+        return report
 
 
 LEARNING_FIELDS = ('actor', 'critic', 'target_critic', 'temperature',
@@ -207,22 +263,32 @@ def training_readiness(report, settings, region, *, require_coverage=True):
 
 def comparison_stable(previous, current, settings):
     """Empirical plateau of both branches AND their advantage; not convergence."""
+    return not comparison_instability_reasons(previous, current, settings)
+
+
+def comparison_instability_reasons(previous, current, settings):
+    """Name every failed plateau check; preserve the acceptance tolerances."""
     def close(a, b, absolute=None):
         a, b = np.asarray(a), np.asarray(b)
         tolerance = absolute if absolute is not None else settings.cost_relative_tolerance*np.maximum(1., np.maximum(abs(a), abs(b)))
         return bool(a.shape == b.shape and np.isfinite(a).all() and np.isfinite(b).all()
                     and np.all(abs(a-b) <= tolerance))
+    reasons = []
     for side in ('candidate', 'control'):
         old, new = previous[side], current[side]
         if not close(old['cost'], new['cost']):
-            return False
+            reasons.append(side+'_cost_not_stable')
         for key, tolerance in (
             ('local_per_object_position_mean_m', settings.position_tolerance_m),
             ('local_per_object_orientation_mean_rad', settings.orientation_tolerance_rad),
             ('local_object_success_robust_fraction', settings.success_tolerance),
             ('local_cws_tolerance_error', settings.cost_relative_tolerance)):
             if not close(old['metrics'][key], new['metrics'][key], tolerance):
-                return False
+                reasons.append(side+'_'+key+'_not_stable')
     old_gain = previous['control']['cost']-previous['candidate']['cost']
     new_gain = current['control']['cost']-current['candidate']['cost']
-    return bool(close(old_gain, new_gain) and (old_gain > 1e-4) == (new_gain > 1e-4))
+    if not close(old_gain, new_gain):
+        reasons.append('candidate_advantage_not_stable')
+    if (old_gain > 1e-4) != (new_gain > 1e-4):
+        reasons.append('candidate_advantage_changed_sign')
+    return reasons

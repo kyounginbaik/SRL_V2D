@@ -3,6 +3,9 @@
 UniRetarget refines a reconstructed robot reference using feedback from a physics-trained
 controller. The current implementation uses **lower FlashSAC training**, an **upper actor
 with a TD wrench-cost critic**, and local corrections to both wrists and all finger joints.
+The critic also learns from measured candidate/control rollouts, including rejected edits.
+The current `wrench-feedback-fast` recipe bounds validation work while retaining every
+selected window, rather than ranking windows and discarding proposals before testing.
 Five prepared Track 3 episodes, object meshes, collision assets and robot assets are included
 through Git LFS.
 
@@ -38,19 +41,23 @@ launcher logs offline. It does not automatically mount the host's W&B login file
 
 | Setting | Smoke | Full training (`pilot` output phase) |
 | --- | --- | --- |
-| Training worlds | 64 | 2,048 |
-| Main environment transitions | 131,072 | 100,663,296 |
-| Upper update interval | 65,536; one round | 501,760; about 200 rounds |
+| Training worlds | 2,048 | 2,048 |
+| Main environment transitions | 524,288 | 100,663,296 |
+| Upper update interval | 501,760; one round | 501,760; about 200 rounds |
 | Upper proposals | One per selected window, up to four | Same |
 | Upper action | Local 56D correction: 12 wrist + 44 finger dimensions | Same |
-| Episode 1 adaptation checkpoints, per branch | 50,048 / 100,032 / 200,000 | 684,032 / 1,368,064 / 2,736,128 |
+| Adaptation checkpoints, per branch | Three, chosen from the scoring interval; at most 448 vector steps | Same |
 | Checkpoint/media interval | Final checkpoint | 1,003,520 plus final checkpoint |
 
 Adaptation transitions are additional to the main training budget. Each comparison trains
 an unchanged-reference control and candidate controllers from the same incoming learner
 on fresh experience. The main run pauses during this work. The control curve is reused
-across up to four candidate windows; full training can take substantially longer than the
-main step count suggests. The 2,048 worlds are training worlds, not 2,048 upper candidates.
+across up to four candidate windows. Early windows can use 64 / 96 / 128 vector steps
+(131,072 / 196,608 / 262,144 transitions per branch). Later windows receive more time to
+reach the scoring interval, with a strict 448-vector-step cap (917,504 transitions).
+The cap permits reaching episode 1's final frames; readiness still checks actual coverage.
+Runtime also includes physics evaluations and media. The 2,048 worlds are training worlds,
+not 2,048 upper candidates. This profile replaces the older full-horizon 1 / 2 / 4-pass budget.
 
 `--phase smoke` stops after integration validation. Once its report says `passed: true`,
 use `--phase pilot` with the same episode, seed and run root to start fresh full training.
@@ -60,10 +67,15 @@ continue the smoke weights. There is no complete training resume; keep the check
 unchanged while jobs run and use a fresh checkout/root for changes or retries.
 
 The upper differentiates through three temporary lower actor learning updates to propose
-an edit. Longer, complete FlashSAC adaptation then checks that edit in physics against
+an edit. Bounded, complete FlashSAC adaptation then checks that edit in physics against
 an equally trained unchanged control. Accepted edits publish the reference and the complete
 adapted lower learning state together; rejected edits retain the incoming pair and replay.
-This is a finite-step bilevel approximation. Long adaptation is validation, outside the
+At each adaptation checkpoint, the unassisted evaluation's actual costs train the upper
+critic, even when the reference is rejected. Complete rollout segments provide discounted
+return targets alongside branch-matched TD targets. Branch observations stay paired with
+their exact reference and lower actor; they are not relabeled as accepted-reference data
+or mixed into the main actor replay. This is a finite-step bilevel approximation.
+Physical adaptation is validation, outside the
 gradient calculation; no full neural-RL convergence guarantee is claimed.
 
 Both hands share a fixed demonstration start. Window selection uses object failure and
@@ -74,9 +86,10 @@ physics videos, and original/current reference overlays at 45% original opacity.
 Six `track3_estimated/*` metrics use reference poses as proxy ground truth; CD-O is mesh
 self-comparison, not a measurement against the hidden scan.
 
-The initial submission passed 31 focused core tests, four launcher tests and three exact
-launch-configuration checks. These establish integration checks on CPU, not improved
-GPU task performance. Validate the smoke report and measured refinement on your server.
+Validate the new smoke report on your server. It now requires measured feedback from
+every tested branch, actual upper-critic parameter changes, and adaptation within the
+configured cap, in addition to finite learning, fixed starts and checkpoint videos.
+Passing integration does not establish improved task performance or require accepting an edit.
 
 | Code | Purpose |
 | --- | --- |

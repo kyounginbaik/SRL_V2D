@@ -1,5 +1,6 @@
 """CPU-only checks for portable recipes and both W&B upper-record schemas."""
 import hashlib
+import copy
 import importlib.util
 import json
 from pathlib import Path
@@ -41,17 +42,18 @@ class LaunchRecipesTest(unittest.TestCase):
                                     text=True, capture_output=True)
             config = json.loads(result.stdout)
             command = config['training_command']
-            self.assertEqual(config['worlds'], 64)
+            self.assertEqual(config['worlds'], 2048)
             self.assertEqual(config['planned_upper_search_rounds'], 1)
             self.assertEqual(config['upper_action_dimension'], 56)
             self.assertEqual(config['maximum_proposals_per_round'], 4)
             self.assertNotIn('upper_trials', config)
             self.assertNotIn('lower_surrogate', config)
             self.assertIn('+bilevel=wrench_hypergradient', command)
-            self.assertIn('bilevel.interval=65536', command)
-            self.assertIn('training.total_environment_steps=131072', command)
-            self.assertIn('training.replay.capacity=262144', command)
-            self.assertIn('training.replay.minimum_size=8192', command)
+            self.assertIn('bilevel.interval=501760', command)
+            self.assertIn('+adaptive_voc.interval=501760', command)
+            self.assertIn('training.total_environment_steps=524288', command)
+            self.assertIn('training.replay.capacity=1048576', command)
+            self.assertIn('training.replay.minimum_size=102400', command)
             self.assertIn('training.replay.batch_size=1024', command)
             self.assertIn('reset.fixed_initial_state=true', command)
             self.assertFalse(any(arg.startswith('+bilevel.') for arg in command))
@@ -65,8 +67,57 @@ class LaunchRecipesTest(unittest.TestCase):
         self.assertIn('training.total_environment_steps=100663296', command)
         self.assertIn('training.replay.capacity=1048576', command)
         self.assertIn('bilevel.interval=501760', command)
-        self.assertEqual(config['adaptation_minimum_reference_passes'], [1, 2, 4])
+        self.assertIn('bilevel.adaptation.budget_mode=bounded_window', command)
+        self.assertIn('bilevel.adaptation.maximum_vector_steps=448', command)
+        self.assertEqual(config['adaptation_maximum_transitions_per_branch'], 917504)
+        self.assertEqual(config['experiment_name'], 'wrench-feedback-fast')
+        self.assertNotIn('adaptation_minimum_reference_passes', config)
         self.assertNotIn('lower_response_error_tolerance', config)
+
+    def test_smoke_rejects_disconnected_feedback_or_exceeded_cap(self):
+        validate = module('hypergradient_smoke').validate_feedback_and_budget
+        config = dict(worlds=2048, adaptation_maximum_vector_steps=256,
+                      adaptation_maximum_transitions_per_branch=524288)
+        budgets = [131072, 196608, 262144]
+        row = dict(adaptation_checkpoints=budgets,
+            adaptation_budget=dict(mode='bounded_window', world_count=2048,
+                maximum_vector_steps=256, environment_steps=budgets, vector_steps=[64, 96, 128]),
+            candidates=[dict(gradient_norm=1., accepted=False, window=dict(window_id=0),
+                adaptation=dict(checkpoints=[dict(environment_steps=count) for count in budgets]))],
+            critic_feedback=[dict(branch=branch, environment_steps=count,
+                trial_feedback_rows=40, trial_feedback_complete_rows=40,
+                trial_critic_skipped=0, trial_critic_updates=32,
+                trial_critic_parameter_delta_l2=.1)
+                for branch in ('noedit', 'window_0') for count in budgets])
+        self.assertEqual(validate(row, config)['critic_feedback_complete_rows'], 240)
+        missing = copy.deepcopy(row)
+        missing['critic_feedback'] = [r for r in missing['critic_feedback'] if r['branch'] == 'noedit']
+        with self.assertRaisesRegex(AssertionError, 'Missing candidate/control'):
+            validate(missing, config)
+        unchanged = copy.deepcopy(row)
+        unchanged['critic_feedback'][-1]['trial_critic_parameter_delta_l2'] = 0
+        with self.assertRaisesRegex(AssertionError, 'did not change'):
+            validate(unchanged, config)
+        unbounded = copy.deepcopy(config)
+        unbounded['adaptation_maximum_transitions_per_branch'] = 200000
+        with self.assertRaises(AssertionError):
+            validate(row, unbounded)
+
+    def test_feedback_panels_include_rejected_trial_learning(self):
+        summary = module('wandb_sync').feedback_summary
+        result = summary([dict(branch='window_0', accepted=False, trial_critic_skipped=0,
+                               trial_feedback_rows=30, trial_feedback_complete_rows=20,
+                               trial_feedback_discarded_rows=10, trial_feedback_trajectories=1,
+                               trial_critic_parameter_delta_l2=.2,
+                               trial_critic_heldout_return_mae_before=3.,
+                               trial_critic_heldout_return_mae_after=1.),
+                          dict(branch='noedit', trial_critic_skipped=1,
+                               trial_feedback_rows=1, trial_feedback_discarded_rows=1)])
+        self.assertEqual(result['fitted_branch_checkpoints'], 1)
+        self.assertEqual(result['trial_feedback_complete_rows'], 20)
+        self.assertEqual(result['trial_feedback_discarded_rows'], 11)
+        self.assertEqual(result['trial_critic_parameter_delta_l2_max'], .2)
+        self.assertEqual(result['trial_critic_heldout_return_mae_after'], 1.)
 
     def test_upper_records_accept_both_engines_and_skipped_windows(self):
         summary = module('wandb_sync').candidate_summary

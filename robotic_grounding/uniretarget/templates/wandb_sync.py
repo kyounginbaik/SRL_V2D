@@ -36,6 +36,24 @@ def candidate_summary(candidates):
     return result
 
 
+def feedback_summary(records):
+    """Keep per-branch details local while exposing the measured feedback loop."""
+    fitted = [record for record in records if not record.get('trial_critic_skipped', True)]
+    result = dict(branch_checkpoints=len(records), fitted_branch_checkpoints=len(fitted))
+    for key in ('trial_feedback_rows', 'trial_feedback_complete_rows',
+                'trial_feedback_discarded_rows', 'trial_feedback_trajectories'):
+        result[key] = sum(record.get(key, 0) for record in records)
+    for key in ('trial_critic_heldout_return_mae_before', 'trial_critic_heldout_return_mae_after',
+                'trial_critic_prediction_before', 'trial_critic_prediction_after',
+                'trial_critic_measured_return', 'trial_critic_train_loss'):
+        values = [record[key] for record in fitted if key in record]
+        if values:
+            result[key] = sum(values)/len(values)
+    result['trial_critic_parameter_delta_l2_max'] = max(
+        (record.get('trial_critic_parameter_delta_l2', 0) for record in fitted), default=0)
+    return result
+
+
 def main():
     import cv2
     import wandb
@@ -73,11 +91,13 @@ def main():
     run_id = f'{os.environ.get("UNIRETARGET_RUN_TAG", "chord100m")}-{args.phase}-{args.episode}-{args.variant}-s{args.seed}'
     config = json.loads(config_path.read_text())
     hypergradient = config.get('engine') == 'wrench_hypergradient'
-    name = (f'wrench-hypergradient-full-d56-w{config["worlds"]}-{args.phase}-{args.episode}-s{args.seed}'
+    experiment = config.get('experiment_name', 'wrench-hypergradient' if hypergradient else 'chord-fixed-start')
+    experiment_date = config.get('experiment_date', '20261015')
+    name = (f'{experiment}-full-d56-w{config["worlds"]}-{args.phase}-{args.episode}-s{args.seed}'
             if hypergradient else
             f'chord-fixed-start-{config.get("upper_optimizer", "gaussian")}-d56-c{config["upper_trials"]}-{args.phase}-{args.episode}-s{args.seed}')
     run = wandb.init(entity=os.environ.get('WANDB_ENTITY', 'DexDreamer'), project=os.environ.get('WANDB_PROJECT', 'v2d-track3-uniretarget'),
-                     group=f'{"wrench-hypergradient" if hypergradient else "chord-fixed-start"}-20261015-{args.phase}', id=run_id,
+                     group=f'{experiment}-{experiment_date}-{args.phase}', id=run_id,
                      name=name,
                      resume='allow', dir=str(work), config=config)
     run.define_metric('environment_steps')
@@ -118,6 +138,10 @@ def main():
                     record.update(candidate_summary(candidates))
                     # Full per-candidate evidence stays in search_batches/*/scores.json.
                 if prefix == 'upper/':
+                    feedback = record.pop('critic_feedback', [])
+                    if feedback:
+                        run.log({'environment_steps': int(step),
+                                 **flatten(feedback_summary(feedback), 'upper_feedback/')})
                     failure = record.pop('failure_context', {})
                     record['failure_time_seconds'] = failure.get('failure_seconds')
                     record['error_onset_seconds'] = failure.get('onset_seconds')

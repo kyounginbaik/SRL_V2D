@@ -3,7 +3,7 @@ from pathlib import Path
 import argparse,json,os,subprocess,sys,hashlib
 B=Path(__file__).resolve().parents[1]
 def main():
- p=argparse.ArgumentParser();p.add_argument('--phase',choices=['smoke','pilot'],default='smoke');p.add_argument('--seed',type=int,default=42);p.add_argument('--worlds',type=int,default=None);p.add_argument('--dry-run',action='store_true');a=p.parse_args();a.worlds=a.worlds or (64 if a.phase=='smoke' else 2048)
+ p=argparse.ArgumentParser();p.add_argument('--phase',choices=['smoke','pilot'],default='smoke');p.add_argument('--seed',type=int,default=42);p.add_argument('--worlds',type=int,default=None);p.add_argument('--dry-run',action='store_true');a=p.parse_args();a.worlds=a.worlds or (64 if a.phase=='smoke' and '__UPPER_OPTIMIZER__'!='wrench_hypergradient' else 2048)
  source_manifest=B.parent/'source_manifest.json'
  source_hashes=json.loads(source_manifest.read_text())
  for relative,checksum in source_hashes.items():

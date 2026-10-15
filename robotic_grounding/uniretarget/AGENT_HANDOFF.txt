@@ -1,5 +1,5 @@
 AGENT HANDOFF: current UniRetarget wrench-hypergradient experiment
-Updated 2026-10-15
+Updated 2026-10-16: measured trial feedback and bounded adaptation
 
 Set up the current UniRetarget implementation on this GPU server and reproduce
 THREE EPISODE-1 SMOKE RUNS, seeds 43, 44, 45. Use --upper wrench_hypergradient
@@ -9,7 +9,8 @@ the smoke validation succeeds; the commands are documented below in RUNNING.txt.
 
 Repository: https://github.com/kyounginbaik/SRL_V2D
 Checkout: current main in a new isolated directory; record git rev-parse HEAD.
-Implementation baseline: 721cf423fec736430b158db1d3009c3824b856ea or later.
+Use a commit containing the 2026-10-16 measured-feedback/bounded-validation
+changes. Earlier wrench-hypergradient commits lack the trial feedback loop.
 Full setup/commands: robotic_grounding/uniretarget/RUNNING.txt
 Method/math: robotic_grounding/flash_chord/docs/wrench_hypergradient.txt
 
@@ -32,15 +33,25 @@ partition/account, not the method. Keep a manifest of job IDs, roots, exact code
 commit, image IDs, device types and W&B URLs. Do not submit duplicate jobs.
 
 Smoke contract:
-- 64 worlds, 131,072 main transitions, one upper round at 65,536.
+- 2,048 worlds, 524,288 main transitions, one upper round at 501,760.
+  Same batch 1,024 and replay settings as full training, so GPU shape is tested.
 - Upper: 56D local full-hand correction, one actor proposal per selected window,
   up to four windows chosen from baseline object failure/onset/history.
 - Upper TD critic learns discounted wrench-support cost. Proposal gradients
   differentiate three temporary lower actor learning updates.
 - Actual validation trains the full lower FlashSAC on fresh experience for
   both candidate and unchanged references, starting from the same learner.
-- Episode 1 matched checkpoints: 50,048 / 100,032 / 200,000 extra transitions
-  per branch. Main training pauses; do not bypass or shrink this validation.
+- Adaptation uses three checkpoints chosen from the scoring interval: at least
+  64 vector steps, then two 32-step increments, with 16 steps of desired tail.
+  Strict cap: 448 vector steps (917,504 transitions per branch at 2,048 worlds).
+  Early intervals can use 64 / 96 / 128 vector steps. Later windows receive more
+  time within the cap. Real coverage and actor/critic learning remain required.
+  All selected proposals are physically tested; no critic-ranked shortlist.
+- At EVERY candidate/control checkpoint, the actual unassisted rollout trains
+  the upper critic, regardless of later acceptance. Complete discounted rollout
+  returns and matching-branch TD targets are used. Recorded observations/actions
+  stay paired with that exact reference and lower actor. Branch data never enter
+  current-reference actor replay or get relabeled as the accepted reference.
 - Publish the accepted reference and complete adapted lower learning state
   together. A rejected proposal preserves the incoming learner and replay.
 - Fixed initial physical state, immutable object targets, pot 0.2kg, lid 0.1kg,
@@ -62,20 +73,24 @@ Use a new checkout/root for changes or retries. No complete resume is supported.
 Require exit code zero and reports/smoke_validation_episode_000001_sNN.json
 with passed=true. Do not rely only on stage.json or a final checkpoint. The
 validator checks proposals, real lower learning, finite state, fixed starts
-and media. Zero accepted edits is a valid integration result, not improvement.
+and media, plus complete measured feedback and nonzero upper-critic parameter
+changes from EVERY tested branch checkpoint, and compliance with the cap. Zero accepted edits is a valid integration result, not improvement.
 
 Report back: job status and hardware, validation result, upper acceptance
 count, wrist movement in cm, finger change in degrees, failure/onset and window
 times, actual candidate/control adaptation budgets and cost gains, VOC=0 videos,
-reference overlays and W&B URLs. Distinguish predicted upper cost from actual
+reference overlays and W&B URLs. Include upper_feedback/* counts, parameter
+changes, held-out return prediction error, and measured upper-round duration. Distinguish predicted upper cost from actual
 physical gain. If blocked, report the concrete error and preserve logs.
 
 If full training is requested after a passed smoke, use --phase pilot for that
 same episode/seed/root. It starts fresh 2048-world/100,663,296-main-step training;
 it does not continue smoke weights or verify the passed report itself.
 For an untouched episode/seed/root, --phase full runs smoke then fresh full
-training automatically. Full episode-1 adaptation can add up to five branches
-of 2,736,128 transitions per upper round; do not quote only main-step runtime.
+training automatically. Full training retains the same bounded validation
+profile as the smoke. At most five branches run per round (one reused unchanged
+control plus four candidate windows); do not quote only main-step runtime.
+Expected W&B names start with wrench-feedback-fast-full-d56-w2048-.
 
 Mathematical description: finite-step bilevel gradient proposals with a learned
 cost surrogate and longer physical validation. Long adaptation is outside the

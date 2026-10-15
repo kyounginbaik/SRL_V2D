@@ -6,6 +6,7 @@ cost predictions nor a nonzero hypergradient alone authorize publication.
 from copy import deepcopy
 from dataclasses import asdict, replace
 import json
+import hashlib
 import time
 
 import jax
@@ -17,13 +18,13 @@ from flash_chord.retargeting.response_editor import ResponseBilevelEditor
 from flash_chord.retargeting.reference_relabel import ReferenceRelabel, binding_for_q
 from flash_chord.retargeting.reference_snapshot import command_digest, save_snapshot
 from flash_chord.retargeting.wrench_hypergradient import (
-    HypergradientConfig, ReferenceReplay, WrenchHypergradient,
+    HypergradientConfig, ReferenceReplay, WrenchHypergradient, TrialRollout, actor_policy_digest,
 )
 from flash_chord.runtime.jax import to_jax
 from flash_chord.training.reference_update import ReferenceLearnerUpdate
 from flash_chord.retargeting.lower_adaptation import (
     AdaptationConfig, FlashSACAdaptation, learning_snapshot, install_learning,
-    training_readiness, comparison_stable,
+    training_readiness, comparison_stable, comparison_instability_reasons,
 )
 
 
@@ -67,6 +68,8 @@ class WrenchHypergradientEditor(ResponseBilevelEditor):
             raise ValueError('positive capture stride/world count required')
         self.pending = None
         self.capture_evaluation = False
+        self.trial_capture = None
+        self._round_critic_feedback = []
         self.hyper = None
         self.hyper_rng = np.random.default_rng(self.training.seed+93001)
         self._metrics = {}
@@ -84,7 +87,8 @@ class WrenchHypergradientEditor(ResponseBilevelEditor):
             proposal_lower_objective='SAC actor loss under relabeled fixed replay and frozen lower critic',
             lower_objective='ordinary configured FlashSAC actor, critic and temperature losses on fresh data',
             lower_replay='cleared on accepted reference change; retained after rejection',
-            upper_replay='reference-version-isolated measured wrench-support transitions',
+            upper_replay='reference-version-isolated main/baseline transitions; isolated policy-matched trial feedback',
+            trial_feedback='each tested control/candidate checkpoint teaches critic with measured TD and complete-rollout returns, including rejected proposals',
             upper_updates_per_batch=self.hg_config.upper_steps,
             nominal_candidates_per_window=1, candidate_worlds=1, eval_worlds=1,
             upper_feedback='discounted CHORD-style wrench-support cost, not measured six-axis net wrench',
@@ -123,7 +127,11 @@ class WrenchHypergradientEditor(ResponseBilevelEditor):
         row.update(next_observation=np.array(transition.terminal_observation[ids]),
                    next_context=np.array(transition.terminal_critic_context[ids]), cost=cost.astype(np.float32),
                    done=(terminated | truncated | horizon_end).astype(np.float32))
-        self.replay.add(self.version, **row)
+        trial = getattr(self, 'trial_capture', None)
+        if trial is None:
+            self.replay.add(self.version, **row)
+        else:
+            trial.add(trial.reference_key, trial.policy_key, world_ids=ids, **row)
         self.pending = None
 
     def before_training_step(self, env, learner, action, step):
@@ -138,13 +146,45 @@ class WrenchHypergradientEditor(ResponseBilevelEditor):
         self._after(env, transition)
 
     def before_evaluation_step(self, env, observation, action, frame):
-        if self.capture_evaluation:
+        if self.capture_evaluation or getattr(self, 'trial_capture', None) is not None:
+            source = 2 if getattr(self, 'trial_capture', None) is not None else 1
             self._before(env, observation, jnp.array(env.initial_critic_context, copy=True),
-                         action, frame, np.arange(env.world_count), 1)
+                         action, frame, np.arange(env.world_count), source)
 
     def after_evaluation_step(self, env, transition):
-        if self.capture_evaluation:
+        if self.capture_evaluation or getattr(self, 'trial_capture', None) is not None:
             self._after(env, transition)
+
+    def _evaluate_trial_feedback(self, binding, learner, seed, *, branch, budget, step):
+        """Use every tested pair's real unassisted trajectory to correct the critic.
+
+        Trial observations retain their own robot reference and exact inference
+        policy. They never enter main-version replay or proposal actor batches.
+        This call precedes acceptance so rejected trials provide feedback too.
+        """
+        if self.capture_evaluation or getattr(self, 'trial_capture', None) is not None:
+            raise RuntimeError('nested baseline/trial capture is not supported')
+        q = np.ascontiguousarray(binding.joint_q)
+        reference_key = hashlib.sha256(str((q.shape, q.dtype.str)).encode()+q.tobytes()).hexdigest()
+        trial = TrialRollout(reference_key, actor_policy_digest(learner))
+        self.trial_capture = trial
+        try:
+            result = self.rollout(binding, learner, seed, return_feedback=True)
+        finally:
+            self.trial_capture = None
+            self.pending = None
+        started = time.perf_counter()
+        measured = self.hyper.fit_trial_critic(trial, learner, self.hyper_rng)
+        row = dict(step=step, branch=branch, budget=budget, environment_steps=budget,
+                   reference_sha256=trial.reference_key, policy_sha256=trial.policy_key,
+                   critic_fit_seconds=time.perf_counter()-started, **measured)
+        self._round_critic_feedback.append(row)
+        with (self.output.parent/'critic_feedback.jsonl').open('a') as stream:
+            stream.write(json.dumps(row, allow_nan=False)+'\n')
+        print(f'[upper-feedback] branch={branch} budget={budget} '
+              f'rows={measured["trial_feedback_complete_rows"]} '
+              f'updates={measured.get("trial_critic_updates", 0)}', flush=True)
+        return result
 
     def drain_metrics(self):
         metrics, self._metrics = self._metrics, {}
@@ -174,7 +214,8 @@ class WrenchHypergradientEditor(ResponseBilevelEditor):
                 report = session.advance(budget, physical.timestep.numpy)
                 self.adaptation_transitions += budget-previous
                 previous = budget
-                metrics, _, _, feedback = self.rollout(binding, session.state, seed, return_feedback=True)
+                metrics, _, _, feedback = self._evaluate_trial_feedback(
+                    binding, session.state, seed, branch=label, budget=budget, step=step)
                 row = dict(environment_steps=budget, cost=self._cost(metrics, binding.joint_q),
                            metrics=metrics, training=report)
                 with (self.output.parent/'adaptation_progress.jsonl').open('a') as stream:
@@ -202,10 +243,13 @@ class WrenchHypergradientEditor(ResponseBilevelEditor):
                 # and actual network updates must still match the protocol.
                 readiness += ['control_'+r for r in training_readiness(
                     control['training'], self.adaptation_config, self.scoring_region, require_coverage=False)]
-                stable = previous is not None and not readiness and not previous_readiness and comparison_stable(previous, pair, self.adaptation_config)
+                instability = (['no_previous_ready_checkpoint'] if previous is None else
+                    comparison_instability_reasons(previous, pair, self.adaptation_config))
+                stable = previous is not None and not readiness and not previous_readiness and not instability
                 stable_count = stable_count+1 if stable else 0
                 comparisons.append(dict(environment_steps=result['environment_steps'],
-                    stable=stable, stable_comparisons=stable_count, readiness_reasons=readiness, **pair))
+                    stable=stable, stable_comparisons=stable_count, readiness_reasons=readiness,
+                    instability_reasons=instability, **pair))
                 previous, previous_readiness, last = pair, readiness, result
                 if stable_count >= self.adaptation_config.stable_comparisons:
                     break
@@ -233,6 +277,7 @@ class WrenchHypergradientEditor(ResponseBilevelEditor):
         self.upper_round += 1
         started, prior_steps = time.perf_counter(), self.validation_steps
         prior_adaptation = self.adaptation_transitions
+        self._round_critic_feedback = []
         seed = self.training.seed+step
         # Supply unassisted physical data even while the lower curriculum uses VOC.
         self.capture_evaluation = True
@@ -253,7 +298,9 @@ class WrenchHypergradientEditor(ResponseBilevelEditor):
         fit = self.hyper.fit_critic(self.replay, learner, self.hyper_rng)
         windows, trials, best = list(self.window_contexts), [], None
         before_q = self.binding.joint_q.copy()
-        budgets = self.adaptation_config.budgets(env.world_count, self.binding.num_frames)
+        budget_report = self.adaptation_config.budget_report(
+            env.world_count, self.binding.num_frames, region=self.scoring_region)
+        budgets = tuple(budget_report['environment_steps'])
         if budgets[0] <= max(self.adaptation_config.replay_minimum_size, self.training.replay.batch_size):
             raise ValueError('first adaptation checkpoint must allow learning after replay warmup')
         print(f'[lower-adaptation] resolved matched budgets={budgets} worlds={env.world_count}', flush=True)
@@ -342,7 +389,9 @@ class WrenchHypergradientEditor(ResponseBilevelEditor):
             reference_change=change, critic=fit, seconds=time.perf_counter()-started,
             upper_simulation_transitions=self.validation_steps-prior_steps,
             adaptation_transitions=self.adaptation_transitions-prior_adaptation,
-            adaptation_checkpoints=list(budgets), adaptation_voc_scale=float(stage.voc_scale),
+            adaptation_checkpoints=list(budgets), adaptation_budget=budget_report,
+            critic_feedback=list(self._round_critic_feedback),
+            adaptation_voc_scale=float(stage.voc_scale),
             lower_response='matched_full_FlashSAC_fresh_experience',
             gradient_estimator='short_actor_unrolling_proposal_then_long_adaptation_validation')
         path = self.output.parent/'search_batches'/f'step_{step}'
@@ -365,6 +414,19 @@ class WrenchHypergradientEditor(ResponseBilevelEditor):
                               'adaptation/max_budget_per_branch': float(budgets[-1]),
                               'adaptation/selected_budget': float(selected['adaptation']['selected_environment_steps']) if selected else 0.,
                               'adaptation/stable_candidates': sum(t.get('adaptation', {}).get('stable', False) for t in trials)})
+        feedback_rows = self._round_critic_feedback
+        feedback_fits = [row for row in feedback_rows if not row.get('trial_critic_skipped', 1)]
+        self._metrics.update({
+            'upper_feedback/complete_rows': sum(row['trial_feedback_complete_rows'] for row in feedback_rows),
+            'upper_feedback/critic_updates': sum(row.get('trial_critic_updates', 0) for row in feedback_rows),
+            'upper_feedback/tested_checkpoints': len(feedback_rows),
+            'upper_feedback/fit_seconds': sum(row['critic_fit_seconds'] for row in feedback_rows),
+        })
+        if feedback_fits:
+            for key in ('heldout_return_mae_before', 'heldout_return_mae_after',
+                        'parameter_delta_l2', 'prediction_before', 'prediction_after', 'measured_return'):
+                self._metrics[f'upper_feedback/{key}'] = float(np.mean([
+                    row[f'trial_critic_{key}'] for row in feedback_fits]))
         measured = [t for t in trials if 'gradient_norm' in t]
         if measured:
             for key in ('gradient_norm', 'direct_gradient_norm', 'response_gradient_norm',

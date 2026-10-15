@@ -1,28 +1,51 @@
 CURRENT HYPERGRADIENT SERVER HANDOFF
-Updated 2026-10-15
+Updated 2026-10-16: measured trial feedback and bounded adaptation
 
-The general AGENT_HANDOFF.txt now describes the current wrench-hypergradient
-method. Give that file to the agent on the other server:
-
+Give the other server's agent:
   robotic_grounding/uniretarget/AGENT_HANDOFF.txt
 
-It specifies episode 1, seeds 43/44/45, three smoke runs with the actual long
-lower-adaptation validation. Complete clone/LFS/Docker/W&B/direct-GPU/Slurm
-commands, smoke-to-full phase selection and evidence paths are in:
-
+It specifies episode 1, seeds 43/44/45, full-shape GPU smoke validation and the
+current measured-feedback method. Complete clone/LFS/Docker/W&B/direct-GPU/Slurm
+commands, phase selection and evidence paths are in:
   robotic_grounding/uniretarget/RUNNING.txt
 
 Repository: https://github.com/kyounginbaik/SRL_V2D
-Use current main in a clean checkout and record its exact commit. Always pass
---upper wrench_hypergradient; the CLI default is the earlier Gaussian engine.
-Use this server's allocated GPUs and a fresh persistent output root. Keep the
-checkout unchanged while running, and configure online W&B explicitly.
+Use a clean current checkout containing these 2026-10-16 changes and record its
+exact commit. Always pass --upper wrench_hypergradient; the CLI default is the
+older Gaussian engine. Use allocated GPUs, a fresh persistent output root and
+explicit online W&B configuration. Keep the source checkout unchanged while
+jobs run. Older frozen runs do not automatically acquire these changes.
 
-Method and mathematical scope:
+Current contract:
+- One learned 56D full-hand proposal per selected local window, up to four.
+  This is not a 2,048-candidate search or a critic-ranked two-window shortlist.
+- The proposal differentiates through three temporary lower actor updates.
+- Physical validation trains complete FlashSAC candidate/control copies from
+  the same incoming learner. It is separate from the proposal gradient graph.
+- At every validation checkpoint, actual VOC=0 candidate/control rollout costs
+  train the upper critic, including when an edit is later rejected. Use complete
+  discounted rollout returns plus branch-matched TD targets. Keep exact branch
+  reference/policy identity; do not relabel trial data into main actor replay.
+- Validation checkpoints start at max(64 vector steps, scoring interval end+16,
+  replay warmup+16), followed by two 32-step increments, subject to a strict
+  448-vector-step cap. At 2,048 worlds this is at most 917,504 transitions per
+  branch. Actual frame coverage, learning and physical acceptance remain checked.
+- Smoke: 2,048 worlds, 524,288 main transitions, one upper round at 501,760,
+  batch 1,024 and full replay settings. Require the smoke report passed=true.
+- Full: fresh 100,663,296 main transitions, same bounded validation settings.
+  Full training is not a continuation of smoke weights.
+- W&B names start wrench-feedback-fast-full-d56-w2048-. Keep historical videos,
+  reference overlays, Track 3 estimates and upper_feedback/* measurements.
+
+Report measured round duration and additional adaptation transitions separately
+from main steps. Timing improvement is not established until measured on the
+new GPU run. Zero accepted edits can pass integration; report acceptance and
+actual wrist/finger changes without implying task success. Finite adaptation,
+empirical stability and critic fitting do not prove neural-RL convergence.
+
+Detailed method and mathematical scope:
   robotic_grounding/flash_chord/docs/wrench_hypergradient.txt
 
-The old d9a72f54 handoff and its 30-run search ablation are superseded for this
-task. The new upper uses one learned 56D proposal per selected local window,
-not a 2048-candidate search. Full FlashSAC validation is separate from the
-three-update differentiable proposal response. See AGENT_HANDOFF.txt for the
-exact settings and required smoke report before full training.
+The old d9a72f54 30-run search ablation and the 2026-10-15 full-horizon adaptation
+recipe are superseded for this task. See AGENT_HANDOFF.txt and RUNNING.txt for
+required smoke evidence and the full-training command.

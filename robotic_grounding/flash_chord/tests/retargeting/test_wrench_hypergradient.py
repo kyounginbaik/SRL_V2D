@@ -6,7 +6,8 @@ import numpy as np
 import pytest
 
 from flash_chord.retargeting.wrench_hypergradient import (
-    HypergradientConfig, ReferenceReplay, WrenchHypergradient, gradient_parts, unroll_actor,
+    HypergradientConfig, ReferenceReplay, TrialRollout, WrenchHypergradient,
+    actor_policy_digest, gradient_parts, unroll_actor,
 )
 
 
@@ -106,7 +107,113 @@ def test_critic_trains_on_measured_costs_and_bootstraps_terminal_correctly():
     assert metrics['critic_heldout_td_mae'] < 1.5
 
 
-@pytest.mark.parametrize('kwargs', [{'inner_steps': 0}, {'discount': 1.}, {'radius': np.nan}])
+def trial_rows(frame, cost, done, *, observation_dim=12, context_dim=3):
+    n = len(frame)
+    return dict(observation=np.zeros((n, observation_dim), np.float32),
+                context=np.ones((n, context_dim), np.float32),
+                action=np.zeros((n, 56), np.float32),
+                next_observation=np.ones((n, observation_dim), np.float32),
+                next_context=np.ones((n, context_dim), np.float32),
+                frame=np.asarray(frame), cost=np.asarray(cost, np.float32),
+                done=np.asarray(done, np.float32))
+
+
+def test_trial_returns_are_terminal_bounded_copy_capture_and_drop_incomplete_tail():
+    trial = TrialRollout('candidate-A', 'policy-A')
+    first = trial_rows([0, 0], [1, 10], [0, 0])
+    trial.add('candidate-A', 'policy-A', **first)
+    first['cost'][:] = 999
+    first['observation'][:] = 999
+    trial.add('candidate-A', 'policy-A', **trial_rows([1, 1], [2, 20], [1, 0]))
+    # World 0 has reset. Its final incomplete tail must NOT bootstrap/contaminate
+    # either previous completed trajectory's observed return.
+    trial.add('candidate-A', 'policy-A', **trial_rows([0, 2], [100, 30], [0, 1]))
+    batch, metrics = trial.completed_batch(.9)
+    np.testing.assert_allclose(batch['measured_return'], [2.8, 2, 52.3, 47, 30])
+    np.testing.assert_array_equal(batch['trajectory_id'], [0, 0, 1, 1, 1])
+    np.testing.assert_array_equal(batch['observation'], np.zeros((5, 12)))
+    assert metrics == dict(trial_feedback_rows=6, trial_feedback_complete_rows=5,
+                          trial_feedback_discarded_rows=1, trial_feedback_trajectories=2)
+    with pytest.raises(ValueError):
+        batch['cost'][0] = 1
+
+
+@pytest.mark.parametrize('reference,policy', [('candidate-B', 'policy-A'), ('candidate-A', 'policy-B')])
+def test_trial_rejects_mixed_references_and_policies(reference, policy):
+    trial = TrialRollout('candidate-A', 'policy-A')
+    with pytest.raises(ValueError, match='mixed reference or policy'):
+        trial.add(reference, policy, **trial_rows([0], [1], [1]))
+    assert trial.size == 0
+
+
+def test_trial_rejects_capture_gaps_instead_of_fabricating_monte_carlo_return():
+    trial = TrialRollout('candidate-A', 'policy-A')
+    trial.add('candidate-A', 'policy-A', **trial_rows([0], [1], [0]))
+    with pytest.raises(ValueError, match='consecutive physical frames'):
+        trial.add('candidate-A', 'policy-A', **trial_rows([2], [1], [1]))
+    assert trial.size == 1
+    data, metrics = trial.completed_batch(.99)
+    assert data == {}
+    assert metrics['trial_feedback_complete_rows'] == 0
+
+
+def test_bad_trial_improves_critic_calibration_without_touching_main_replay_or_lower_actor():
+    config, learner, batch = make_network_case()
+    engine = WrenchHypergradient(config, 12, 3, 7,
+        HypergradientConfig(trial_critic_updates=32, batch_size=8), 11)
+    policy_key = actor_policy_digest(learner)
+    trial = TrialRollout('rejected-candidate', policy_key)
+    row = trial_rows(np.zeros(32, int), np.full(32, 2.), np.ones(32))
+    row['observation'] = np.tile(np.asarray(batch['observation']), (4, 1))
+    trial.add('rejected-candidate', policy_key, **row)
+    main = ReferenceReplay(64)
+    main.add('accepted-reference', **trial_rows([0], [.1], [1]))
+    main_copy = {key: value.copy() for key, value in main.storage.items()}
+    learner_before = actor_policy_digest(learner)
+    metrics = engine.fit_trial_critic(trial, learner, np.random.default_rng(6))
+    assert metrics['trial_critic_parameter_delta_l2'] > 0
+    assert metrics['trial_critic_prediction_after'] > metrics['trial_critic_prediction_before']
+    assert metrics['trial_critic_heldout_return_mae_after'] < metrics['trial_critic_heldout_return_mae_before']
+    assert metrics['trial_critic_measured_return'] == 2.
+    assert metrics['trial_feedback_complete_rows'] == 32
+    assert metrics['trial_critic_updates'] == 32
+    assert actor_policy_digest(learner) == learner_before
+    assert main.version == 'accepted-reference' and main.size == 1
+    for key in main_copy:
+        np.testing.assert_array_equal(main.storage[key], main_copy[key])
+    mismatched = NS(actor=NS(params=jax.tree.map(lambda x: x+.1, learner.actor.params),
+                             batch_stats=learner.actor.batch_stats))
+    with pytest.raises(ValueError, match='does not match bootstrap learner'):
+        engine.fit_trial_critic(trial, mismatched, np.random.default_rng(6))
+
+
+def test_trial_fit_never_optimizes_heldout_rows():
+    config, learner, _ = make_network_case()
+    engine = WrenchHypergradient(config, 12, 3, 7,
+        HypergradientConfig(trial_critic_updates=3, batch_size=8), 11)
+    policy_key = actor_policy_digest(learner)
+    trial = TrialRollout('candidate-A', policy_key)
+    row = trial_rows(np.zeros(40, int), np.full(40, 2.), np.ones(40))
+    row['observation'][:, 0] = np.arange(40)
+    trial.add('candidate-A', policy_key, **row)
+    # Reproduce only the holdout split; inspect what actual optimizer calls see.
+    heldout = np.random.default_rng(17).choice(40, size=8, replace=False)
+    optimized_ids = set()
+    original = engine._trial_critic_update
+    def capture(*args):
+        optimized_ids.update(np.asarray(args[-1]['observation'][:, 0], dtype=int))
+        return original(*args)
+    engine._trial_critic_update = capture
+    metrics = engine.fit_trial_critic(trial, learner, np.random.default_rng(17))
+    assert optimized_ids
+    assert optimized_ids.isdisjoint(heldout)
+    assert metrics['trial_critic_training_rows'] == 32
+    assert metrics['trial_critic_heldout_rows'] == 8
+
+
+@pytest.mark.parametrize('kwargs', [{'inner_steps': 0}, {'discount': 1.}, {'radius': np.nan},
+                                   {'trial_critic_updates': 0}, {'trial_mc_weight': 0.},
+                                   {'trial_mc_weight': 1.1}])
 def test_invalid_configuration_rejected(kwargs):
     with pytest.raises(ValueError):
         HypergradientConfig(**kwargs)

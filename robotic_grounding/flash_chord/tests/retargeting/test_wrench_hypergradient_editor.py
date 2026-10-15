@@ -7,7 +7,7 @@ import numpy as np
 import pytest
 
 from flash_chord.retargeting.wrench_hypergradient_editor import WrenchHypergradientEditor, support_cost
-from flash_chord.retargeting.wrench_hypergradient import ReferenceReplay, HypergradientConfig
+from flash_chord.retargeting.wrench_hypergradient import ReferenceReplay, HypergradientConfig, TrialRollout
 from flash_chord.retargeting.lower_adaptation import AdaptationConfig
 
 
@@ -31,6 +31,9 @@ def test_hydra_recipe_selects_new_engine_and_preserves_runtime_reset_contract():
     assert cfg.bilevel.eval_worlds == cfg.scene.world_count
     assert cfg.bilevel.hypergradient.inner_steps == 3
     assert list(cfg.bilevel.adaptation.checkpoints) == [50000,100000,200000]
+    assert cfg.bilevel.adaptation.budget_mode == 'bounded_window'
+    assert cfg.bilevel.adaptation.maximum_vector_steps == 448
+    assert cfg.bilevel.hypergradient.trial_critic_updates == 32
     assert cfg.reset.fixed_initial_state and cfg.reset.voc_decay_steps == 0
 
 
@@ -153,3 +156,66 @@ def test_publication_uses_measured_physics_and_commits_the_tested_pair(monkeypat
     assert report['accepted'] == improves
     assert report['candidates'][0]['predicted_wrench_return_gain'] > 0
     assert report['candidates'][0]['adaptation']['selected_environment_steps'] == 16
+
+
+def test_trial_evaluation_teaches_rejected_pair_without_polluting_main_replay(monkeypatch, tmp_path):
+    import flash_chord.retargeting.wrench_hypergradient_editor as module
+    editor = WrenchHypergradientEditor.__new__(WrenchHypergradientEditor)
+    editor.capture_evaluation=False; editor.trial_capture=None; editor.pending=None
+    editor.replay=ReferenceReplay(20); editor.replay.clear(7)
+    editor.version=7; editor.wrench_tolerance=.1; editor._round_critic_feedback=[]
+    editor.output=tmp_path/'references'; editor.output.mkdir()
+    editor.hyper_rng=np.random.default_rng(0)
+    editor.binding=NS(num_frames=4, joint_q=np.zeros((4,58), np.float32))
+    candidate=NS(num_frames=4, joint_q=np.ones((4,58), np.float32))
+    learner=object()
+    monkeypatch.setattr(module, 'actor_policy_digest', lambda current: 'matching-policy' if current is learner else 'wrong')
+    monkeypatch.setattr(module, 'to_jax', lambda value, shape: jnp.asarray(value).reshape(shape))
+    objective=NS(num_hands=2,num_bodies=2,num_basis=3,
+        current_wrench_support=np.zeros(12),wrench_support_target=np.ones(12))
+    env=NS(world_count=1,initial_critic_context=jnp.zeros((1,2)),
+        env=NS(world_count=1,objective=objective))
+    calls=[]
+    def rollout(binding, policy, seed, **kwargs):
+        assert binding is candidate and policy is learner
+        for frame in range(3):
+            observation=np.full((1,3),frame,np.float32)
+            editor.before_evaluation_step(env, observation, np.zeros((1,56)), np.array([frame]))
+            observation[:]=99  # Input copies must survive donated simulation buffers.
+            transition=NS(terminated=jnp.array([False]),truncated=jnp.array([False]),
+                terminal_observation=jnp.full((1,3),frame+1.),terminal_critic_context=jnp.zeros((1,2)))
+            editor.after_evaluation_step(env, transition)
+        return ({'cost':100.},None,None,{'failed':True})  # A poor edit still teaches the critic.
+    editor.rollout=rollout
+    def fit(trial, policy, rng):
+        assert policy is learner and trial.policy_key=='matching-policy'
+        batch,stats=trial.completed_batch(.99)
+        assert stats['trial_feedback_complete_rows']==3
+        np.testing.assert_array_equal(batch['observation'][:,0],[0,1,2])
+        assert np.all(batch['cost']>0) and batch['measured_return'][0]>batch['cost'][0]
+        assert editor.replay.size==0 and editor.replay.version==7
+        calls.append(trial.reference_key)
+        return dict(stats,trial_critic_skipped=0,trial_critic_updates=32,
+                    trial_critic_parameter_delta_l2=.1)
+    editor.hyper=NS(fit_trial_critic=fit)
+    result=editor._evaluate_trial_feedback(candidate,learner,42,branch='window_0',budget=272384,step=501760)
+    assert result[0]['cost']==100 and len(calls)==1
+    assert editor.binding.joint_q.sum()==0 and editor.version==7
+    assert editor.replay.size==0 and editor.trial_capture is None and editor.pending is None
+    assert editor._round_critic_feedback[0]['branch']=='window_0'
+    assert editor._round_critic_feedback[0]['trial_critic_updates']==32
+    logged=json.loads((tmp_path/'critic_feedback.jsonl').read_text())
+    assert logged['reference_sha256']==calls[0]
+
+
+def test_trial_capture_is_cleared_when_physics_fails(monkeypatch,tmp_path):
+    import flash_chord.retargeting.wrench_hypergradient_editor as module
+    editor=WrenchHypergradientEditor.__new__(WrenchHypergradientEditor)
+    editor.capture_evaluation=False; editor.trial_capture=None; editor.pending='old'
+    monkeypatch.setattr(module,'actor_policy_digest',lambda learner:'policy')
+    def fail(*args,**kwargs): raise RuntimeError('simulation failed')
+    editor.rollout=fail
+    with pytest.raises(RuntimeError,match='simulation failed'):
+        editor._evaluate_trial_feedback(NS(joint_q=np.zeros((3,58))),object(),0,
+            branch='noedit',budget=100,step=50)
+    assert editor.trial_capture is None and editor.pending is None

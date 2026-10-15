@@ -5,7 +5,7 @@ import pytest
 
 from flash_chord.retargeting.lower_adaptation import (
     AdaptationConfig, FlashSACAdaptation, learning_snapshot, install_learning,
-    training_readiness, comparison_stable,
+    training_readiness, comparison_stable, comparison_instability_reasons,
 )
 
 
@@ -15,9 +15,67 @@ def test_episode_aware_budgets_do_not_stop_before_the_grasp():
     assert settings.budgets(64, 401) == (50048, 100032, 200000)
 
 
+def test_bounded_window_budgets_avoid_training_four_whole_horizons():
+    settings = AdaptationConfig(budget_mode='bounded_window')
+    region = dict(start_frame=20, stop_frame_exclusive=53)
+    assert settings.budgets(2048, 335, region=region) == (141312, 206848, 272384)
+    # An unrelated later tail must not multiply all candidate adaptation work.
+    assert settings.budgets(2048, 1335, region=region) == settings.budgets(2048, 335, region=region)
+    report = settings.budget_report(2048, 335, region=region)
+    assert report['vector_steps'] == [69, 101, 133]
+    assert report['first_checkpoint_can_reach_scoring_end']
+    assert report['final_checkpoint_includes_requested_tail']
+    assert not report['cap_reached']
+
+
+def test_bounded_budgets_allow_replay_warmup_and_equal_complete_collections():
+    settings = AdaptationConfig(budget_mode='bounded_window')
+    region = dict(start_frame=20, stop_frame_exclusive=53)
+    budgets = settings.budgets(64, 335, region=region)
+    assert budgets == (9216, 11264, 13312)
+    assert budgets[0] > settings.replay_minimum_size
+    assert all(b % 64 == 0 for b in budgets)
+    assert all(b-a == 32*64 for a, b in zip(budgets, budgets[1:]))
+    with pytest.raises(ValueError, match='replay warmup'):
+        settings.budgets(2, 335, region=region)
+
+
+def test_late_window_exposes_cap_without_claiming_coverage_or_growing_budget():
+    settings = AdaptationConfig(budget_mode='bounded_window')
+    region = dict(start_frame=270, stop_frame_exclusive=300)
+    report = settings.budget_report(2048, 335, region=region)
+    assert report['vector_steps'] == [192, 224, 256]
+    assert report['cap_reached']
+    assert not report['final_checkpoint_can_reach_scoring_end']
+    assert not report['final_checkpoint_includes_requested_tail']
+    # A large aggregate sample count is not evidence that the needed frames
+    # occurred. The existing readiness guard must reject this capped branch.
+    training = dict(actor_updates=100, critic_updates=200, actor_parameter_delta_l2=.01,
+        critic_parameter_delta_l2=.1, frame_samples=[2048]*256, max_reference_frame=255)
+    assert training_readiness(training, settings, region) == ['insufficient_failure_region_experience']
+
+
+def test_bounded_schedule_does_not_confuse_reachable_end_with_requested_tail():
+    settings = AdaptationConfig(budget_mode='bounded_window')
+    report = settings.budget_report(2048, 335,
+        region=dict(start_frame=230, stop_frame_exclusive=250))
+    assert report['final_checkpoint_can_reach_scoring_end']
+    assert not report['final_checkpoint_includes_requested_tail']
+
+
+@pytest.mark.parametrize('region', [None, dict(start_frame=3, stop_frame_exclusive=3),
+    dict(start_frame=-1, stop_frame_exclusive=10), dict(start_frame=0, stop_frame_exclusive=336),
+    dict(start_frame=0, stop_frame_exclusive=3.5)])
+def test_bounded_schedule_requires_a_valid_shared_scoring_region(region):
+    with pytest.raises(ValueError):
+        AdaptationConfig(budget_mode='bounded_window').budgets(2048, 335, region=region)
+
+
 @pytest.mark.parametrize('kwargs', [dict(checkpoints=[1]), dict(stable_comparisons=3),
     dict(minimum_reference_passes=[1, 1, 2]), dict(replay_capacity=1),
-    dict(position_tolerance_m=float('nan')), dict(checkpoints=[1., 2., 2.5])])
+    dict(position_tolerance_m=float('nan')), dict(checkpoints=[1., 2., 2.5]),
+    dict(budget_mode='unsupported'), dict(budget_mode='bounded_window', maximum_vector_steps=96),
+    dict(checkpoint_stride_vector_steps=0)])
 def test_invalid_settings_fail_early(kwargs):
     with pytest.raises(ValueError):
         AdaptationConfig(**kwargs)
@@ -36,10 +94,13 @@ def test_stability_checks_both_objects_and_the_comparison():
     assert comparison_stable(before, after, settings)
     after['candidate']['metrics']['local_per_object_position_mean_m'][1] = .05
     assert not comparison_stable(before, after, settings)
+    assert comparison_instability_reasons(before, after, settings) == [
+        'candidate_local_per_object_position_mean_m_not_stable']
     # Small scalar movement that reverses the winner is not stable evidence.
     before = dict(candidate=checkpoint(.99), control=checkpoint(1.))
     after = dict(candidate=checkpoint(1.01), control=checkpoint(1.))
     assert not comparison_stable(before, after, settings)
+    assert comparison_instability_reasons(before, after, settings) == ['candidate_advantage_changed_sign']
 
 
 def test_training_must_reach_the_failure_region_and_update_both_networks():

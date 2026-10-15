@@ -36,9 +36,17 @@ hypergradient:
   critic_updates: 64
   batch_size: 128
   target_rate: 0.01
+  trial_critic_updates: 32
+  trial_mc_weight: 0.5
 adaptation:
-  # Floors, rounded up to vector collections. At each checkpoint also allow
-  # 1 / 2 / 4 full reference horizons per world from the fixed initial state.
+  # Bounded failure-window adaptation; all windows still receive matched tests.
+  # 448 vector steps covers this 335-frame episode including the checkpoint tail.
+  budget_mode: bounded_window
+  minimum_vector_steps: 64
+  checkpoint_stride_vector_steps: 32
+  maximum_vector_steps: 448
+  window_tail_vector_steps: 16
+  # Retained only for the optional legacy reference_passes budget mode.
   checkpoints: [50000, 100000, 200000]
   minimum_reference_passes: [1, 2, 4]
   replay_capacity: 262144
