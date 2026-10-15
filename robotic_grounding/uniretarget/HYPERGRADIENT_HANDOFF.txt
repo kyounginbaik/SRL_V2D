@@ -1,0 +1,45 @@
+UniRetarget wrench-hypergradient handoff (2026-10-15)
+
+Use the current commit containing this file from https://github.com/kyounginbaik/SRL_V2D.
+Do not check out the older commit pinned in AGENT_HANDOFF.txt; that is the earlier
+Gaussian/FlashSAC candidate-search experiment. Record `git rev-parse HEAD` with
+your new run. Follow RUNNING.txt for Git LFS, pinned Docker builds and W&B setup.
+
+Start with episode 1, three independent GPU smoke jobs, seeds 43, 44 and 45:
+
+  python3 robotic_grounding/uniretarget/launch.py --episode 1 --seed 43 \
+    --upper wrench_hypergradient --phase smoke --gpu GPU_UUID_OR_INDEX
+
+Repeat with seeds 44 and 45 on separately allocated GPUs. Prefer scheduler
+allocations. Example: train.sbatch 1 43 wrench_hypergradient smoke. Use a fresh
+run root for a retry/change. This command only runs smoke; it does not launch
+full training. Other bundled episodes (3,5,6,35) are supported when requested.
+
+Method: 56D local wrist-and-finger upper actor, TD wrench-cost critic, short
+differentiable lower actor response for proposals. Validate each proposal after
+full FlashSAC training on fresh simulated data, with an unchanged-reference
+control starting from the identical incoming learner and fixed physical start.
+Extend through matched budgets until empirical stability, or reject at the cap.
+Publish the accepted reference and complete adapted lower learning state together.
+The long validation is not differentiated; there is no global convergence claim.
+
+Smoke: 64 worlds, 131,072 main steps, one upper round at 65,536, final media.
+Actual long adaptation remains enabled: episode 1 budgets per branch are 50,048,
+100,032,200,000 extra transitions. Up to four one-second windows, one learned
+proposal each. This is not 2,048 candidates. Main training is paused during
+comparison. Physics/rewards/VOC/fixed-start/media match the existing recipe.
+
+W&B: wrench-hypergradient-full-d56-w64-smoke-episode_000001-s43 (and s44/s45).
+Online logging requires WANDB_MODE=online plus credentials/endpoint from this
+server's secret environment. Never commit/copy credentials. Upper/hypergradient
+and adaptation panels show critic/gradient/cost diagnostics and fresh lower
+updates; reference_change gives accepted edit sizes. Original reference hands
+remain 45% opaque, with historical checkpoint videos and six estimated Track3
+metrics. Local files remain authoritative if W&B is unavailable.
+
+Do not call smoke successful unless reports/smoke_validation_* says passed.
+The validator requires actual proposals, real adaptation, finite state/metrics,
+fixed initial-state audits and saved media. Zero acceptances are valid evidence,
+not proof of improvement. Report acceptance and wrist/finger magnitudes separately.
+
+Detailed math/limitations: ../flash_chord/docs/wrench_hypergradient.txt.

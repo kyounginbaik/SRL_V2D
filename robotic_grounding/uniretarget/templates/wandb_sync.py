@@ -23,6 +23,19 @@ def flatten(value, prefix=''):
     return out
 
 
+def candidate_summary(candidates):
+    measured = [candidate for candidate in candidates
+                if isinstance(candidate.get('cost'), (int, float))
+                and math.isfinite(candidate['cost'])]
+    result = dict(candidate_count=len(measured), skipped_window_count=len(candidates)-len(measured),
+                  gate_pass_fraction=sum(candidate.get('gate_passed', candidate.get('accepted', False))
+                                         for candidate in measured)/max(len(measured), 1))
+    if measured:
+        costs = [candidate['cost'] for candidate in measured]
+        result.update(candidate_cost_min=min(costs), candidate_cost_mean=sum(costs)/len(costs))
+    return result
+
+
 def main():
     import cv2
     import wandb
@@ -59,9 +72,13 @@ def main():
         state['media_schema_version'] = 2
     run_id = f'{os.environ.get("UNIRETARGET_RUN_TAG", "chord100m")}-{args.phase}-{args.episode}-{args.variant}-s{args.seed}'
     config = json.loads(config_path.read_text())
+    hypergradient = config.get('engine') == 'wrench_hypergradient'
+    name = (f'wrench-hypergradient-full-d56-w{config["worlds"]}-{args.phase}-{args.episode}-s{args.seed}'
+            if hypergradient else
+            f'chord-fixed-start-{config.get("upper_optimizer", "gaussian")}-d56-c{config["upper_trials"]}-{args.phase}-{args.episode}-s{args.seed}')
     run = wandb.init(entity=os.environ.get('WANDB_ENTITY', 'DexDreamer'), project=os.environ.get('WANDB_PROJECT', 'v2d-track3-uniretarget'),
-                     group=f'chord-fixed-start-20261015-{args.phase}', id=run_id,
-                     name=f'chord-fixed-start-{config.get("upper_optimizer", "gaussian")}-d56-c{64 if args.phase == "smoke" else 2048}-{args.phase}-{args.episode}-s{args.seed}',
+                     group=f'{"wrench-hypergradient" if hypergradient else "chord-fixed-start"}-20261015-{args.phase}', id=run_id,
+                     name=name,
                      resume='allow', dir=str(work), config=config)
     run.define_metric('environment_steps')
     run.define_metric('*', step_metric='environment_steps')
@@ -98,12 +115,7 @@ def main():
                     raise ValueError(f'Missing step in {path}')
                 if prefix == 'upper/' and 'candidates' in record:
                     candidates = record.pop('candidates')
-                    costs = [c['cost'] for c in candidates if math.isfinite(c['cost'])]
-                    record['candidate_count'] = len(candidates)
-                    record['gate_pass_fraction'] = sum(c['gate_passed'] for c in candidates)/max(len(candidates),1)
-                    if costs:
-                        record['candidate_cost_min'] = min(costs)
-                        record['candidate_cost_mean'] = sum(costs)/len(costs)
+                    record.update(candidate_summary(candidates))
                     # Full per-candidate evidence stays in search_batches/*/scores.json.
                 if prefix == 'upper/':
                     failure = record.pop('failure_context', {})
@@ -124,7 +136,15 @@ def main():
                         record['confirmation_cost_gain_mean'] = sum(c['cost_gain'] for c in checks)/len(checks)
                         record['confirmation_improving_fraction'] = sum(c['cost_gain']>0 for c in checks)/len(checks)
                     # Detailed paired trajectories/metrics remain in local scores.json.
-                metrics = {k:v for k,v in flatten(record, prefix).items() if not k.startswith('voc_schedule/')}
+                metric_prefix = prefix
+                if prefix == 'adaptation/':
+                    # Publish progress while long validation is running, without
+                    # creating a separate chart for every reference frame.
+                    metric_prefix += record.pop('branch')+'/'
+                    record = dict(step=step, environment_transitions=record['environment_steps'],
+                                  cost=record['cost'], training={key: value for key, value in record['training'].items()
+                                                               if key != 'frame_samples'})
+                metrics = {k:v for k,v in flatten(record, metric_prefix).items() if not k.startswith('voc_schedule/')}
                 metrics['environment_steps'] = int(step)
                 run.log(metrics)
                 state['offsets'][filename] = source.tell()
@@ -134,6 +154,8 @@ def main():
         while True:
             stream('training_metrics.jsonl', '')
             stream('upper_updates.jsonl', 'upper/')
+            if hypergradient:
+                stream('adaptation_progress.jsonl', 'adaptation/')
             stream('progress_checks.jsonl', 'progress/')
             if config.get('voc_mode') != 'step_schedule':
                 stream('voc_gate.jsonl', 'voc_gate/')

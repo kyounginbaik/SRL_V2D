@@ -52,6 +52,9 @@ def main():
              '+bilevel.acceptance_position_regression_m=0.05','+bilevel.acceptance_orientation_regression_deg=20.0'])
  config['upper_contact_objective']={'type':'CHORD-style normalized squared tolerance-band support loss','tolerance':0.1,'weight':5.0,'missed_weight':1.0,'unintended_weight':1.0,'contact_regression_tolerance':None,'location_penalty':False,'location_gate':False}
  config['experiment_interpretation']='Candidate-specific convex policy-head responses with CHORD-style upper contact guidance; no full neural-RL convergence guarantee.'
+ if '__UPPER_OPTIMIZER__' == 'wrench_hypergradient':
+  from hypergradient_launch import configure_hypergradient
+  configure_hypergradient(cmd, config, a.phase, a.worlds, B)
  (run/'run_config.json').write_text(json.dumps(config,indent=2)+'\n')
  if a.dry_run:print(json.dumps(config,indent=2));return
  def stage(s,**kw):(run/'stage.json').write_text(json.dumps({'stage':s,**kw},indent=2)+'\n')

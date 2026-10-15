@@ -1,5 +1,52 @@
 Portable CHORD-response UniRetargeting (2026-10-15)
 
+NEW ENGINE: wrench hypergradient with matched full lower training
+---------------------------------------------------------------
+The new engine is optional; gaussian/flashsac retain their original recipes below.
+For the new method, use the CURRENT checkout, not the old commit pinned by the
+legacy AGENT_HANDOFF.txt. See HYPERGRADIENT_HANDOFF.txt for a concise handoff.
+
+  python3 robotic_grounding/uniretarget/launch.py --episode 1 --seed 43 \
+    --upper wrench_hypergradient --phase smoke --gpu 0
+
+This smoke trains 64 worlds for 131,072 main transitions, with one upper round at
+65,536 and final checkpoint/media at 131,072. Main replay capacity is 262,144,
+minimum 8,192, batch 1,024. It preserves physics, rewards, fixed initial state,
+VOC performance gate, reference overlay opacity/history and six estimated metrics.
+Its name uses w64 (training worlds), not c64/2048 (candidate population).
+
+The upper actor proposes one local 56D wrist-and-finger edit per selected window,
+up to four windows. A learned TD critic predicts discounted wrench-support cost.
+The proposal gradient differentiates three temporary lower actor updates. Actual
+acceptance requires matched full FlashSAC training for candidate and unchanged
+control, fresh data, stable comparison and object/prefix guards. At 64 worlds in
+episode 1 the comparison budgets are 50,048 / 100,032 / 200,000 transitions PER
+branch; one control curve is reused across all windows. These extra transitions
+are separate from the main training clock. A smoke can reject every edit and
+still validate integration; it must actually exercise proposals and adaptation.
+
+For --phase full, this new smoke must pass before fresh 2,048-world/100,663,296-step
+training starts (the latter retains the output label pilot). Upper interval is
+501,760 main transitions. Adaptation budgets grow with horizon and world count:
+episode 1 at 2,048 worlds uses 684,032 / 1,368,064 / 2,736,128 per branch. A full run
+can therefore cost much more than the older candidate-search experiment. Three
+seeds are separate jobs; there is no automatic full launch after --phase smoke.
+
+Smoke CPU/config checks: python3 -m unittest discover -s robotic_grounding/uniretarget/tests
+Method details: ../flash_chord/docs/wrench_hypergradient.txt
+No full neural-RL convergence or true-physics hypergradient guarantee is claimed.
+Long adaptation is validation, not part of the differentiated computation.
+
+Slurm supports optional fourth argument PHASE (default full):
+
+  sbatch --partition=YOUR_PARTITION robotic_grounding/uniretarget/train.sbatch \
+    1 43 wrench_hypergradient smoke
+
+UNIRETARGET_IMAGE and UNIRETARGET_RUN_ROOT set optional image/output defaults;
+explicit --image/--run-root options take precedence. Use fresh output roots for
+changed code. Source checksums include YAML configs as well as Python sources.
+The remaining gaussian/flashsac descriptions below concern the older engine.
+
 Included: current FlashCHORD implementation, all five frozen references (episodes
 1, 3, 5, 6, 35), submitted visual meshes, convex collision pieces, object URDFs,
 Sharpa hand URDF/meshes in flash_chord/assets, and the finger PCA prior. Git LFS

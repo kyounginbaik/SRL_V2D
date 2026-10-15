@@ -12,4 +12,4 @@ GPU_ALLOCATION=${SLURM_STEP_GPUS:-${SLURM_JOB_GPUS:-${CUDA_VISIBLE_DEVICES:-0}}}
 GPU_ALLOCATION=${GPU_ALLOCATION%%,*}
 GPU_DEVICE=$(nvidia-smi -i "$GPU_ALLOCATION" --query-gpu=uuid --format=csv,noheader | head -1)
 python3 "$REPO_ROOT/robotic_grounding/uniretarget/launch.py" \
-    --episode "${1:-1}" --seed "${2:-43}" --phase full --gpu "$GPU_DEVICE" --upper "${3:-gaussian}"
+    --episode "${1:-1}" --seed "${2:-43}" --phase "${4:-full}" --gpu "$GPU_DEVICE" --upper "${3:-gaussian}"

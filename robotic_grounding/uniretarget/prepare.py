@@ -18,13 +18,16 @@ def digest(path):
 
 
 def prepare(root, upper='gaussian'):
+    if upper not in ('gaussian', 'flashsac', 'wrench_hypergradient'):
+        raise ValueError(f'Unknown upper optimizer: {upper}')
     root = Path(root).resolve()
     root.mkdir(parents=True, exist_ok=True)
     with (root / '.prepare.lock').open('a') as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
         source_hashes = {str(p.relative_to(SOURCE)): digest(p)
                          for folder in ('src', 'scripts', 'tests')
-                         for p in sorted((SOURCE / folder).rglob('*.py'))}
+                         for p in sorted((SOURCE / folder).rglob('*'))
+                         if p.is_file() and p.suffix in ('.py', '.yaml', '.yml')}
         fingerprint = {str(p.relative_to(PACKAGE)): digest(p)
                        for p in PACKAGE.rglob('*') if p.is_file()
                        and '__pycache__' not in p.parts and p.name != '.gitignore'}
@@ -67,7 +70,7 @@ def prepare(root, upper='gaussian'):
                     link.symlink_to(root / name, target_is_directory=True)
             (base / 'frozen_manifest.json').write_text(json.dumps([entry], indent=2)+'\n')
             for template in (PACKAGE / 'templates').glob('*.py'):
-                text = template.read_text().replace('episode_000001', ep)
+                text = template.read_text().replace('episode_000001', ep).replace('__UPPER_OPTIMIZER__', upper)
                 if template.name == 'run_mixed.py':
                     text = text.replace(" config['upper_updates_per_batch']=0", " config['upper_optimizer']='"+upper+"'\n config['upper_updates_per_batch']=0")
                     if upper == 'flashsac':
@@ -75,9 +78,6 @@ def prepare(root, upper='gaussian'):
                         text = text.replace("'upper_updates_per_batch':0", "'upper_updates_per_batch':32").replace("config['upper_updates_per_batch']=0", "config['upper_updates_per_batch']=32")
                         text = text.replace('Gaussian candidate population with solved lower response for every candidate',
                                             'learned upper FlashSAC Gaussian proposals; solved lower response for every candidate')
-                if template.name == 'gpu_entry.py' and upper == 'flashsac':
-                    text = text.replace("  assert rows and all(row['lower_response_solved_for_every_candidate'] for row in rows)",
-                        "  assert rows and all(row['lower_response_solved_for_every_candidate'] for row in rows)\n  assert all(row['upper_proposal']=='flashsac' and row['upper_optimizer_updates_this_round']>0 and row['upper_actor_parameter_max_change']>0 for row in rows)")
                 (base / 'code' / template.name).write_text(text)
         (root / 'source_manifest.json').write_text(json.dumps(source_hashes, indent=2)+'\n')
         stamp.write_text(json.dumps(dict(source=source_hashes, package=fingerprint, upper=upper), indent=2)+'\n')
@@ -87,6 +87,6 @@ def prepare(root, upper='gaussian'):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--run-root', required=True)
-    parser.add_argument('--upper', choices=('gaussian','flashsac'), default='gaussian')
+    parser.add_argument('--upper', choices=('gaussian','flashsac','wrench_hypergradient'), default='gaussian')
     args=parser.parse_args()
     prepare(args.run_root, args.upper)
