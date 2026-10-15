@@ -1,0 +1,53 @@
+# Add to an existing floating-Sharpa training command with:
+# +bilevel=wrench_hypergradient reset.fixed_initial_state=true reset.voc_decay_steps=0
+engine: wrench_hypergradient
+mode: reactor_wrench
+study_variant: chunk
+edit_scope: full
+chunk_seconds: 1.0
+warmup: 501760
+interval: 501760
+# Required by the shared scene/window constructor; no candidate population is
+# evaluated by this engine. It evaluates one actor proposal per selected window.
+eval_worlds: ${scene.world_count}
+upper_trials: ${scene.world_count}
+fixed_start: true
+failure_baseline_worlds: 0
+acceptance_mode: local_nominal
+robust_confirmation: false
+contact_proximity_weight: 0.0
+cws_weight: 5.0
+cws_tolerance: 0.1
+wrist_translation_offset_m: 0.03
+wrist_translation_correction_speed_m_s: 0.10
+local_translation_step_m: 0.02
+hyper_replay_capacity: 32768
+hyper_capture_stride: 4
+hyper_capture_worlds: 32
+hypergradient:
+  inner_steps: 3
+  inner_rate: 0.0001
+  upper_rate: 0.001
+  upper_steps: 4
+  radius: 0.25
+  regularization: 0.01
+  discount: 0.99
+  critic_rate: 0.0003
+  critic_updates: 64
+  batch_size: 128
+  target_rate: 0.01
+adaptation:
+  # Floors, rounded up to vector collections. At each checkpoint also allow
+  # 1 / 2 / 4 full reference horizons per world from the fixed initial state.
+  checkpoints: [50000, 100000, 200000]
+  minimum_reference_passes: [1, 2, 4]
+  replay_capacity: 262144
+  replay_minimum_size: 8192
+  minimum_actor_updates: 32
+  minimum_critic_updates: 32
+  minimum_window_samples: 128
+  stable_comparisons: 1
+  cost_relative_tolerance: 0.05
+  position_tolerance_m: 0.003
+  orientation_tolerance_rad: 0.03
+  success_tolerance: 0.02

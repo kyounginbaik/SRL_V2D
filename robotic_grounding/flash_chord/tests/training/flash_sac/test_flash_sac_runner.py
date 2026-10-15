@@ -340,6 +340,46 @@ def test_runner_uses_environment_step_curriculum_logs_and_saves(tmp_path, monkey
     assert logger.checkpoints[-1][2]["immediate_first_frame_probability"] == 0.5
 
 
+def test_reference_capture_hooks_run_before_donation_and_publish_metrics():
+    _, jnp = _dependencies()
+    from flash_chord.training.flash_sac.runner import run_training
+
+    class Observer:
+        def __init__(self):
+            self.before, self.after, self.updates = [], [], []
+            self.metrics = {}
+
+        def before_training_step(self, env, learner, action, step):
+            self.before.append((step, np.array(learner.observation), np.array(action)))
+
+        def after_training_step(self, env, transition):
+            self.after.append(np.array(transition.terminal_observation))
+
+        def __call__(self, env, learner, step, stage):
+            self.updates.append(step)
+            self.metrics = {'hypergradient/replay_rows': len(self.after)*env.world_count}
+
+        def drain_metrics(self):
+            result, self.metrics = self.metrics, {}
+            return result
+
+    observer, logger = Observer(), _Logger()
+    learner = run_training(_Env(jnp), replace(_config(), device='cpu'), logger=logger,
+                           reference_update=observer, log_interval=2)
+    assert int(learner.environment_steps) == 8
+    assert [row[0] for row in observer.before] == [0, 2, 4, 6]
+    assert observer.updates == [2, 4, 6, 8]
+    for index, (_, observation, action) in enumerate(observer.before):
+        np.testing.assert_array_equal(observation, float(index))
+        assert np.isfinite(action).all()
+    # True terminal observations were copied before replay/learner donation.
+    np.testing.assert_array_equal(observer.after[1][1], 102.)
+    np.testing.assert_array_equal(observer.after[3][0], 104.)
+    records = [(step, m['hypergradient/replay_rows']) for step, m in logger.records
+               if 'hypergradient/replay_rows' in m]
+    assert records == [(2, 2), (4, 4), (6, 6), (8, 8)]
+
+
 @pytest.mark.parametrize("upload_training_state", [False, True])
 def test_wandb_logger_uploads_learner_state_only_when_requested(monkeypatch, tmp_path, upload_training_state):
     _dependencies()

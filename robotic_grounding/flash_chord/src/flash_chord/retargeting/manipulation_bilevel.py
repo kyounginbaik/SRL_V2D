@@ -338,7 +338,11 @@ class ManipulationBilevel:
         for step_index in range(binding.num_frames - 1):
             frame = env.timestep.numpy().copy()
             action, key = self.policy(state, observation, key)
+            if hasattr(self, 'before_evaluation_step'):
+                self.before_evaluation_step(adapter, observation, action, frame)
             transition = adapter.step(action)
+            if hasattr(self, 'after_evaluation_step'):
+                self.after_evaluation_step(adapter, transition)
             self.validation_steps += env.world_count
             observation = jnp.array(transition.observation, copy=True)
             if getattr(self, "penetration_aware", False) and step_index % rollout_stride == 0:

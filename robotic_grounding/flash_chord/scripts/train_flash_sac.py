@@ -135,7 +135,10 @@ def main(cfg: DictConfig) -> None:
             if cfg.bilevel.get("engine") == "ttsa_flashsac":
                 from flash_chord.retargeting.ttsa_editor import TTSAReferenceEditor
                 update_class = TTSAReferenceEditor
-            if cfg.bilevel.get("engine") == "response_bilevel":
+            if cfg.bilevel.get("engine") == "wrench_hypergradient":
+                from flash_chord.retargeting.wrench_hypergradient_editor import WrenchHypergradientEditor
+                update_class = WrenchHypergradientEditor
+            elif cfg.bilevel.get("engine") == "response_bilevel":
                 from flash_chord.retargeting.response_editor import ResponseBilevelEditor
                 update_class = ResponseBilevelEditor
             elif cfg.bilevel.get("engine") == "adaptive_window_flashsac":

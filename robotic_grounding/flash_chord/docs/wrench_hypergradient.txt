@@ -1,0 +1,239 @@
+WRENCH HYPERGRADIENT ENGINE
+=========================
+
+Status: ready for a GPU smoke run after CPU validation, separate from
+response_bilevel. Existing frozen jobs do not pick this up automatically.
+No job restart is part of implementation.
+
+ACTUAL ALGORITHM
+
+1. The ordinary lower FlashSAC continues training with its configured tracking,
+   physics and regularization rewards. Capture 32 worlds every four transitions
+   into a 32,768-row auxiliary buffer, with reference version, frame, observation,
+   action, critic context, next observation, done, and measured wrench-support
+   cost. The version is owned by the buffer; mixing versions is rejected.
+2. Every 501,760 environment transitions, roll out the current pair from the
+   fixed start without VOC. These transitions also enter the auxiliary buffer.
+   Detect failure and propose up to four earlier windows using the existing
+   onset/threshold/history selector. The actor does not learn the window index.
+3. Fit twin scalar discounted wrench-cost critics from replay. Lower actor
+   deterministic actions supply TD targets; max(twin cost) is pessimistic.
+   Hold out rows from the current critic fitting round and log their TD error.
+   The outer evaluation batch comes specifically from unassisted rollouts.
+4. For each window, find its feasible coefficient intervals using the actual
+   joint, cumulative-offset and correction-speed bounds. Build a local reference
+   Jacobian with finite differences (normalized radius at most 0.01) through
+   that edit and Newton FK; use one-sided derivatives at active limits.
+   Recompute reference-conditioned observation fields in JAX. Verify zero edit
+   reproduces the stored observation. Measured state, old actions, object targets
+   and desired support are constants. This is a local linearization; simulator
+   trajectories and sampled-state distributions are NOT differentiated.
+5. The upper MLP produces a bounded 56D wrist-and-finger correction. Starting
+   from the incoming lower actor, take three differentiable projected SGD steps
+   on the existing SAC actor loss using relabeled replay. All actor parameters
+   are editable. Lower critics, temperature, batch statistics and sampled noise
+   remain fixed in this short response. This is not three complete FlashSAC
+   actor/critic/temperature updates, and is not the old ridge head fit.
+6. Evaluate the learned wrench-cost critic on the adapted actor. Backpropagate
+   through the three actor-learning steps AND reference observations into the
+   upper actor. Four upper Adam steps are taken with a normalized correction
+   radius of 0.25 (at most 5 mm wrist translation and 0.05 rad finger/rotation
+   increment before additional cumulative/rate limits). Map the actor output
+   smoothly into the feasible coefficient box; a neutral actor uses its midpoint.
+   A joint at its lower limit therefore starts with a small inward correction,
+   not a blocked outward correction. The zero-edit control is exactly zero.
+7. Treat the short response ONLY as a proposal mechanism. For physical
+   validation, start the edited and unchanged references from the SAME full
+   incoming FlashSAC learner, including optimizer state, target critic,
+   temperature, normalization statistics, and scheduler clocks. Neither starts
+   from the three-step actor copy. Each branch gets fresh, isolated replay,
+   fresh simulator experience, and the ordinary complete FlashSAC update.
+8. Train at matched checkpoints. Requested floors are 50K / 100K / 200K aggregate
+   environment transitions. The resolved budget is the larger of each floor
+   and 1 / 2 / 4 reference horizons per world, rounded up to vector collections.
+   Example: 401 reference frames and 2,048 worlds resolve to 819,200 / 1,638,400 /
+   3,276,800 transitions PER branch. A 50K budget would cover only 25 frames per
+   world and could never reach a later grasp from the fixed initial state.
+   Check actual frame coverage too: a nominal horizon is not proof that early
+   termination allowed the training worlds to reach the failure interval.
+9. Hold the incoming lower reward weights and VOC stage fixed during the
+   comparison. Use matching learning/reset seeds, exact original reset joints,
+   the same optimizer settings and fresh replay warmup in both branches.
+   Replay holds 262,144 transitions; learning starts at max(8,192, batch size).
+   Collection uses the warm-started policy even during replay warmup.
+   Evaluation at every checkpoint remains full-horizon, deterministic, VOC=0.
+10. Train one unchanged-reference control through all checkpoints, then reuse
+    that measured control curve for each window at the matching budget. Train
+    each candidate continuously across checkpoints, keeping its physics state,
+    replay and optimizer state. At most one extra vector training scene is
+    alive at a time. The main training run remains paused and untouched.
+11. Require two consecutive ready checkpoints with stable costs, per-object
+    local pose errors, success and support errors, and a stable advantage sign.
+    By default readiness requires at least 32 actor and 32 critic updates,
+    nonzero parameter changes in both branches. The candidate also needs 128
+    observed failure-region transitions and to reach that interval's final
+    frame. An equally trained control may continue failing earlier; that is a
+    valid comparison outcome, not a veto on a successful candidate. Its actual
+    coverage is still recorded. Cost tolerance is 5% (unit floor),
+    position tolerance 3 mm, orientation tolerance .03 rad, success tolerance
+    .02 and support-error tolerance .05. Extend training while the comparison
+    changes. At the maximum budget, unresolved comparisons are INCONCLUSIVE
+    and rejected. These checks are empirical stability, NOT proven convergence.
+12. Among stable comparisons, require local physical cost improvement over BOTH
+    the matched trained control and incoming pair, plus existing per-object
+    regression and archived-prefix guards. Publish the best passing reference
+    together with ALL its tested lower learning state. Retain its Adam moments;
+    reset only per-episode return accumulation because training restarts at
+    frame zero. Clear main and auxiliary replay on publication. Rejection
+    retains the original learner/reference/replay. Upper learning persists.
+
+WHAT THE WRENCH LABEL MEANS
+
+It is the existing CHORD-style object-centric contact wrench SUPPORT descriptor,
+not a measured six-axis net force/torque vector. Per-frame costs use the squared
+relative tolerance-band error (weight 5), missed support, and unintended support
+energy. All hands participate, objects get equal weight, targets are immutable.
+Termination incurs at least 20 cost; termination and finite-horizon truncation
+stop TD bootstrapping. VOC/reset context is included in the cost critic input.
+
+MATHEMATICAL SCOPE (PLAIN TEXT)
+
+theta = 56 local reference coefficients; phi = full lower actor parameters.
+phi_0 = current lower actor (constant at start of each upper round).
+phi_{k+1}(theta) = Project(phi_k(theta) - inner_rate * grad_phi SAC_loss).
+F_K(theta) = mean(Q_wrench(obs(theta), pi_phi_K(theta)(obs(theta))))
+             + regularization * mean(theta^2).
+The upper actor supplies theta, and autodiff computes the derivative of F_K.
+Log the total gradient, the gradient with phi_K detached, and their difference.
+That difference isolates the contribution through lower actor learning.
+
+This is a finite-step unrolling approximation using a learned upper objective.
+It is NOT an implicit-Hessian algorithm, stock upper FlashSAC, a certified
+gradient of discontinuous physical contacts, or proof of optimal full RL.
+The critic may be inaccurate; its held-out TD error does not certify action
+gradients. Physical acceptance is mandatory. Native FK finite differences and
+fixed replay distributions introduce additional explicit approximations.
+
+Long adaptation is a validation stage, not part of the autodiff graph. Its
+gradient is not claimed to equal the short response gradient. This change
+provides evidence after meaningful training, rather than a convergence proof
+or an exact hypergradient of fully trained neural FlashSAC.
+
+RUN
+
+Use the same container/dependencies and episode assets as the existing jobs.
+In scripts/train_flash_sac.py select:
+
+  +bilevel=wrench_hypergradient
+  reset.fixed_initial_state=true
+  reset.voc_decay_steps=0
+
+Keep the existing final reference, meshes, masses, controller, reward and lower
+training overrides. Remove old +bilevel.* overrides that conflict with the new
+group. Do not change masses or reward weights just to enable this optimizer.
+Use a fresh output directory. The inherited editor refuses resume because upper
+state/replay restoration is not implemented; it must not silently reset them.
+
+For a first GPU smoke run, retain the existing episode/assets/controller flags
+and use these additional overrides (one upper round before the final step):
+
+  scene.world_count=64
+  training.total_environment_steps=131072
+  training.replay.capacity=262144
+  training.replay.minimum_size=8192
+  training.replay.batch_size=1024
+  training.checkpoint.save_interval_environment_steps=131072
+  bilevel.warmup=65536
+  bilevel.interval=65536
+
+For episode_000001's current 335-frame, 20 Hz reference, adaptation at 64 worlds
+uses 50,048 / 100,032 / 200,000 transitions per branch. At 2,048 worlds it uses
+684,032 / 1,368,064 / 2,736,128. Full adaptation remains enabled in the smoke
+recipe; this checks the actual long-training path rather than bypassing it.
+
+OBSERVABILITY
+
+hypergradient/gradient_norm, direct_gradient_norm, response_gradient_norm
+hypergradient/predicted_wrench_return_gain, actual_local_cost_gain, accepted, physics_trials
+hypergradient/critic_train_loss, critic_heldout_td_mae, replay_rows
+reference_change/* : actual committed wrist cm and finger degrees
+adaptation/environment_transitions, max_budget_per_branch, selected_budget,
+stable_candidates
+
+Predicted gain is discounted learned wrench-support cost plus edit penalty.
+Actual gain is the physical local score (object pose, support, stability and edit
+penalty); these quantities have different scales and must not be equated.
+
+upper_updates.jsonl and search_batches/step_*/scores.json contain each window,
+56D proposal, model prediction, physical result, and rejection reasons.
+upper_state.msgpack stores the upper actor, twin critic, target and optimizer
+states for inspection; selected_reference.npz records the published reference.
+The existing demo archive continues to save the best validated policy/reference.
+adaptation_progress.jsonl records each physical checkpoint as soon as it
+finishes: branch, budget, learning updates, parameter movement, frame coverage,
+VOC and physical metrics. Search records contain the complete paired learning
+curves, stability decisions and rejection reasons. Side-training transitions
+are reported separately from the main training clock; selected optimizer
+clocks include the actual additional learning. At four windows the maximum
+side work is five branches times the largest resolved budget, plus evaluations.
+
+TESTS
+
+test_wrench_hypergradient.py: independent analytic/finite-difference gradients,
+nonzero learning-response contribution using production FlashSAC networks,
+critic fitting, bounded proposals, reference-version isolation.
+test_reference_relabel.py: quaternion frames, finger units, immutable fields,
+native Sharpa FK at joint limits and feasible upper proposals.
+test_wrench_hypergradient_editor.py: capture copies, support labels, terminal
+handling, accepted/rejected publication and replay contract.
+test_lower_adaptation.py: production FlashSAC actor AND critic training on fresh
+experience, matched-seed reproducibility, source-state/donation isolation, full
+learning-state publication, horizon-aware budgets, readiness, and comparison
+extension or rejection.
+
+Conceptual foundation: finite inner-optimization differentiation,
+https://proceedings.mlr.press/v80/franceschi18a.html . Its convergence conditions
+are not asserted for this learned critic/contact-simulation implementation.
+
+INITIAL SHORT-RESPONSE VALIDATION (2026-10-15, before long adaptation)
+
+17 targeted CPU checks passed in 59.32 seconds inside the existing
+flash_chord:mixed-ep01-media image. This includes the three retargeting test
+files above, test_rejected_search_callback.py, and the real FlashSAC runner's
+test_reference_capture_hooks_run_before_donation_and_publish_metrics.
+The numerical quadratic test compares autodiff with an independent analytic
+solution and finite differences; the production-network test verifies a
+nonzero gradient through lower learning. Native Newton FK verifies finger
+joint-limit handling. Simulator acceptance/publication tests use controlled
+rollout results; they are not evidence of improved episode performance.
+
+An additional broader runner suite had 28 passes and five CUDA-only failures
+because this container was deliberately run on CPU. No full GPU training or
+episode-level improvement has been evaluated for this new engine yet. Existing
+jobs were neither modified nor restarted during this implementation.
+
+LONG-ADAPTATION VALIDATION (2026-10-15)
+
+30 targeted CPU checks passed in 72.00 seconds using the same image. The suite
+adds test_lower_adaptation.py to the five-file selection above. It verifies
+nonzero actor, critic, temperature and target-critic learning with the production
+FlashSAC executable; exact matched-seed reproducibility; continued training
+across checkpoints; full learning-state publication; and preservation of the
+incoming learner/replay. It also tests extending unstable comparisons, rejecting
+at the cap, guarding both objects, and rejecting insufficient frame coverage.
+Configuration composition, native Sharpa FK, hypergradients and training hooks
+also pass. Compilation and git diff whitespace checks pass. The full episode
+GPU path has not been executed; no performance improvement is claimed yet.
+
+A final 19-test adaptation/editor rerun passed in 31.32 seconds after adding
+the early-failing-control regression case. It confirms that an unchanged
+controller's failure to reach the scoring interval does not block a stable,
+improving candidate that has enough actual training coverage there.
+
+PRE-SUBMISSION VALIDATION (2026-10-15)
+
+The complete focused selection above, including the added early-failing-control
+regression, passed together: 31 tests in 72.46 seconds in the CPU container.
+This covers the real FlashSAC learning/update path, reference relabeling and
+publication, and the runner hooks. It does not establish GPU memory fit or
+episode-level improvement; those are the purpose of the first GPU smoke jobs.

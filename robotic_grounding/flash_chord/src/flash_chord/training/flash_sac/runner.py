@@ -575,7 +575,11 @@ def _run_training(
         logging_boundary = (
             next_collection_index % log_interval == 0 or next_environment_steps == config.total_environment_steps
         )
+        if hasattr(reference_update, 'before_training_step'):
+            reference_update.before_training_step(env, learner, action, environment_steps)
         step = env.step(action)
+        if hasattr(reference_update, 'after_training_step'):
+            reference_update.after_training_step(env, step)
         if step.objective_terms is None:
             raise RuntimeError("environment stopped publishing raw objective terms")
         if step.terminal_observation is None or step.critic_context is None or step.terminal_critic_context is None:
@@ -653,6 +657,10 @@ def _run_training(
 
         if reference_update is not None:
             replacement = reference_update(env, learner, environment_steps, current_stage)
+            if logger is not None and hasattr(reference_update, 'drain_metrics'):
+                upper_metrics = reference_update.drain_metrics()
+                if upper_metrics:
+                    logger.log(upper_metrics, step=environment_steps)
             from flash_chord.training.reference_update import ReferenceLearnerUpdate
             if isinstance(replacement, ReferenceLearnerUpdate):
                 learner = replacement.learner
