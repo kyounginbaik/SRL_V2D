@@ -186,11 +186,13 @@ whole episode. Earlier prefix mean errors may increase by at most 2 mm and
 0.01 rad; prefix p95 by 5 mm and 0.03 rad. Large-regression guards allow at
 most +5 cm and +20 degrees in each object's mean pose error, measured both
 over the whole episode and separately after the scoring interval. New
-instability is rejected. No per-object first-failure-time or individual
-wrench-component veto is applied. Acceptance requires local cost improvement
+instability is rejected. No per-object whole-episode first-failure-time or
+individual wrench-component veto is applied. fixed_start additionally protects
+the successful prefix of the archived best pair: no earlier sustained failure
+and no mean/p95 prefix regressions beyond the preceding tolerances. Acceptance requires local cost improvement
 >1e-4 at the original start; there are no perturbed confirmation resets.
-The 16 perturbed baseline probes still select the failure/window and do not
-accept or reject candidates. These tolerances are engineering choices.
+The fixed_start launch uses one nominal baseline rollout; it disables the
+optional legacy 16 perturbed baseline probes. These tolerances are engineering choices.
 Legacy strict_robust retains its three-reset, per-object nonregression rules.
 Both wrists and fingers can change; intended hand/object labels remain fixed.
 Raw normalized wrench MSE is retained as a diagnostic, not an upper cost.
@@ -221,3 +223,24 @@ the independent sampler's initial support. The implemented 32 gradient steps
 convergence claim. Changing the proposal mechanism leaves the exact per-candidate
 lower optimum and residual bound valid. It does not turn the algorithm into
 an implicit-gradient method or prove whole-loop convergence.
+
+Fixed-start demonstration preservation (2026-10-15)
+-------------------------------------------------
+fixed_start=true binds training, window detection, candidate evaluation and
+checkpoint checks to one physical initial state. Finger opening and random
+reference-frame reset sampling are disabled. Every candidate still receives
+its own solved lower response, with unchanged residual bounds. Initial robot
+and object generalized positions plus zero velocities are audited by hash.
+
+The incumbent pair has a verified successful prefix ending at its first
+sustained tracking failure. A candidate must preserve that historical prefix,
+even if the current lower learner has already regressed. Accepted pairs are
+stored immutably. The preferred archive pointer ranks prefix length first,
+then the fixed full-horizon cost; this provides a nondecreasing archived prefix,
+not a guarantee that subsequent neural-policy training cannot regress.
+Checks run at upper stages and lower checkpoint boundaries. No implicit actor-
+only rollback is performed. If the solved no-edit head violates the saved
+prefix and no edit passes, the incoming learner is retained and the stage logs
+lower_response_applied=false. No optimal-lower-response claim is made about
+that retained incoming learner. The accepted candidate pairs still use their
+certified surrogate responses. No global convergence guarantee is added.

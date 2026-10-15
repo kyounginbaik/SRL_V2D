@@ -304,6 +304,8 @@ class ManipulationBilevel:
                 newton.eval_fk(env.model,state.joint_q,state.joint_qd,state)
             initial_observation = env.observation_strategy.compute(env.state_0)
         observation = jnp.array(to_jax(initial_observation, (env.world_count, env.observation_dim)), copy=True)
+        if hasattr(self,'audit_initial_state'):
+            self.audit_initial_state(env,'nominal_rollout')
         if voc_probe_scale is not None:
             np.testing.assert_allclose(env.object_control_scale.numpy(),voc_probe_scale,atol=1e-7)
             if env.command.voc_body_ids_w.size != env.world_count * env.command.layout.num_objects:

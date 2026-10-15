@@ -466,6 +466,8 @@ def _run_training(
     if logger is not None and not config.resume:
         logger.log({"curriculum/voc_scale": float(initial_stage.voc_scale)}, step=0)
     initial_observation = jax.device_put(jnp.array(env.reset(), copy=True), jax_device)
+    if hasattr(reference_update, 'audit_initial_state'):
+        reference_update.audit_initial_state(env.env, 'training_start')
     initial_context = jax.device_put(jnp.array(env.initial_critic_context, copy=True), jax_device)
     learner, executables = create_learner(
         config,
@@ -671,6 +673,8 @@ def _run_training(
                 env = replacement
                 env.set_curriculum(current_stage)
                 observation = jax.device_put(jnp.array(env.reset(), copy=True), jax_device)
+                if hasattr(reference_update, 'audit_initial_state'):
+                    reference_update.audit_initial_state(env.env, 'training_reference_update')
                 context = jax.device_put(jnp.array(env.initial_critic_context, copy=True), jax_device)
                 learner = learner.replace(
                     replay=clear_replay(learner.replay), observation=observation,
@@ -707,6 +711,8 @@ def _run_training(
         if should_save and environment_steps != last_checkpoint_step:
             jax.block_until_ready(learner.global_update_step)
             checkpoint_start = time.perf_counter()
+            if hasattr(reference_update, 'on_checkpoint'):
+                reference_update.on_checkpoint(env, learner, environment_steps)
             curriculum_metadata = {
                 "curriculum_stage": current_stage_index,
                 "voc_scale": current_stage.voc_scale,

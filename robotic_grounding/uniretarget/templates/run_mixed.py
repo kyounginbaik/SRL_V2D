@@ -23,13 +23,15 @@ def main():
   config['frozen_probe_accepted_rounds']=diagnostic['accepted_total']
  config['experiment_interpretation']='Full training experiment; increased edit magnitude and more upper updates do not establish improved task success.'
  config['window_selection']={'max_windows':4,'window_seconds':1.0,'shoulder_seconds':0.5,'failure_position_m':0.05,'failure_orientation_deg':20,'failure_persistence_seconds':0.15,'selection':'before error growth, before threshold failure, sampled earlier history','both_hands':True}
- cmd.extend(['+bilevel.failure_baseline_worlds=16','+bilevel.failure_consensus_fraction=0.5',
-             '+bilevel.failure_consensus_cluster_seconds=0.5'])
- config['window_selection'].update(detector='baseline_onset_consensus', baseline_worlds=16,
-     parallel=True, minimum_fraction=0.5, cluster_seconds=0.5,
-     reset_translation_m=0.001, reset_finger_degrees=0.5,
-     weak_consensus_fallback='largest onset cluster; earliest on ties',
-     selection='earliest repeatable onset, earlier error growth, sampled earlier history')
+ cmd.extend(['reset.fixed_initial_state=true','reset.always_reset_to_first_frame=true',
+             '+bilevel.fixed_start=true','+bilevel.failure_baseline_worlds=0'])
+ config['fixed_initial_state']=True
+ config['training_reset']='exact frame-zero robot/object poses and zero velocities; no finger opening'
+ config['historical_prefix_protection']=True
+ config['best_demo_selection']='longest saved successful prefix, then full-horizon pose/wrench cost'
+ config['window_selection'].update(detector='fixed_start_nominal',baseline_worlds=1,
+     parallel=False,reset_translation_m=0.,reset_finger_degrees=0.,
+     selection='first sustained failure from the original episode start; earlier error growth and history')
  config['rejected_search_preserves_lower_replay']=True
  config['voc_rotation_inertia']='full inertia tensor'
  config['voc_reset_on_reference_change']=False

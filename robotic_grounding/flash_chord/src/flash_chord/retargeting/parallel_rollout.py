@@ -66,7 +66,7 @@ def install_candidate_references(env, packed):
 
 
 def rollout_candidates(editor, learner, q, targets, *, record_indices=(),
-                       policy_override=None, on_observation=None):
+                       policy_override=None, on_observation=None, on_feedback=None):
     """One simulation pass, one separately reduced score per candidate world."""
     import jax
     import jax.numpy as jnp
@@ -88,6 +88,8 @@ def rollout_candidates(editor, learner, q, targets, *, record_indices=(),
     adapter=WarpRLEnv(env,publish_diagnostics=False,publish_step_metrics=False)
     from flash_chord.runtime.jax import to_jax
     obs=jnp.array(to_jax(env.reset(frame_id=0),(env.world_count,env.observation_dim)),copy=True);state=ActorInferenceState(learner.actor.params,learner.actor.batch_stats)
+    if hasattr(editor,'audit_initial_state'):
+        editor.audit_initial_state(env,'candidate_batch')
     key=jax.random.PRNGKey(editor.training.seed)
     if editor.parallel_policy is None:
         actor,_=create_actor_template(editor.training,obs.shape[1],adapter.action_dim)
@@ -133,4 +135,5 @@ def rollout_candidates(editor, learner, q, targets, *, record_indices=(),
         if editor.contact_proximity is not None:m.update(summarize_contact_proximity(sums[world:world+1],counts[world:world+1]))
         results.append(m)
     editor.validation_steps+=B*(F-1)
+    if on_feedback is not None:on_feedback(pos,angles)
     return results,packed,np.asarray(recorded)

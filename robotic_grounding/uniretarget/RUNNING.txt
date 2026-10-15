@@ -88,27 +88,27 @@ allocation. The default script resolves the allocated GPU to its UUID.
 Method and scope
 ----------------
 The lower learner is full-hand FlashSAC with a finger PCA exploration basis.
-The upper proposes a local 56D correction (both wrists and all fingers), using
-windows chosen from repeatable object-tracking failure onsets and earlier
-error growth/history. Sixteen parallel baseline worlds use the unchanged current
-reference/controller, VOC=0, and independent reset perturbations (up to 1 mm
-wrist translation and 0.5 degrees in scalar finger joints, clipped to limits).
-Each world's first sustained crossing is recorded separately for each object:
-position error >5 cm OR orientation error >20 degrees for 0.15 seconds. Choose
-the earliest onset cluster on the same object supported by at least 8/16 worlds
-within 0.5 seconds; successful worlds remain in that denominator. Its median
-failure frame and lower-quartile error-growth frame guide the earlier windows.
-If no cluster qualifies, choose the largest cluster, earliest on ties, and log
-weak consensus. No failures falls back to full-episode window exploration.
-These are tunable search heuristics, not Track 3's official scoring thresholds
-or causal diagnoses. All baseline traces/reset deltas are saved per search in
-baseline_ensemble.npz; W&B upper charts report agreement, failing fraction and
-probe duration. The 16 probes are additional to the unchanged 2048 candidate
-budget. Automatic stopping after all failures disappear is not implemented.
+Training resets always use frame-zero wrist/finger joints, object poses, and
+zero velocities. fixed_initial_state=true disables both random frame selection
+and sampled finger opening; reset_finger_openness=0 alone would NOT do this.
+Training still explores through stochastic SAC actions. All three seeds use
+the same physical starting state; they differ in learning/proposal randomness.
+The upper proposes a local 56D correction (both wrists and all fingers).
+One deterministic VOC=0 rollout from the same start identifies the first
+sustained crossing by either object: position error >5 cm OR orientation error
+>20 degrees for 0.15 seconds. Earlier error growth and sampled history guide
+up to four candidate windows. There are no perturbed baseline worlds.
+No failure falls back to full-episode window exploration. These are tunable
+search heuristics, not Track 3's official thresholds or causal diagnoses.
+Each search saves nominal_baseline.npz. initial_state_checks.jsonl verifies the
+same robot/object generalized positions and zero velocities across training,
+reference changes, baseline evaluation, and every candidate world. The shared
+2048-candidate budget and 500K-step search schedule are unchanged.
 Object trajectories remain fixed. Every candidate gets
 its own solved, strongly convex policy-head response before physical evaluation.
 The accepted reference and adapted head are published together. Rejected edits
-preserve replay, and keep the adapted no-edit head. CHORD-style wrench support
+preserve replay. An adapted no-edit head is kept only when it preserves the
+saved successful prefix; otherwise the incoming learner is retained. CHORD-style wrench support
 replaces contact-position guidance in the upper score. Acceptance uses the
 original demonstration start, with no three-perturbed-reset veto. Candidates
 share one scoring interval from detected error onset through failure+1 second
@@ -116,7 +116,20 @@ share one scoring interval from detected error onset through failure+1 second
 Before-onset prefix mean/p95 errors remain protected. Per-object whole-episode
 and post-interval mean pose regressions above 5 cm or 20 degrees, or new
 instability, are rejected. Those are tunable guards, not robustness guarantees.
-The 16 baseline probes still choose windows; they do not gate acceptance.
+Historical protection also compares each candidate against the saved best
+policy/reference pair, not just a possibly regressed current controller.
+An earlier sustained failure or excessive per-object mean/p95 error in that
+saved prefix rejects the candidate. Saved best pairs prefer the longest
+successful prefix, then lower full-horizon cost among prefix-preserving pairs.
+training/demo_archive stores immutable accepted/promoted actor/reference pairs;
+training/best_demo.json points to the preferred pair. Checkpoints are checked
+from the same start and cannot overwrite a better archived demonstration.
+This retains a deployable pair, not a complete training-resume snapshot;
+training continues exploring and is not automatically rolled back.
+W&B progress/current_first_failure_seconds, progress/best_success_prefix_seconds,
+and progress/current_prefix_preserved distinguish current behavior from retained
+progress. Partial improvements need not solve a failure;
+upper/failure_resolved_through_lookahead is true only after passing the full scoring interval.
 W&B upper/local_cost_gain and upper/scoring_region show the accepted gain and
 scoring interval; selected_window reports the actual edit window only when
 an edit was accepted. Full-horizon costs remain diagnostic charts.
@@ -159,7 +172,7 @@ correction magnitudes and lower-solve evidence; checkpoint_videos/step_*/ contai
 object_poses.npz, track3_estimates.json and physics MP4. voc_checkpoint_videos has
 assisted results. reference_overlays retains each accepted reference version.
 
-Validation: 102 targeted CPU tests passed before queueing the 100.7M batch;
+Validation: 114 targeted CPU tests passed before queueing the fixed-start 100.7M batch;
 randomized 1/2-object, 1/3-world score comparisons agreed with official formulas
 within 3e-14. New GPU integration is enforced by each job's smoke, and has not yet
 run while the cluster is fully occupied. A full Docker rebuild on a second server

@@ -8,7 +8,7 @@ p=argparse.ArgumentParser();p.add_argument('--seed',type=int,default=43)
 p.add_argument('--phase',choices=['smoke','pilot','full'],default='full');a=p.parse_args()
 if a.phase in ('smoke','full'):
  subprocess.run([sys.executable,'-m','pytest','tests/retargeting/test_response_bilevel.py',
-  'tests/retargeting/test_response_policy.py','tests/retargeting/test_response_metrics.py','tests/retargeting/test_local_acceptance.py',
+  'tests/retargeting/test_response_policy.py','tests/retargeting/test_response_metrics.py','tests/retargeting/test_local_acceptance.py','tests/retargeting/test_fixed_start.py',
   'tests/retargeting/test_chord_upper.py','tests/retargeting/test_response_upper.py','tests/evaluation/test_track3_estimates.py','tests/test_adaptive_windows.py',
   'tests/test_failure_consensus.py','tests/test_local_correction.py','tests/test_rejected_search_callback.py',
   'tests/runtime/test_wrist_limits.py','-q','-p','no:cacheprovider'],
@@ -35,12 +35,13 @@ for phase in (('smoke','pilot') if a.phase=='full' else (a.phase,)):
     assert chosen['rejection_reasons']==[]
     assert chosen['cost']==min(c['cost'] for c in row['candidates'] if c['gate_passed'])
    failure=row['failure_context']
-   assert failure['detector']=='baseline_onset_consensus'
-   assert failure['baseline_worlds']==16 and failure['baseline_probe_parallel']
-   assert failure['baseline_probe_distinct_resets']==16 and failure['baseline_probe_voc_scale']==0.
-   probe=np.load(run/'training/search_batches'/f'step_{row["step"]}'/'baseline_ensemble.npz')
-   assert probe['position_m'].shape[1:]==(16,len(config['episode']['objects']))
+   assert failure['detector']=='fixed_start_nominal' and failure['baseline_worlds']==1
+   assert failure['baseline_probe_translation_m']==0. and failure['baseline_probe_finger_degrees']==0.
+   assert row['fixed_initial_state'] and len(row['initial_state_sha256'])==64
+   probe=np.load(run/'training/search_batches'/f'step_{row["step"]}'/'nominal_baseline.npz')
+   assert probe['position_m'].shape[1:]==(1,len(config['episode']['objects']))
    assert np.isfinite(probe['position_m']).all() and np.isfinite(probe['orientation_rad']).all()
+   assert not list((run/'training/search_batches').glob('*/baseline_ensemble.npz'))
    for candidate in row['candidates']:
     assert np.isfinite(candidate['cost'])
     assert candidate['metrics']['cws_frames']>0
@@ -49,6 +50,15 @@ for phase in (('smoke','pilot') if a.phase=='full' else (a.phase,)):
     assert candidate['metrics']['local_stop_frame_exclusive']==region['stop_frame_exclusive']
     assert len(candidate['metrics']['per_object_cws_tolerance_error'])==len(config['episode']['objects'])
     assert 'contact_proximity_mean_m' not in candidate['metrics']
+  audits=[json.loads(line) for line in (run/'training/initial_state_checks.jsonl').read_text().splitlines()]
+  assert len({v['initial_state_sha256'] for v in audits})==1
+  assert all(v['frame']==0 and v['joint_velocity_max_error']==0 and v['joint_position_max_error']<=1e-6 for v in audits)
+  assert {'training_start','candidate_batch','nominal_rollout'} <= {v['context'] for v in audits}
+  best=json.loads((run/'training/best_demo.json').read_text())
+  assert Path(best['policy']).is_file() and Path(best['reference']).is_file()
+  progress=[json.loads(line) for line in (run/'training/progress_checks.jsonl').read_text().splitlines()]
+  assert np.all(np.diff([v['best_success_prefix_seconds'] for v in progress])>=0)
+  assert any(v['origin']=='checkpoint' for v in progress)
   (b.parent/'reports'/f'smoke_validation_{b.name}_s{a.seed}.json').write_text(json.dumps(dict(
    passed=True,seed=a.seed,searches=len(rows),accepted=sum(row['accepted'] for row in rows),
    maximum_lower_error=max(row['lower_parameter_error_bound_max'] for row in rows),

@@ -25,7 +25,7 @@ def main():
     a = p.parse_args()
     if a.seed < 0 or ',' in a.gpu:
         p.error('Use a nonnegative seed and exactly one GPU index or UUID')
-    root = (a.run_root or REPO / '.uniretarget' / f'chord-local-nominal-{a.upper}').resolve()
+    root = (a.run_root or REPO / '.uniretarget' / f'chord-fixed-start-{a.upper}').resolve()
     root.mkdir(parents=True, exist_ok=True)
     command = ['docker', 'run', '--rm', '--init', '--user', f'{os.getuid()}:{os.getgid()}',
                '--shm-size', '2g', '-v', f'{REPO}:{REPO}', '-v', f'{root}:{root}',

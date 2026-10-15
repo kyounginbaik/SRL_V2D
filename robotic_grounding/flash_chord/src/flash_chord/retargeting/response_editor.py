@@ -85,6 +85,17 @@ class ResponseBilevelEditor(AdaptiveWindowEditor):
             raise ValueError('unknown reference acceptance mode')
         self.local_acceptance = self.acceptance_mode == 'local_nominal'
         self.scoring_region = None
+        self.fixed_start = bool(self.options.get('fixed_start',False))
+        self.initial_state_sha256 = None
+        self.demo_archive = None
+        if self.fixed_start:
+            if not self.local_acceptance or int(self.options.get('failure_baseline_worlds',0)):
+                raise ValueError('fixed-start reconstruction needs local acceptance and an unperturbed baseline')
+            reset=self.config['env']['reset']
+            if not reset.get('fixed_initial_state') or reset.get('voc_decay_steps')!=0:
+                raise ValueError('fixed-start training must reset exact frame-zero joints without settling')
+            from flash_chord.retargeting.demo_archive import DemoArchive
+            self.demo_archive=DemoArchive(self)
         self.proposal_mode = self.options.get('upper_proposal', 'gaussian')
         if self.proposal_mode not in ('gaussian', 'flashsac'):
             raise ValueError('upper_proposal must be gaussian or flashsac')
@@ -128,6 +139,10 @@ class ResponseBilevelEditor(AdaptiveWindowEditor):
             contact_location_penalty=False,contact_location_gate=False,
             cws_contact_regression_tolerance=float(self.options.get('cws_contact_regression_tolerance',.02)))
         manifest['acceptance_mode'] = self.acceptance_mode
+        if self.fixed_start:
+            manifest.update(fixed_initial_state=True,window_selection='fixed_start_nominal_failure',
+                failure_baseline_worlds=1,failure_baseline_perturbations=False,
+                historical_prefix_protection=True,best_demo_pointer=str(self.output.parent/'best_demo.json'))
         if self.local_acceptance:
             manifest.update(confirmation='nominal demonstration start; no perturbed-reset acceptance veto',
                 cws_contact_regression_tolerance=None,
@@ -144,6 +159,30 @@ class ResponseBilevelEditor(AdaptiveWindowEditor):
             manifest['upper_flashsac_config'] = self.proposal_learner.configuration()
         path.write_text(json.dumps(manifest,indent=2)+'\n')
 
+    def audit_initial_state(self,env,context):
+        if not self.fixed_start:return
+        from flash_chord.retargeting.fixed_start import assert_initial_state
+        result=assert_initial_state(env,self.initial_state_sha256)
+        self.initial_state_sha256=result['initial_state_sha256']
+        result.update(context=context,reference_version=self.version,
+                      voc_scale=float(env.object_control_scale.numpy()[0]))
+        with (self.output.parent/'initial_state_checks.jsonl').open('a') as stream:
+            stream.write(json.dumps(result)+'\n')
+
+    def _archive_pair(self,binding,learner,p,a,metrics,step,origin,*,save_pair=False):
+        if self.demo_archive is None:return None
+        cost=response_cost(metrics,binding.joint_q,self.baseline.joint_q,self.projector.layout,
+                           self.baseline.fps,self.wrench_weight)
+        return self.demo_archive.consider(binding,learner,p,a,metrics,cost,step,origin,save_pair=save_pair)
+
+    def on_checkpoint(self,env,learner,step):
+        if not self.fixed_start:return
+        metrics,_,_,feedback=self.rollout(self.binding,learner,self.training.seed+step,return_feedback=True)
+        p=np.asarray(feedback['frame_per_object_position_m'])[:,0]
+        a=np.asarray(feedback['frame_per_object_orientation_rad'])[:,0]
+        report=self._archive_pair(self.binding,learner,p,a,metrics,step,'checkpoint')
+        print('[fixed-start-checkpoint] '+json.dumps(report),flush=True)
+
     def new_wrench_accumulator(self,env):
         objective=env.objective
         if self.local_acceptance and self.scoring_region is not None:
@@ -154,6 +193,10 @@ class ResponseBilevelEditor(AdaptiveWindowEditor):
 
     def observation(self, metrics, feedback=None):
         observation = super().observation(metrics, feedback)
+        if self.fixed_start:
+            self.failure_context.update(detector='fixed_start_nominal',baseline_worlds=1,
+                baseline_probe_distinct_resets=1,baseline_probe_translation_m=0.,baseline_probe_finger_degrees=0.,
+                baseline_probe_voc_scale=0.,initial_state_sha256=self.initial_state_sha256)
         if self.local_acceptance:
             self.scoring_region = scoring_region(self.failure_context, self.baseline.num_frames,
                 self.baseline.fps, lookahead_seconds=float(self.options.get('acceptance_lookahead_seconds',1.)))
@@ -165,6 +208,8 @@ class ResponseBilevelEditor(AdaptiveWindowEditor):
         metrics = super().trajectory_metrics(p, a)
         if getattr(self, 'local_acceptance', False) and self.scoring_region is not None:
             metrics.update(local_pose_metrics(p, a, self.scoring_region))
+        if getattr(self,'demo_archive',None) is not None:
+            metrics.update(self.demo_archive.check(p,a))
         return metrics
 
     def rollout(self,*args,**kwargs):
@@ -187,9 +232,11 @@ class ResponseBilevelEditor(AdaptiveWindowEditor):
                                    self.baseline.fps,self.wrench_weight,local=self.local_acceptance)
 
     def _local_rejections(self,after,before):
-        return local_guard_reasons(after,before,
+        reasons=local_guard_reasons(after,before,
             position_regression_m=float(self.options.get('acceptance_position_regression_m',.05)),
             orientation_regression_rad=np.deg2rad(float(self.options.get('acceptance_orientation_regression_deg',20.))))
+        if self.fixed_start:reasons.extend(after['saved_prefix_rejection_reasons'])
+        return reasons
 
     def _gate(self,after,before):
         if getattr(self, 'local_acceptance', False):
@@ -212,6 +259,9 @@ class ResponseBilevelEditor(AdaptiveWindowEditor):
         started=time.perf_counter();previous_steps=self.validation_steps
         seed=self.training.seed+step
         baseline,_,_,feedback=self.rollout(self.binding,learner,seed,return_feedback=True)
+        baseline_progress=self._archive_pair(self.binding,learner,
+            np.asarray(feedback['frame_per_object_position_m'])[:,0],
+            np.asarray(feedback['frame_per_object_orientation_rad'])[:,0],baseline,step,'baseline')
         if self.baseline_probe is not None:
             probe_seed = int(np.random.SeedSequence([self.training.seed, self.upper_round, 81001]).generate_state(1)[0])
             p, a, deltas, probe_metadata = self.baseline_probe(self, learner, probe_seed)
@@ -247,8 +297,10 @@ class ResponseBilevelEditor(AdaptiveWindowEditor):
         del rows
         print('[response-bilevel] lower parameter error bound max='+
               str(float(responses.certificate.parameter_error_bound.max())),flush=True)
+        candidate_feedback={}
         adapted_metrics,_,_=rollout_candidates(self,learner,qs,targets,
-            policy_override=self.response_adapter.policy_for(learner,responses))
+            policy_override=self.response_adapter.policy_for(learner,responses),
+            on_feedback=lambda p,a:candidate_feedback.update(position=p,orientation=a))
         if not (adapted_metrics[0]['all_errors_finite'] and adapted_metrics[0]['full_horizon']):
             raise FloatingPointError('adapted no-edit control did not produce a valid full-horizon rollout')
         costs=np.asarray([self._cost(m,q) for m,q in zip(adapted_metrics,qs)])
@@ -300,12 +352,18 @@ class ResponseBilevelEditor(AdaptiveWindowEditor):
                         and sum(c['cost_gain']>0 for c in checks)>=2)
                 attempts.append(dict(trial=int(index),accepted=bool(passed),mean_cost=mean_cost,checks=checks))
                 if passed:feasible.append((mean_cost,int(index),candidate,candidate_learner))
-        # Always solve and retain a lower response at the selected reference.
-        # With no feasible edit this is the adapted no-edit control, not W=0.
+        # Prefer the solved no-edit response when no reference edit is feasible.
+        # Fixed-start runs may reject this head to protect the saved prefix.
         selected=0;accepted=False;replacement=None;updated=control_learner
+        lower_response_applied=True
+        # A solved no-edit head may itself break a previously solved grasp.
+        # Reject that head rather than silently publishing an unsafe response.
+        if self.fixed_start and not adapted_metrics[0]['saved_prefix_preserved']:
+            updated=learner;lower_response_applied=False
         old_version=self.version
         if feasible:
             _,selected,candidate,updated=min(feasible,key=lambda item:item[0])
+            lower_response_applied=True
             self.binding=candidate;self.version+=1;self.publish(step);accepted=True
             replacement=RLEnv(replace(self.setup.scene,robot_reference=self.binding),
                                self.setup.reference,config=deepcopy(env.env.config))
@@ -331,7 +389,8 @@ class ResponseBilevelEditor(AdaptiveWindowEditor):
             lower_backbone_critic_frozen_within_stage=True,lower_response_solved_for_every_candidate=True,
             lower_parameter_error_bound_max=float(responses.certificate.parameter_error_bound.max()),
             lower_objective_gap_bound_max=float(responses.certificate.objective_gap_bound.max()),
-            lower_data_sha256=responses.data_sha256,selected_lower_trial=selected,
+            lower_data_sha256=responses.data_sha256,selected_lower_trial=selected if lower_response_applied else None,
+            lower_response_applied=lower_response_applied,
             baseline=adapted_metrics[0],
             baseline_cost_terms=self._cost_terms(adapted_metrics[0],qs[0]),
             selected_cost_terms=self._cost_terms(adapted_metrics[selected],qs[selected]),
@@ -363,6 +422,28 @@ class ResponseBilevelEditor(AdaptiveWindowEditor):
             record['gate_diagnostics']['rejection_counts']=dict(Counter(
                 reason for row in record['candidates'][1:] for reason in row['rejection_reasons']))
         record.update(upper_learning)
+        if self.fixed_start:
+            if lower_response_applied:
+                published_metrics=adapted_metrics[selected]
+                p=candidate_feedback['position'][:,selected];a=candidate_feedback['orientation'][:,selected]
+            else:
+                published_metrics=baseline
+                p=np.asarray(feedback['frame_per_object_position_m'])[:,0]
+                a=np.asarray(feedback['frame_per_object_orientation_rad'])[:,0]
+            progress=self._archive_pair(self.binding,updated,p,a,published_metrics,step,
+                                       'accepted' if accepted else 'retained',save_pair=accepted)
+            record.update(fixed_initial_state=True,initial_state_sha256=self.initial_state_sha256,
+                          progress=progress,baseline_progress=baseline_progress,
+                          failure_resolved_through_lookahead=bool(self.failure_context['failed'] and
+                              progress['current_first_failure_seconds']>=self.scoring_region['end_seconds_exclusive']))
+            np.savez_compressed(evidence/'nominal_baseline.npz',
+                position_m=feedback['frame_per_object_position_m'],
+                orientation_rad=feedback['frame_per_object_orientation_rad'])
+            if not lower_response_applied:
+                # The retained incoming actor did not have its wrench trace
+                # rescored on the newly selected local interval.
+                record['selected_cost_terms']=None
+                record['published_full_horizon_cost']=progress['full_horizon_cost']
         record['upper_proposal'] = self.proposal_mode
         if self.proposal_learner:
             from flash_chord.training.flash_sac.checkpoint import save_learner_checkpoint
