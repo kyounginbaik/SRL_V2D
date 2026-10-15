@@ -1,16 +1,20 @@
 AGENT HANDOFF: current UniRetarget wrench-hypergradient experiment
 Updated 2026-10-16: measured trial feedback and bounded adaptation
 
-Set up the current UniRetarget implementation on this GPU server and reproduce
-THREE EPISODE-1 SMOKE RUNS, seeds 43, 44, 45. Use --upper wrench_hypergradient
-explicitly. Do not substitute the older gaussian/flashsac upper search or launch
-the old 30-run ablation matrix. Start full training only when requested, after
-the smoke validation succeeds; the commands are documented below in RUNNING.txt.
+Set up the current UniRetarget implementation on this GPU server and run FULL
+EPISODE-1 TRAINING for seeds 43, 44 and 45. Use --upper wrench_hypergradient
+explicitly and --phase full on fresh episode/seed paths. That command runs the
+full-shape smoke, validates it, and automatically starts fresh 100.7M training
+when it passes. Proceed through both stages; no further approval is needed.
+Do not substitute the older gaussian/flashsac upper search or launch the old
+30-run ablation matrix. If a smoke fails, diagnose its concrete error and keep
+its logs before retrying with a fresh output root.
 
 Repository: https://github.com/kyounginbaik/SRL_V2D
 Checkout: current main in a new isolated directory; record git rev-parse HEAD.
-Use a commit containing the 2026-10-16 measured-feedback/bounded-validation
-changes. Earlier wrench-hypergradient commits lack the trial feedback loop.
+Implementation baseline: 4e762541 or a later main commit containing these
+measured-feedback/bounded-validation changes. Earlier wrench-hypergradient
+commits lack the trial feedback loop.
 Full setup/commands: robotic_grounding/uniretarget/RUNNING.txt
 Method/math: robotic_grounding/flash_chord/docs/wrench_hypergradient.txt
 
@@ -21,16 +25,50 @@ The package includes all five prepared episodes (1,3,5,6,35), object/robot asset
 and PCA prior. No original /data1 paths, source videos, ComPose, reconstruction
 weights, final_submission.zip or original run directories are needed.
 
-Use one allocated GPU per job. For one smoke, from the cloned repository root:
+After completing RUNNING.txt sections 1-4, use one allocated GPU per job.
+Choose direct execution OR Slurm; never duplicate episode/seed output paths.
+All commands below run from the cloned repository root and retain the configured
+UNIRETARGET_RUN_ROOT, UNIRETARGET_IMAGE and W&B environment.
 
-  python3 robotic_grounding/uniretarget/launch.py \
-    --upper wrench_hypergradient --episode 1 --seed 43 --phase smoke \
-    --gpu GPU_UUID_OR_INDEX
+Direct execution, sequentially on one allocated GPU:
 
-Repeat for 44/45 on separate allocated GPUs or sequentially. RUNNING.txt gives
-a Slurm loop with the fourth positional phase argument set to smoke. Adapt the
-partition/account, not the method. Keep a manifest of job IDs, roots, exact code
-commit, image IDs, device types and W&B URLs. Do not submit duplicate jobs.
+  export UNIRETARGET_GPU=GPU_UUID_OR_INDEX
+  mkdir -p "$UNIRETARGET_RUN_ROOT/launch_logs"
+  for seed in 43 44 45; do
+    python3 robotic_grounding/uniretarget/launch.py \
+      --upper wrench_hypergradient --episode 1 --seed "$seed" --phase full \
+      --gpu "$UNIRETARGET_GPU" \
+      >"$UNIRETARGET_RUN_ROOT/launch_logs/episode_000001_s${seed}.log" 2>&1 || break
+  done
+
+Replace GPU_UUID_OR_INDEX with the actual allocated device. Use a persistent
+session. For three concurrent runs, run each seed on its own allocated GPU
+or use the Slurm loop below. Do not share an occupied GPU between jobs.
+
+Slurm, three independent allocations, each smoke followed by full training:
+
+  export UNIRETARGET_PARTITION=YOUR_PARTITION
+  export UNIRETARGET_SLURM_TIME="${UNIRETARGET_SLURM_TIME:-7-00:00:00}"
+  mkdir -p "$UNIRETARGET_RUN_ROOT/slurm_logs"
+  for seed in 43 44 45; do
+    sbatch --export=ALL --partition="$UNIRETARGET_PARTITION" \
+      --time="$UNIRETARGET_SLURM_TIME" --job-name="whg-e1-full-s${seed}" \
+      --output="$UNIRETARGET_RUN_ROOT/slurm_logs/%j.out" \
+      --error="$UNIRETARGET_RUN_ROOT/slurm_logs/%j.err" \
+      robotic_grounding/uniretarget/train.sbatch 1 "$seed" wrench_hypergradient full
+  done
+
+Replace the partition and adapt account/QoS/walltime to this server. Seven days
+is a scheduling limit, not a predicted duration. The portable script requests
+one GPU, 12 CPUs and 96GB RAM and discovers the allocated device. Keep a manifest
+of job IDs, roots, code commit, image IDs, hardware and W&B URLs.
+
+The Slurm GPU resolver accepts UUID allocations directly. For numeric IDs,
+UNIRETARGET_GPU_ID_KIND=auto stops if Linux minor and nvidia-smi index mappings
+conflict. Verify this site's convention before selecting minor or index.
+The original cluster uses minor; do not infer that for another server.
+UNIRETARGET_GPU_UUID is an optional explicit override for one allocation;
+do not export a single fixed GPU UUID into all three scheduled jobs.
 
 Smoke contract:
 - 2,048 worlds, 524,288 main transitions, one upper round at 501,760.
@@ -74,20 +112,23 @@ Require exit code zero and reports/smoke_validation_episode_000001_sNN.json
 with passed=true. Do not rely only on stage.json or a final checkpoint. The
 validator checks proposals, real lower learning, finite state, fixed starts
 and media, plus complete measured feedback and nonzero upper-critic parameter
-changes from EVERY tested branch checkpoint, and compliance with the cap. Zero accepted edits is a valid integration result, not improvement.
+changes from EVERY tested branch checkpoint, and compliance with the cap.
+Zero accepted edits is a valid integration result, not improvement. In phase
+full, the launcher enforces this validation before starting full training.
 
 Report back: job status and hardware, validation result, upper acceptance
 count, wrist movement in cm, finger change in degrees, failure/onset and window
 times, actual candidate/control adaptation budgets and cost gains, VOC=0 videos,
 reference overlays and W&B URLs. Include upper_feedback/* counts, parameter
-changes, held-out return prediction error, and measured upper-round duration. Distinguish predicted upper cost from actual
-physical gain. If blocked, report the concrete error and preserve logs.
+changes, held-out return prediction error, and measured upper-round duration.
+Distinguish predicted upper cost from actual physical gain. If blocked, report the concrete error and preserve logs.
 
-If full training is requested after a passed smoke, use --phase pilot for that
-same episode/seed/root. It starts fresh 2048-world/100,663,296-main-step training;
+Optional staged alternative: --phase smoke intentionally stops after the GPU
+validation. After its report passes, use --phase pilot for that episode/seed/root.
+It starts fresh 2048-world/100,663,296-main-step training;
 it does not continue smoke weights or verify the passed report itself.
-For an untouched episode/seed/root, --phase full runs smoke then fresh full
-training automatically. Full training retains the same bounded validation
+For this task, prefer --phase full on untouched episode/seed paths so smoke and
+fresh full training run automatically in one allocation. Full training retains the same bounded validation
 profile as the smoke. At most five branches run per round (one reused unchanged
 control plus four candidate windows); do not quote only main-step runtime.
 Expected W&B names start with wrench-feedback-fast-full-d56-w2048-.

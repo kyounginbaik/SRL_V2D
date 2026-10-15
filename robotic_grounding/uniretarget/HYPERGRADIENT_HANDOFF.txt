@@ -4,17 +4,21 @@ Updated 2026-10-16: measured trial feedback and bounded adaptation
 Give the other server's agent:
   robotic_grounding/uniretarget/AGENT_HANDOFF.txt
 
-It specifies episode 1, seeds 43/44/45, full-shape GPU smoke validation and the
-current measured-feedback method. Complete clone/LFS/Docker/W&B/direct-GPU/Slurm
+The requested task is FULL episode-1 training, seeds 43/44/45. Use --phase full
+on fresh paths: each job validates a full-shape smoke and automatically proceeds
+to fresh 100.7M training. No additional approval is needed between stages. Complete clone/LFS/Docker/W&B/direct-GPU/Slurm
 commands, phase selection and evidence paths are in:
   robotic_grounding/uniretarget/RUNNING.txt
 
 Repository: https://github.com/kyounginbaik/SRL_V2D
-Use a clean current checkout containing these 2026-10-16 changes and record its
-exact commit. Always pass --upper wrench_hypergradient; the CLI default is the
+Use implementation baseline 4e762541 or a later main commit containing these
+changes, in a clean checkout, and record its exact commit. Always pass --upper wrench_hypergradient; the CLI default is the
 older Gaussian engine. Use allocated GPUs, a fresh persistent output root and
 explicit online W&B configuration. Keep the source checkout unchanged while
 jobs run. Older frozen runs do not automatically acquire these changes.
+For numeric Slurm GPU IDs, confirm whether the site uses Linux device minors
+or nvidia-smi indices. The resolver's auto mode stops on ambiguity; configure
+UNIRETARGET_GPU_ID_KIND only after verifying that mapping. See RUNNING.txt.
 
 Current contract:
 - One learned 56D full-hand proposal per selected local window, up to four.
@@ -33,7 +37,11 @@ Current contract:
 - Smoke: 2,048 worlds, 524,288 main transitions, one upper round at 501,760,
   batch 1,024 and full replay settings. Require the smoke report passed=true.
 - Full: fresh 100,663,296 main transitions, same bounded validation settings.
-  Full training is not a continuation of smoke weights.
+  --phase full runs smoke then full training automatically; failure blocks the
+  full stage. Full training is not a continuation of smoke weights.
+- Optional staged commands remain available: --phase smoke stops at validation;
+  --phase pilot starts fresh full training after manually checking its report.
+  Do not rerun full over existing smoke outputs; there is no complete resume.
 - W&B names start wrench-feedback-fast-full-d56-w2048-. Keep historical videos,
   reference overlays, Track 3 estimates and upper_feedback/* measurements.
 

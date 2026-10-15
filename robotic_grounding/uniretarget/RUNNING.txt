@@ -4,22 +4,26 @@ Current method: wrench_hypergradient, measured-feedback bounded validation (2026
 Repository: https://github.com/kyounginbaik/SRL_V2D
 Agent handoff: AGENT_HANDOFF.txt in this directory
 Method/math: ../flash_chord/docs/wrench_hypergradient.txt
-Use a main commit containing the measured trial feedback and bounded-window adaptation
-changes described here. Record the actual checkout commit; older 2026-10-15 code
-does not contain this feedback loop.
+Implementation baseline: 4e762541, or a later main commit containing its measured
+trial feedback and bounded-window adaptation. Record the actual checkout commit;
+older 2026-10-15 code does not contain this feedback loop.
 
 Always pass --upper wrench_hypergradient. The CLI's default is still the older
 Gaussian candidate-search method. These instructions reproduce the NEW method.
-Initial experiment: episode 1, seeds 43/44/45, three GPU smoke jobs. Other bundled
-episodes are 3, 5, 6 and 35. Each invocation uses one allocated GPU.
+Recommended task: FULL episode-1 training, seeds 43/44/45. Use --phase full:
+each job automatically validates a full-shape smoke, then starts fresh 100.7M
+training if validation passes. No additional approval step is needed between
+phases. Other bundled episodes are 3, 5, 6 and 35; run only the requested subset.
+Each invocation uses one allocated GPU.
 
 1. HOST AND CLEAN CHECKOUT
 
 Use Linux, NVIDIA Container Toolkit and Docker access. The pinned Dockerfile
 requires a compatible NVIDIA driver >=580. Reserve one GPU, 12 CPUs and 96GB
-host RAM per job, as in the submitted smoke recipe. The existing cluster uses
+host RAM per job, as in the submitted training recipe. The existing cluster uses
 L40S 48GB and B200 GPUs. The smoke now uses the full 2,048-world shape
-to validate memory fit and the new feedback loop before full training. Inspect disk space before downloading inputs and building images.
+to validate memory fit and the feedback loop before full training. Inspect
+disk space before downloading inputs and building images.
 Host Python 3 only needs the standard library; dependencies run in Docker.
 
   nvidia-smi
@@ -69,8 +73,8 @@ The original cluster's flash_chord:mixed-ep01-media tag is not required elsewher
 
 Choose a NEW root on persistent storage. This example stays inside the checkout:
 
-  export UNIRETARGET_RUN_ROOT="$PWD/.uniretarget/wrench-feedback-fast-run1"
-  export UNIRETARGET_IMAGE=uniretarget:chord100m
+  export UNIRETARGET_RUN_ROOT="${UNIRETARGET_RUN_ROOT:-$PWD/.uniretarget/wrench-feedback-fast-full-run1}"
+  export UNIRETARGET_IMAGE="${UNIRETARGET_IMAGE:-uniretarget:chord100m}"
 
 Seeds and episodes may share this root; each has a separate run directory and
 lock. Never launch the same episode/seed twice concurrently. A retry after
@@ -81,9 +85,9 @@ and optimizer states. --phase pilot also starts fresh; it is not resume.
 For online W&B:
 
   export WANDB_MODE=online
-  export WANDB_ENTITY=DexDreamer
-  export WANDB_PROJECT=v2d-track3-uniretarget
-  export WANDB_BASE_URL=https://api.wandb.ai
+  export WANDB_ENTITY="${WANDB_ENTITY:-DexDreamer}"
+  export WANDB_PROJECT="${WANDB_PROJECT:-v2d-track3-uniretarget}"
+  export WANDB_BASE_URL="${WANDB_BASE_URL:-https://api.wandb.ai}"
 
 Provide WANDB_API_KEY securely through this server's environment/secret store.
 The portable launcher forwards it, but does not mount the host's .netrc or copy
@@ -111,20 +115,45 @@ error. The exported root and image above apply to subsequent commands too.
 Optional launcher inspection (does not train):
 
   python3 robotic_grounding/uniretarget/launch.py \
-    --upper wrench_hypergradient --episode 1 --seed 43 --phase smoke \
+    --upper wrench_hypergradient --episode 1 --seed 43 --phase full \
     --gpu 0 --dry-run
 
-5. RUN A SMOKE ON AN ALLOCATED GPU
+5. RECOMMENDED: THREE FULL RUNS ON ALLOCATED GPUS
 
-Replace GPU_UUID_OR_INDEX with the actual allocated device:
+Choose either this direct-GPU route OR Slurm in section 7. From the repository
+root, after setup/preparation above, replace GPU_UUID_OR_INDEX with a device
+allocated to this process. This loop runs the three seeds sequentially on that
+one GPU; use a persistent session and retain each log:
+
+  export UNIRETARGET_GPU=GPU_UUID_OR_INDEX
+  mkdir -p "$UNIRETARGET_RUN_ROOT/launch_logs"
+  for seed in 43 44 45; do
+    python3 robotic_grounding/uniretarget/launch.py \
+      --upper wrench_hypergradient --episode 1 --seed "$seed" --phase full \
+      --gpu "$UNIRETARGET_GPU" \
+      >"$UNIRETARGET_RUN_ROOT/launch_logs/episode_000001_s${seed}.log" 2>&1 || break
+  done
+
+For concurrent runs, use three separate allocated GPUs and invoke the same
+command once per seed in separate persistent sessions, changing --gpu to the
+matching device. Do not run simultaneous seeds on one occupied GPU. Slurm below
+handles separate allocations automatically.
+
+--phase full is the recommended single command: it runs targeted CPU checks,
+full-shape GPU smoke, validates its report, and then automatically starts fresh
+100.7M training in the same allocation. A failed smoke prevents full training.
+The full stage appears under runs/pilot; "pilot" is only an output-path label.
+All three episode/seed paths must be untouched in the chosen root. This is
+not resume, and full must not be rerun over an existing smoke for the same seed.
+
+Optional smoke-only route, when intentionally checking integration first:
 
   python3 robotic_grounding/uniretarget/launch.py \
     --upper wrench_hypergradient --episode 1 --seed 43 --phase smoke \
-    --gpu GPU_UUID_OR_INDEX
+    --gpu "$UNIRETARGET_GPU"
 
-Repeat for seeds 44 and 45 on separate allocated GPUs, or sequentially on one.
-Use the scheduler alternative below when available. For a standalone server,
-keep the launch process in a persistent session and retain stdout/stderr.
+This stops after validation. If it passes, use --phase pilot from section 6
+for that seed/root instead of rerunning --phase full.
 
 The smoke runs targeted CPU tests, then 2,048-world training for 524,288 MAIN
 environment transitions. It uses the same batch 1,024 and replay settings as
@@ -190,30 +219,44 @@ and physical guards still apply. Faster validation may reject an edit whose
 benefit requires more lower training. No lower-convergence claim is made.
 There are no 2,048 upper candidates: there is one learned proposal per window.
 
-7. SLURM: THREE SMOKE JOBS
+7. RECOMMENDED SLURM ROUTE: THREE FULL JOBS
 
 Submit from the repository root with the output/image/W&B environment above.
-Replace YOUR_PARTITION and add your site's account/QoS options if needed. The
-portable script uses this server's Slurm GPU allocation, not original node names.
+Replace YOUR_PARTITION and adjust the walltime/account/QoS to this cluster.
+These commands submit three independent jobs, each automatically running its
+smoke and then full training. The portable script uses the allocated GPU;
+no original node names or device indices are required.
 
-  mkdir -p slurm_logs
+GPU allocation resolution defaults to UNIRETARGET_GPU_ID_KIND=auto. UUID
+allocations are unambiguous; numeric allocations may be Linux device minors or
+nvidia-smi indices. Auto stops if those mappings disagree. Confirm this site's
+Slurm convention, then set UNIRETARGET_GPU_ID_KIND=minor or index as appropriate.
+The original node01/node100/node200 cluster uses minor. Do not assume another
+server uses the same convention. A single allocation can explicitly provide
+UNIRETARGET_GPU_UUID; do not reuse one fixed UUID across the three Slurm jobs.
+
+  export UNIRETARGET_PARTITION=YOUR_PARTITION
+  export UNIRETARGET_SLURM_TIME="${UNIRETARGET_SLURM_TIME:-7-00:00:00}"
+  mkdir -p "$UNIRETARGET_RUN_ROOT/slurm_logs"
   for seed in 43 44 45; do
-    sbatch --partition=YOUR_PARTITION --time=08:00:00 \
-      --job-name="whg-e1-smoke-s${seed}" \
-      --output="slurm_logs/%j.out" --error="slurm_logs/%j.err" \
-      robotic_grounding/uniretarget/train.sbatch 1 "$seed" wrench_hypergradient smoke
+    sbatch --export=ALL --partition="$UNIRETARGET_PARTITION" \
+      --time="$UNIRETARGET_SLURM_TIME" --job-name="whg-e1-full-s${seed}" \
+      --output="$UNIRETARGET_RUN_ROOT/slurm_logs/%j.out" \
+      --error="$UNIRETARGET_RUN_ROOT/slurm_logs/%j.err" \
+      robotic_grounding/uniretarget/train.sbatch 1 "$seed" wrench_hypergradient full
   done
 
-Arguments: EPISODE SEED UPPER PHASE. The fourth argument defaults to full when
-omitted. The script requests one GPU, 12 CPUs, 96GB RAM; default time is 40 hours.
-The 8-hour smoke request above is a queue limit, not a measured runtime estimate.
-Ensure your scheduler exports the required environment to jobs. Do not run the
-direct-GPU commands and submit duplicate Slurm jobs for the same output paths.
+Arguments: EPISODE SEED UPPER PHASE. The explicit fourth argument full ensures
+smoke-to-full execution. One GPU, 12 CPUs and 96GB RAM are requested per job.
+The seven-day walltime above is a scheduler limit, not a runtime prediction;
+choose a limit supported by this cluster. --export=ALL forwards the configured
+root/image/W&B environment. Do not also run direct-GPU commands for these paths.
 
-After the three smoke reports pass, change the last argument to pilot and set
-a suitable time limit to submit the corresponding full runs. Use full only for
-untouched episode/seed paths. Other episodes are selected by 3, 5, 6 or 35; run
-only the requested subset, rather than automatically submitting a large matrix.
+Optional staged alternative: change full to smoke to run integration only.
+After each report passes, submit the corresponding seed with pilot to start
+fresh full training without repeating smoke. For existing passed smoke paths,
+use pilot; for untouched paths, use full. A pilot invocation does not itself
+check the earlier report, so inspect it first. Do not submit duplicate jobs.
 
 8. WHAT TO REPORT
 
@@ -234,11 +277,12 @@ Evidence inside that directory:
   reference_overlays/version_*/           original/current reference comparison
   wandb_sync/run.json                      actual W&B URL
 
-Expected W&B smoke names:
-  wrench-feedback-fast-full-d56-w2048-smoke-episode_000001-s43
-  wrench-feedback-fast-full-d56-w2048-smoke-episode_000001-s44
-  wrench-feedback-fast-full-d56-w2048-smoke-episode_000001-s45
-Here "full-d56" means full-hand edits, not full-length training.
+Expected W&B full-training names:
+  wrench-feedback-fast-full-d56-w2048-pilot-episode_000001-s43
+  wrench-feedback-fast-full-d56-w2048-pilot-episode_000001-s44
+  wrench-feedback-fast-full-d56-w2048-pilot-episode_000001-s45
+The preceding integration runs use smoke instead of pilot in their names.
+Here "full-d56" means full-hand edits; pilot runs the full 100.7M budget.
 
 Useful panels:
   hypergradient/accepted, hypergradient/critic_heldout_td_mae

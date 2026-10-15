@@ -8,8 +8,8 @@
 set -euo pipefail
 # Submit from repository root. Override partition/nodelist/output via sbatch flags.
 REPO_ROOT=${SLURM_SUBMIT_DIR:?Submit this script from the cloned repository root}
-GPU_ALLOCATION=${SLURM_STEP_GPUS:-${SLURM_JOB_GPUS:-${CUDA_VISIBLE_DEVICES:-0}}}
-GPU_ALLOCATION=${GPU_ALLOCATION%%,*}
-GPU_DEVICE=$(nvidia-smi -i "$GPU_ALLOCATION" --query-gpu=uuid --format=csv,noheader | head -1)
+# Numeric Slurm allocations can be indices or NVIDIA device minor numbers.
+# Fail on ambiguity unless this site's convention or allocated UUID is explicit.
+GPU_DEVICE=$(python3 "$REPO_ROOT/robotic_grounding/uniretarget/gpu_allocation.py")
 python3 "$REPO_ROOT/robotic_grounding/uniretarget/launch.py" \
     --episode "${1:-1}" --seed "${2:-43}" --phase "${4:-full}" --gpu "$GPU_DEVICE" --upper "${3:-gaussian}"
