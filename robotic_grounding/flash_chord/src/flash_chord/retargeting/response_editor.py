@@ -25,6 +25,9 @@ from flash_chord.envs.rl import RLEnv
 from flash_chord.training.environment import WarpRLEnv
 from flash_chord.training.reference_update import ReferenceLearnerUpdate
 from flash_chord.training.flash_sac.learner import _create_adam
+from flash_chord.retargeting.local_acceptance import (
+    scoring_region, local_pose_metrics, LocalWrenchAccumulator, local_guard_reasons,
+)
 
 
 def joint_object_metrics(position,orientation):
@@ -50,19 +53,20 @@ def geometric_edit_penalty(joint_q, baseline, layout, fps):
     return .05*float(np.mean(terms))+.05*float(np.mean(rates))
 
 
-def response_cost_terms(metrics, joint_q, baseline, layout, fps, wrench_weight=5.):
-    return dict(object_position=metrics['object_position_robust_m']/.03,
-        object_orientation=metrics['object_orientation_robust_rad']/.3,
-        joint_object_failure=2*(1-metrics['object_success_robust_fraction']),
-        wrench_support=wrench_weight*metrics['cws_tolerance_error'],
-        missed_contact=metrics['cws_missed_fraction'],
-        unintended_contact=metrics['cws_unintended_fraction']+metrics['cws_unintended_energy'],
+def response_cost_terms(metrics, joint_q, baseline, layout, fps, wrench_weight=5., *, local=False):
+    prefix = 'local_' if local else ''
+    return dict(object_position=metrics[prefix+'object_position_robust_m']/.03,
+        object_orientation=metrics[prefix+'object_orientation_robust_rad']/.3,
+        joint_object_failure=2*(1-metrics[prefix+'object_success_robust_fraction']),
+        wrench_support=wrench_weight*metrics[prefix+'cws_tolerance_error'],
+        missed_contact=metrics[prefix+'cws_missed_fraction'],
+        unintended_contact=metrics[prefix+'cws_unintended_fraction']+metrics[prefix+'cws_unintended_energy'],
         instability=3*metrics['unstable_world_fraction'],
         reference_regularization=geometric_edit_penalty(joint_q,baseline,layout,fps))
 
 
-def response_cost(metrics, joint_q, baseline, layout, fps, wrench_weight=5.):
-    raw=sum(response_cost_terms(metrics,joint_q,baseline,layout,fps,wrench_weight).values())
+def response_cost(metrics, joint_q, baseline, layout, fps, wrench_weight=5., *, local=False):
+    raw=sum(response_cost_terms(metrics,joint_q,baseline,layout,fps,wrench_weight,local=local).values())
     if not np.isfinite(raw):raise FloatingPointError('nonfinite upper cost')
     # Defines a bounded empirical upper objective, rather than silently clipping
     # only selected candidates or using different scales for confirmation.
@@ -76,6 +80,11 @@ class ResponseBilevelEditor(AdaptiveWindowEditor):
         if float(kwargs['options'].get('contact_proximity_weight',0.)) != 0:
             raise ValueError('CHORD response search must not use contact-location penalties')
         super().__init__(**kwargs)
+        self.acceptance_mode = self.options.get('acceptance_mode', 'strict_robust')
+        if self.acceptance_mode not in ('strict_robust', 'local_nominal'):
+            raise ValueError('unknown reference acceptance mode')
+        self.local_acceptance = self.acceptance_mode == 'local_nominal'
+        self.scoring_region = None
         self.proposal_mode = self.options.get('upper_proposal', 'gaussian')
         if self.proposal_mode not in ('gaussian', 'flashsac'):
             raise ValueError('upper_proposal must be gaussian or flashsac')
@@ -118,6 +127,14 @@ class ResponseBilevelEditor(AdaptiveWindowEditor):
             cws_weight=self.wrench_weight,cws_tolerance=self.wrench_tolerance,
             contact_location_penalty=False,contact_location_gate=False,
             cws_contact_regression_tolerance=float(self.options.get('cws_contact_regression_tolerance',.02)))
+        manifest['acceptance_mode'] = self.acceptance_mode
+        if self.local_acceptance:
+            manifest.update(confirmation='nominal demonstration start; no perturbed-reset acceptance veto',
+                cws_contact_regression_tolerance=None,
+                upper_objective_scope='shared error-onset to failure plus lookahead interval, both objects',
+                acceptance_lookahead_seconds=float(self.options.get('acceptance_lookahead_seconds',1.)),
+                large_position_regression_m=float(self.options.get('acceptance_position_regression_m',.05)),
+                large_orientation_regression_deg=float(self.options.get('acceptance_orientation_regression_deg',20.)))
         if self.baseline_probe is not None:
             manifest.update(window_selection='baseline_onset_consensus_and_sampled_history',
                 failure_baseline_worlds=probe_worlds, failure_baseline_parallel=True,
@@ -129,8 +146,26 @@ class ResponseBilevelEditor(AdaptiveWindowEditor):
 
     def new_wrench_accumulator(self,env):
         objective=env.objective
+        if self.local_acceptance and self.scoring_region is not None:
+            return LocalWrenchAccumulator(env.world_count,objective.num_hands,objective.num_bodies,
+                objective.num_basis,tolerance=self.wrench_tolerance,region=self.scoring_region)
         return WrenchSupportAccumulator(env.world_count,objective.num_hands,objective.num_bodies,
                                        objective.num_basis,tolerance=self.wrench_tolerance)
+
+    def observation(self, metrics, feedback=None):
+        observation = super().observation(metrics, feedback)
+        if self.local_acceptance:
+            self.scoring_region = scoring_region(self.failure_context, self.baseline.num_frames,
+                self.baseline.fps, lookahead_seconds=float(self.options.get('acceptance_lookahead_seconds',1.)))
+            self.protected_prefix_frames = self.scoring_region['start_frame']
+            print('[local-acceptance] '+json.dumps(self.scoring_region), flush=True)
+        return observation
+
+    def trajectory_metrics(self, p, a):
+        metrics = super().trajectory_metrics(p, a)
+        if getattr(self, 'local_acceptance', False) and self.scoring_region is not None:
+            metrics.update(local_pose_metrics(p, a, self.scoring_region))
+        return metrics
 
     def rollout(self,*args,**kwargs):
         # The inherited single-world rollout exposes per-frame object feedback.
@@ -145,13 +180,20 @@ class ResponseBilevelEditor(AdaptiveWindowEditor):
 
     def _cost(self,m,q):
         return response_cost(m,q,self.baseline.joint_q,self.projector.layout,
-                             self.baseline.fps,self.wrench_weight)
+                             self.baseline.fps,self.wrench_weight,local=self.local_acceptance)
 
     def _cost_terms(self,m,q):
         return response_cost_terms(m,q,self.baseline.joint_q,self.projector.layout,
-                                   self.baseline.fps,self.wrench_weight)
+                                   self.baseline.fps,self.wrench_weight,local=self.local_acceptance)
+
+    def _local_rejections(self,after,before):
+        return local_guard_reasons(after,before,
+            position_regression_m=float(self.options.get('acceptance_position_regression_m',.05)),
+            orientation_regression_rad=np.deg2rad(float(self.options.get('acceptance_orientation_regression_deg',20.))))
 
     def _gate(self,after,before):
+        if getattr(self, 'local_acceptance', False):
+            return not self._local_rejections(after,before)
         return (after['all_errors_finite'] and before['all_errors_finite']
                 and after['full_horizon'] and before['full_horizon']
                 and passes_study_gate(after,before) and prefix_gate(after,before)
@@ -218,34 +260,46 @@ class ResponseBilevelEditor(AdaptiveWindowEditor):
         ranked=np.argsort(np.where(eligible,costs,np.inf))
         finalists=self.shortlist_candidates(ranked,eligible,costs,costs[0])
         attempts=[];feasible=[]
-        # Validation uses one unchanged-reference SOLVED response as the
-        # control, not the old frozen actor or a mismatched baseline world.
-        reset_seeds=np.random.SeedSequence([self.training.seed,self.upper_round,71001]).generate_state(3)
-        controls=[];deltas=[]
-        for reset_seed in reset_seeds:
-            rng=np.random.default_rng(int(reset_seed));delta=np.zeros(self.baseline.num_joint_q)
-            for name,qid in zip(self.projector.layout.scalar_joints.names,self.projector.qids):
-                bound=.001 if name.endswith(('wrist_x','wrist_y','wrist_z')) else np.deg2rad(.5)
-                delta[qid]=rng.uniform(-bound,bound)
-            deltas.append(delta)
-            before,_,_=self.rollout(self.binding,control_learner,seed,initial_q_delta=delta)
-            controls.append(before)
-        control_mean=float(np.mean([self._cost(m,qs[0]) for m in controls]))
-        for index in finalists:
-            candidate=build_robot_reference_binding(self.projector.builder,self.projector.layout,
-                                                     qs[index],targets[index],self.baseline.fps)
-            candidate_learner=self._learner_for(learner,responses,index)
-            checks=[]
-            for reset_seed,delta,before in zip(reset_seeds,deltas,controls):
-                after,_,_=self.rollout(candidate,candidate_learner,seed,initial_q_delta=delta)
-                checks.append(dict(seed=int(reset_seed),baseline=before,candidate=after,
-                    gate_passed=bool(self._gate(after,before)),cost=self._cost(after,qs[index]),
-                    cost_gain=self._cost(before,qs[0])-self._cost(after,qs[index])))
-            mean_cost=float(np.mean([c['cost'] for c in checks]))
-            passed=(all(c['gate_passed'] for c in checks) and mean_cost<control_mean
-                    and sum(c['cost_gain']>0 for c in checks)>=2)
-            attempts.append(dict(trial=int(index),accepted=bool(passed),mean_cost=mean_cost,checks=checks))
-            if passed:feasible.append((mean_cost,int(index),candidate,candidate_learner))
+        if self.local_acceptance:
+            # The vectorized batch already evaluated each reference/head pair
+            # from the same original demonstration start, including no-edit.
+            # Rank on one common local interval; keep full-horizon guards only.
+            control_mean=float(costs[0])
+            viable=[int(i) for i in ranked if eligible[i] and costs[i]<costs[0]-1e-4]
+            if viable:
+                index=viable[0]
+                candidate=build_robot_reference_binding(self.projector.builder,self.projector.layout,
+                                                         qs[index],targets[index],self.baseline.fps)
+                feasible.append((float(costs[index]),index,candidate,self._learner_for(learner,responses,index)))
+        else:
+            # Validation uses one unchanged-reference SOLVED response as the
+            # control, not the old frozen actor or a mismatched baseline world.
+            reset_seeds=np.random.SeedSequence([self.training.seed,self.upper_round,71001]).generate_state(3)
+            controls=[];deltas=[]
+            for reset_seed in reset_seeds:
+                rng=np.random.default_rng(int(reset_seed));delta=np.zeros(self.baseline.num_joint_q)
+                for name,qid in zip(self.projector.layout.scalar_joints.names,self.projector.qids):
+                    bound=.001 if name.endswith(('wrist_x','wrist_y','wrist_z')) else np.deg2rad(.5)
+                    delta[qid]=rng.uniform(-bound,bound)
+                deltas.append(delta)
+                before,_,_=self.rollout(self.binding,control_learner,seed,initial_q_delta=delta)
+                controls.append(before)
+            control_mean=float(np.mean([self._cost(m,qs[0]) for m in controls]))
+            for index in finalists:
+                candidate=build_robot_reference_binding(self.projector.builder,self.projector.layout,
+                                                         qs[index],targets[index],self.baseline.fps)
+                candidate_learner=self._learner_for(learner,responses,index)
+                checks=[]
+                for reset_seed,delta,before in zip(reset_seeds,deltas,controls):
+                    after,_,_=self.rollout(candidate,candidate_learner,seed,initial_q_delta=delta)
+                    checks.append(dict(seed=int(reset_seed),baseline=before,candidate=after,
+                        gate_passed=bool(self._gate(after,before)),cost=self._cost(after,qs[index]),
+                        cost_gain=self._cost(before,qs[0])-self._cost(after,qs[index])))
+                mean_cost=float(np.mean([c['cost'] for c in checks]))
+                passed=(all(c['gate_passed'] for c in checks) and mean_cost<control_mean
+                        and sum(c['cost_gain']>0 for c in checks)>=2)
+                attempts.append(dict(trial=int(index),accepted=bool(passed),mean_cost=mean_cost,checks=checks))
+                if passed:feasible.append((mean_cost,int(index),candidate,candidate_learner))
         # Always solve and retain a lower response at the selected reference.
         # With no feasible edit this is the adapted no-edit control, not W=0.
         selected=0;accepted=False;replacement=None;updated=control_learner
@@ -289,9 +343,25 @@ class ResponseBilevelEditor(AdaptiveWindowEditor):
             candidates=[dict(trial=i,cost=float(costs[i]),frozen_cost=float(frozen_costs[i]),
                 metrics=m,gate_passed=bool(eligible[i])) for i,m in enumerate(adapted_metrics)],
             failure_context=self.failure_context,windows=self.window_contexts,
+            acceptance_mode=self.acceptance_mode, scoring_region=self.scoring_region,
+            confirmation_reset_count=0 if self.local_acceptance else 3,
             seconds=time.perf_counter()-started,
             upper_simulation_transitions=self.validation_steps-previous_steps,
             cumulative_upper_simulation_transitions=self.validation_steps)
+        if self.local_acceptance:
+            record['local_cost_gain']=float(costs[0]-costs[selected])
+            record['local_cost_gain_fraction']=float((costs[0]-costs[selected])/max(abs(costs[0]),1e-8))
+            record['full_horizon_cost_before']=response_cost(adapted_metrics[0],qs[0],
+                self.baseline.joint_q,self.projector.layout,self.baseline.fps,self.wrench_weight)
+            record['full_horizon_cost_after']=response_cost(adapted_metrics[selected],qs[selected],
+                self.baseline.joint_q,self.projector.layout,self.baseline.fps,self.wrench_weight)
+            for row in record['candidates']:
+                row['rejection_reasons']=self._local_rejections(row['metrics'],adapted_metrics[0])
+                if row['cost']>=costs[0]-1e-4:
+                    row['rejection_reasons'].append('no_local_cost_improvement')
+            from collections import Counter
+            record['gate_diagnostics']['rejection_counts']=dict(Counter(
+                reason for row in record['candidates'][1:] for reason in row['rejection_reasons']))
         record.update(upper_learning)
         record['upper_proposal'] = self.proposal_mode
         if self.proposal_learner:

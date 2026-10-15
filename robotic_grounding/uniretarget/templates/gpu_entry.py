@@ -8,7 +8,7 @@ p=argparse.ArgumentParser();p.add_argument('--seed',type=int,default=43)
 p.add_argument('--phase',choices=['smoke','pilot','full'],default='full');a=p.parse_args()
 if a.phase in ('smoke','full'):
  subprocess.run([sys.executable,'-m','pytest','tests/retargeting/test_response_bilevel.py',
-  'tests/retargeting/test_response_policy.py','tests/retargeting/test_response_metrics.py',
+  'tests/retargeting/test_response_policy.py','tests/retargeting/test_response_metrics.py','tests/retargeting/test_local_acceptance.py',
   'tests/retargeting/test_chord_upper.py','tests/retargeting/test_response_upper.py','tests/evaluation/test_track3_estimates.py','tests/test_adaptive_windows.py',
   'tests/test_failure_consensus.py','tests/test_local_correction.py','tests/test_rejected_search_callback.py',
   'tests/runtime/test_wrist_limits.py','-q','-p','no:cacheprovider'],
@@ -25,6 +25,15 @@ for phase in (('smoke','pilot') if a.phase=='full' else (a.phase,)):
   assert rows and all(row['lower_response_solved_for_every_candidate'] for row in rows)
   assert all(row['lower_parameter_error_bound_max']<=1e-5 for row in rows)
   for row in rows:
+   assert row['acceptance_mode']=='local_nominal' and row['confirmation_reset_count']==0
+   assert row['confirmation_attempts']==[]
+   region=row['scoring_region']
+   assert region['stop_frame_exclusive']>region['start_frame']
+   if row['accepted']:
+    assert row['local_cost_gain']>1e-4
+    chosen=row['candidates'][row['selected_trial']]
+    assert chosen['rejection_reasons']==[]
+    assert chosen['cost']==min(c['cost'] for c in row['candidates'] if c['gate_passed'])
    failure=row['failure_context']
    assert failure['detector']=='baseline_onset_consensus'
    assert failure['baseline_worlds']==16 and failure['baseline_probe_parallel']
@@ -35,6 +44,9 @@ for phase in (('smoke','pilot') if a.phase=='full' else (a.phase,)):
    for candidate in row['candidates']:
     assert np.isfinite(candidate['cost'])
     assert candidate['metrics']['cws_frames']>0
+    assert candidate['metrics']['local_cws_frames']==region['stop_frame_exclusive']-region['start_frame']
+    assert candidate['metrics']['local_start_frame']==region['start_frame']
+    assert candidate['metrics']['local_stop_frame_exclusive']==region['stop_frame_exclusive']
     assert len(candidate['metrics']['per_object_cws_tolerance_error'])==len(config['episode']['objects'])
     assert 'contact_proximity_mean_m' not in candidate['metrics']
   (b.parent/'reports'/f'smoke_validation_{b.name}_s{a.seed}.json').write_text(json.dumps(dict(

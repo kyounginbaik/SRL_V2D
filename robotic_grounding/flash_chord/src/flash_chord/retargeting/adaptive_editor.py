@@ -154,7 +154,8 @@ class AdaptiveWindowEditor(LocalReferenceEditor):
 
     def finalize_search_record(self, record, qs, costs, valid):
         selected = record['selected_trial']
-        record['selected_window'] = None if selected is None else self.window_contexts[self.window_ids[selected]]
+        record['selected_window'] = (self.window_contexts[self.window_ids[selected]]
+                                     if record['accepted'] and selected is not None else None)
         record['window_results'] = [dict(w, best_cost=float(costs[self.window_ids == w['window_id']].min()),
             improving_count=int(np.sum(costs[self.window_ids == w['window_id']] < record['gate_diagnostics']['baseline_cost'])),
             screening_pass_count=int(np.sum(valid[self.window_ids == w['window_id']]))) for w in self.window_contexts]

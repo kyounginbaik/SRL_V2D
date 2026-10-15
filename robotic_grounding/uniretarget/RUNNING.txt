@@ -109,8 +109,17 @@ Object trajectories remain fixed. Every candidate gets
 its own solved, strongly convex policy-head response before physical evaluation.
 The accepted reference and adapted head are published together. Rejected edits
 preserve replay, and keep the adapted no-edit head. CHORD-style wrench support
-replaces contact-position guidance in the upper score/gates. Fresh paired reset
-confirmations protect every object and the successful prefix.
+replaces contact-position guidance in the upper score. Acceptance uses the
+original demonstration start, with no three-perturbed-reset veto. Candidates
+share one scoring interval from detected error onset through failure+1 second
+(clipped to episode end); both objects' pose and wrench errors enter the cost.
+Before-onset prefix mean/p95 errors remain protected. Per-object whole-episode
+and post-interval mean pose regressions above 5 cm or 20 degrees, or new
+instability, are rejected. Those are tunable guards, not robustness guarantees.
+The 16 baseline probes still choose windows; they do not gate acceptance.
+W&B upper/local_cost_gain and upper/scoring_region show the accepted gain and
+scoring interval; selected_window reports the actual edit window only when
+an edit was accepted. Full-horizon costs remain diagnostic charts.
 
 See ../flash_chord/docs/response_bilevel.txt for equations, residual bounds and
 assumptions. Bounds concern the explicit per-stage convex head surrogate, not a

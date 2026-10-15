@@ -47,8 +47,9 @@ The stage's bilevel problem is
   minimize_theta F_t(theta, W_t*(theta)),
   W_t*(theta) = argmin_W G_t(theta,W).
 
-F_t evaluates full-horizon VOC0 physics with that candidate's OWN adapted
-controller, plus CHORD-style normalized tolerance-band wrench-support error (weight 5),
+F_t runs full-horizon VOC0 physics with that candidate's OWN adapted
+controller. In local_nominal mode it scores the shared failure-local interval
+(error onset through failure + 1 second), plus CHORD-style normalized tolerance-band wrench-support error (weight 5),
 missed and unintended support penalties (weight 1 each), and separately
 scaled reference penalties. No contact-position distance enters ranking or
 acceptance. Both-object success
@@ -112,14 +113,17 @@ This estimator is a tested numerical primitive, not the production upper
 proposal rule or a claim of convergence of the full training loop.
 
 The production upper approximation samples a finite candidate set, solves
-each lower response, screens using matched adapted controls, then evaluates
-up to four finalists on the same three confirmation resets. It minimizes
-the measured confirmation cost among the no-edit control and finalists
-passing the explicitly declared per-reset constraints. This statement is
-about the tested set, not an unsearched continuous reference domain.
+each lower response, and compares against a matched adapted no-edit control.
+In local_nominal mode every pair uses the original demonstration start and
+one common scoring interval across all windows. It selects the lowest local
+cost satisfying prefix/large-regression guards, with a 1e-4 minimum gain.
+The optional legacy strict_robust mode retests up to four finalists on three
+paired perturbed resets and requires every per-reset gate. Neither statement
+covers an unsearched continuous reference domain.
 
 If evaluated feasible-set costs differ uniformly from ideal costs by at most
-e, exact finite-set minimization gives regret at most 2e: apply the bound
+e, exact finite-set minimization gives regret at most 2e (plus the 1e-4
+acceptance deadband in local_nominal mode): apply the bound
 once at the selected candidate, the estimated minimization inequality, and
 once at the ideal finite-set minimizer. If the continuous composed objective
 is L-Lipschitz and the candidate set is an h-cover, add L*h. Neither a small
@@ -175,10 +179,19 @@ Upper F = position/0.03 + orientation/0.3 + 2*(1-joint_object_success)
         + 5*cws_band_error + missed_fraction
         + unintended_fraction + unintended_energy
         + 3*instability + geometric_edit_and_rate_penalties.
-F is capped to [0,100]. Every paired confirmation reset must preserve each
-object and the successful prefix, and may worsen each object's missed or
-unintended fraction by at most 0.02 (two percentage points). The accepted
-candidate must improve mean full cost and at least two of three reset costs.
+F is capped to [0,100]. In local_nominal mode pose, joint-success and wrench
+terms use [error onset, failure+1s), clipped to the horizon. All candidates
+share this interval even when their edit windows differ. No failure uses the
+whole episode. Earlier prefix mean errors may increase by at most 2 mm and
+0.01 rad; prefix p95 by 5 mm and 0.03 rad. Large-regression guards allow at
+most +5 cm and +20 degrees in each object's mean pose error, measured both
+over the whole episode and separately after the scoring interval. New
+instability is rejected. No per-object first-failure-time or individual
+wrench-component veto is applied. Acceptance requires local cost improvement
+>1e-4 at the original start; there are no perturbed confirmation resets.
+The 16 perturbed baseline probes still select the failure/window and do not
+accept or reject candidates. These tolerances are engineering choices.
+Legacy strict_robust retains its three-reset, per-object nonregression rules.
 Both wrists and fingers can change; intended hand/object labels remain fixed.
 Raw normalized wrench MSE is retained as a diagnostic, not an upper cost.
 
@@ -198,7 +211,8 @@ where reward = clip(F_t(no-edit,W*_t(no-edit)) - F_t(theta,W*_t(theta)), -5, 5).
 Critic/actor updates learn this one-step entropy-regularized bandit. Replay is
 refreshed each stage; networks persist, so old reward labels are never replayed
 against a changed lower stage. The no-edit action is explicitly included. The
-best evaluated feasible pair is selected with the original un-clipped objective.
+best evaluated feasible pair is selected with F, without clipping its gain
+to the proposal learner's [-5,5] reward interval.
 
 The local feasible reference map bounds edits in both proposal modes. The upper
 actor uses an identity action transform and initial Gaussian std 0.5, matching

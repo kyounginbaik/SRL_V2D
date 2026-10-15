@@ -60,8 +60,8 @@ def main():
     run_id = f'{os.environ.get("UNIRETARGET_RUN_TAG", "chord100m")}-{args.phase}-{args.episode}-{args.variant}-s{args.seed}'
     config = json.loads(config_path.read_text())
     run = wandb.init(entity=os.environ.get('WANDB_ENTITY', 'DexDreamer'), project=os.environ.get('WANDB_PROJECT', 'v2d-track3-uniretarget'),
-                     group=f'chord-consensus16-20261015-{args.phase}', id=run_id,
-                     name=f'chord-consensus16-{config.get("upper_optimizer", "gaussian")}-d56-c{64 if args.phase == "smoke" else 2048}-{args.phase}-{args.episode}-s{args.seed}',
+                     group=f'chord-local-nominal-20261015-{args.phase}', id=run_id,
+                     name=f'chord-local-nominal-{config.get("upper_optimizer", "gaussian")}-d56-c{64 if args.phase == "smoke" else 2048}-{args.phase}-{args.episode}-s{args.seed}',
                      resume='allow', dir=str(work), config=config)
     run.define_metric('environment_steps')
     run.define_metric('*', step_metric='environment_steps')
