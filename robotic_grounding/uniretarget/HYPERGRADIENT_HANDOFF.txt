@@ -1,5 +1,5 @@
 CURRENT HYPERGRADIENT SERVER HANDOFF
-Updated 2026-10-16: measured trial feedback and bounded adaptation
+Updated 2026-10-16: wrench-adam-feedback, normalized returns and fresh baselines
 
 Give the other server's agent:
   robotic_grounding/uniretarget/AGENT_HANDOFF.txt
@@ -11,8 +11,9 @@ commands, phase selection and evidence paths are in:
   robotic_grounding/uniretarget/RUNNING.txt
 
 Repository: https://github.com/kyounginbaik/SRL_V2D
-Use implementation baseline 4e762541 or a later main commit containing these
-changes, in a clean checkout, and record its exact commit. Always pass --upper wrench_hypergradient; the CLI default is the
+Use current main containing all the fixes below, in a clean checkout, and record
+its exact commit. Earlier wrench-feedback-fast snapshots are superseded.
+Always pass --upper wrench_hypergradient; the CLI default is the
 older Gaussian engine. Use allocated GPUs, a fresh persistent output root and
 explicit online W&B configuration. Keep the source checkout unchanged while
 jobs run. Older frozen runs do not automatically acquire these changes.
@@ -23,17 +24,33 @@ UNIRETARGET_GPU_ID_KIND only after verifying that mapping. See RUNNING.txt.
 Current contract:
 - One learned 56D full-hand proposal per selected local window, up to four.
   This is not a 2,048-candidate search or a critic-ranked two-window shortlist.
-- The proposal differentiates through three temporary lower actor updates.
+- The proposal differentiates through three temporary lower actor Adam updates
+  with its incoming moments/count and actual learning-rate schedule/multipliers.
+  sqrt(v_hat+1e-12) regularizes zero-moment derivatives. Critics, temperature,
+  statistics and experience are frozen in this finite response approximation.
 - Physical validation trains complete FlashSAC candidate/control copies from
   the same incoming learner. It is separate from the proposal gradient graph.
+- Before proposals, fit 32 critic updates to THIS controller's fresh VOC=0
+  baseline returns; sample proposal validation only from the current generation.
 - At every validation checkpoint, actual VOC=0 candidate/control rollout costs
-  train the upper critic, including when an edit is later rejected. Use complete
-  discounted rollout returns plus branch-matched TD targets. Keep exact branch
-  reference/policy identity; do not relabel trial data into main actor replay.
+  train the upper critic, including when an edit is later rejected. Complete
+  returns default to MC weight1; for other weights use Huber(blended target),
+  not a blend of separately clipped losses. Costs, returns and upper regularizer
+  consistently use scale=.01; raw and normalized diagnostics are explicit.
+  Keep exact reference/policy identity; do not relabel data into actor replay.
+  Trial datasets are discarded after fitting; persistent trial replay is absent.
+- The upper objective remains measured full-horizon support cost. Early tracking
+  resets expose stale-frame terminal observations because lifecycle did not
+  advance: mark critic_valid=false, exclude from upper TD fitting, retain for
+  inner actor replay. Full-horizon baseline/trial MC supplies actual continued
+  failure evidence. Upper done marks only horizon completion; lower FlashSAC
+  termination remains unchanged.
 - Validation checkpoints start at max(64 vector steps, scoring interval end+16,
   replay warmup+16), followed by two 32-step increments, subject to a strict
   448-vector-step cap. At 2,048 worlds this is at most 917,504 transitions per
   branch. Actual frame coverage, learning and physical acceptance remain checked.
+  Success-fraction stability uses max(.02, 1/N) for N locally scored frames;
+  improvement and per-object regression guards remain in force.
 - Smoke: 2,048 worlds, 524,288 main transitions, one upper round at 501,760,
   batch 1,024 and full replay settings. Require the smoke report passed=true.
 - Full: fresh 100,663,296 main transitions, same bounded validation settings.
@@ -42,12 +59,14 @@ Current contract:
 - Optional staged commands remain available: --phase smoke stops at validation;
   --phase pilot starts fresh full training after manually checking its report.
   Do not rerun full over existing smoke outputs; there is no complete resume.
-- W&B names start wrench-feedback-fast-full-d56-w2048-. Keep historical videos,
+- W&B names start wrench-adam-feedback-full-d56-w2048-. Keep historical videos,
   reference overlays, Track 3 estimates and upper_feedback/* measurements.
 
 Report measured round duration and additional adaptation transitions separately
 from main steps. Timing improvement is not established until measured on the
-new GPU run. Zero accepted edits can pass integration; report acceptance and
+new Adam-feedback GPU run. Inspect baseline_metrics, baseline_critic and separate
+candidate control_guard_reasons/baseline_guard_reasons in saved round records.
+Zero accepted edits can pass integration; report acceptance and
 actual wrist/finger changes without implying task success. Finite adaptation,
 empirical stability and critic fitting do not prove neural-RL convergence.
 

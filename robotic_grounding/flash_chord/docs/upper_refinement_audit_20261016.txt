@@ -1,0 +1,63 @@
+Upper refinement audit — 2026-10-16
+
+Assessment
+
+The finite actor-response method can propose useful reference corrections, but
+the available physics evidence does not establish that it does so reliably.
+Correct gradients of a learned surrogate are not necessarily good gradients of
+the physical task. This update fixes reproducible learning-signal errors; GPU
+validation and accepted physical improvements remain outstanding.
+
+Evidence from the October 15 full runs
+
+Episode 1, seeds 43/44/45: 16 completed upper rounds, 56 measured proposals,
+zero accepted corrections. All proposals predicted improvement, 34 improved
+the equally adapted control, and 11 improved both that control and the incoming
+pair. Every final proposal failed adaptation stability; the 11 local improvers
+also violated other guards. These are results of the old full runs, not results
+of the previously queued October 16 feedback implementation.
+
+The median lower-response/direct gradient ratio was about 1.7e-5 to 2.3e-5.
+Most of the proposed direction therefore came from changing reference inputs
+with a frozen controller, rather than its modeled learning response.
+
+Implemented corrections
+
+1. Blend TD and measured-return targets before applying Huber loss. Separate
+   clipped losses could exactly cancel while the measured return was badly
+   underestimated. Complete-rollout calibration now defaults to MC weight 1.
+2. Use cost_scale=.01 consistently for TD costs, MC returns and edit penalties.
+   Keep raw and normalized diagnostic units explicit.
+3. Calibrate on the current unassisted baseline before proposals. Outer states
+   must come from this upper round, not old controllers under the same reference.
+4. Differentiate three projected Adam actor updates with the incoming moments,
+   schedule and configured learning-rate multipliers. Regularize the second
+   moment square root with eps_root=1e-12 for finite higher derivatives.
+5. Keep the upper target as measured full-horizon support error. Early tracking
+   cutoffs retain stale reference timing in terminal observations, so omit those
+   rows from upper TD fitting. Retain them for inner actor replay. Complete
+   unassisted MC rollouts provide actual failed-suffix evidence. Lower controller
+   termination semantics are unchanged; no invented terminal suffix cost is used.
+6. Account for one frame of success-score resolution in stability checks.
+   Existing pose, support, advantage and saved-prefix requirements remain.
+7. Record actual proposals per window, baseline metrics and round identity.
+   There is one learned 56D proposal per selected window; 2,048 is the number
+   of lower training/adaptation worlds, not 2,048 upper proposals.
+
+Limits and next decision
+
+The three-step response freezes the lower critic, temperature, statistics and
+sampled state distribution. Physics adaptation remains a separate acceptance
+test. The shared cost critic is not conditioned on all lower-policy weights,
+and measured-return accuracy alone does not certify its reference derivatives.
+
+A synthetic CPU test with warm Adam moments increased the response-gradient
+norm 34.2x versus plain SGD, but the response was still only 0.119% of the total.
+With fresh zero moments it did not increase meaningfully. Neither test uses a
+trained physical controller; these numbers do not predict task improvement.
+
+The full runs should be judged by measured proposal/control improvement,
+accepted wrist/finger changes, failure-prefix progress and actual videos.
+Predicted critic gain or nonzero gradients alone are insufficient. Validation
+retains the bounded physical budgets and tests every selected window; these
+changes add no additional simulated rollouts.

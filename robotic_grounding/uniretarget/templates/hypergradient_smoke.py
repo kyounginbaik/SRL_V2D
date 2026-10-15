@@ -27,7 +27,7 @@ def validate_feedback_and_budget(row, config):
     assert all(count == vector*config['worlds'] for count, vector in zip(expected, budget['vector_steps']))
     feedback = row['critic_feedback']
     assert feedback and all(_finite(record) for record in feedback)
-    required = {('noedit', count) for count in expected}
+    required = {('baseline', 0)} | {('noedit', count) for count in expected}
     for candidate in row['candidates']:
         if 'gradient_norm' not in candidate:
             continue
@@ -36,16 +36,27 @@ def validate_feedback_and_budget(row, config):
                         for checkpoint in candidate['adaptation']['checkpoints'])
     indexed = {(record['branch'], record['environment_steps']): record for record in feedback}
     assert len(indexed) == len(feedback), 'Duplicate measured-feedback checkpoint'
-    assert required == indexed.keys(), 'Missing candidate/control measured-feedback checkpoint'
+    assert required == indexed.keys(), 'Missing baseline/candidate/control measured-feedback checkpoint'
     for record in feedback:
         assert record['trial_feedback_rows'] > 0
         assert record['trial_feedback_complete_rows'] > 0, 'No complete physical rollout labels'
         assert not record['trial_critic_skipped'], 'Measured trial failed to train the upper critic'
         assert record['trial_critic_updates'] > 0
         assert record['trial_critic_parameter_delta_l2'] > 0, 'Trial feedback did not change the upper critic'
+        assert np.isclose(record['trial_critic_cost_scale'], .01), 'Trial critic used inconsistent cost units'
     return dict(critic_feedback_checkpoints=len(feedback),
                 critic_feedback_complete_rows=sum(record['trial_feedback_complete_rows'] for record in feedback),
                 critic_feedback_parameter_delta_l2_max=max(record['trial_critic_parameter_delta_l2'] for record in feedback))
+
+
+def validate_current_proposal(row, candidate):
+    """A fresh baseline and preserved Adam state are part of the response contract."""
+    assert row['outer_validation_generation'] == row['upper_round'], 'Stale outer validation generation'
+    assert candidate['validation_generation'] == row['upper_round'], 'Stale candidate validation generation'
+    assert candidate['inner_optimizer'] == 'adam', 'Proposal used a different inner optimizer'
+    if 'inner_optimizer_state_preserved' in candidate:
+        assert candidate['inner_optimizer_state_preserved'], 'Incoming Adam state was not preserved'
+    assert np.isclose(candidate['critic_cost_scale'], .01), 'Unexpected upper cost scale'
 
 
 def validate(run, config, manifest, rows):
@@ -58,6 +69,10 @@ def validate(run, config, manifest, rows):
     assert manifest['upper_action_dimension'] == 56
     assert manifest['nominal_candidates_per_window'] == 1
     assert manifest['adaptation_worlds'] == config['worlds']
+    assert manifest['hypergradient']['inner_optimizer'] == config['proposal_inner_optimizer'] == 'adam'
+    assert np.isclose(manifest['hypergradient']['cost_scale'], config['upper_cost_scale'])
+    assert np.isclose(config['upper_cost_scale'], .01)
+    assert np.isclose(manifest['hypergradient']['trial_mc_weight'], 1.)
     assert rows and all(row['engine'] == 'wrench_hypergradient' for row in rows)
     measured = []
     feedback_checks = []
@@ -66,12 +81,17 @@ def validate(run, config, manifest, rows):
         assert row['adaptation_transitions'] > 0, 'No full lower adaptation was exercised'
         feedback_checks.append(validate_feedback_and_budget(row, config))
         assert len(row['windows']) <= 4
-        assert row['gradient_estimator'] == 'short_actor_unrolling_proposal_then_long_adaptation_validation'
+        assert all(window['candidate_count'] == 1 for window in row['windows'])
+        assert row['gradient_estimator'] == 'short_actor_adam_unrolling_proposal_then_bounded_adaptation_validation'
+        assert row['baseline_metrics'] and row['baseline_critic']['trial_feedback_complete_rows'] > 0
+        assert not row['baseline_critic']['trial_critic_skipped']
+        assert np.isclose(row['baseline_critic']['trial_critic_cost_scale'], .01)
         failure = row['failure_context']
         assert failure['detector'] == 'fixed_start_nominal' and failure['baseline_worlds'] == 1
         tested = [candidate for candidate in row['candidates'] if 'gradient_norm' in candidate]
         assert tested, 'All windows skipped: upper proposal was not exercised'
         for candidate in tested:
+            validate_current_proposal(row, candidate)
             assert np.asarray(candidate['theta']).shape == (56,)
             assert _finite(candidate)
             for key in ('gradient_norm', 'direct_gradient_norm', 'response_gradient_norm'):

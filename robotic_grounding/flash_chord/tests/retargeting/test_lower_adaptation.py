@@ -103,6 +103,54 @@ def test_stability_checks_both_objects_and_the_comparison():
     assert comparison_instability_reasons(before, after, settings) == ['candidate_advantage_changed_sign']
 
 
+def scored_checkpoint(cost, success, start=20, stop=50):
+    result = checkpoint(cost)
+    result['metrics'].update(local_object_success_robust_fraction=success,
+        local_start_frame=start, local_stop_frame_exclusive=stop)
+    return result
+
+
+@pytest.mark.parametrize('side', ['candidate', 'control'])
+def test_one_scored_frame_of_success_change_is_stable_but_two_are_not(side):
+    settings = AdaptationConfig()
+    before = dict(candidate=scored_checkpoint(.8, 20/30), control=scored_checkpoint(1., 20/30))
+    after = dict(candidate=scored_checkpoint(.8, 20/30), control=scored_checkpoint(1., 20/30))
+    after[side]['metrics']['local_object_success_robust_fraction'] = 21/30
+    assert comparison_stable(before, after, settings)
+    after[side]['metrics']['local_object_success_robust_fraction'] = 22/30
+    assert comparison_instability_reasons(before, after, settings) == [
+        side+'_local_object_success_robust_fraction_not_stable']
+
+
+def test_success_resolution_does_not_relax_other_stability_guards():
+    settings = AdaptationConfig()
+    before = dict(candidate=scored_checkpoint(.8, 20/30), control=scored_checkpoint(1., 20/30))
+    after = dict(candidate=scored_checkpoint(.8, 21/30), control=scored_checkpoint(1., 20/30))
+    after['candidate']['metrics']['local_per_object_position_mean_m'][1] += .004
+    assert comparison_instability_reasons(before, after, settings) == [
+        'candidate_local_per_object_position_mean_m_not_stable']
+
+
+def test_success_resolution_requires_identical_scored_frame_intervals():
+    settings = AdaptationConfig()
+    before = dict(candidate=scored_checkpoint(.8, .5), control=scored_checkpoint(1., .5))
+    after = dict(candidate=scored_checkpoint(.8, .5, start=21, stop=51),
+                 control=scored_checkpoint(1., .5))
+    # Same number of frames is insufficient when the interval itself changes.
+    assert comparison_instability_reasons(before, after, settings) == [
+        'candidate_local_scoring_interval_changed']
+
+
+@pytest.mark.parametrize('missing', ['local_start_frame', 'local_stop_frame_exclusive'])
+def test_missing_interval_metadata_keeps_configured_success_tolerance(missing):
+    settings = AdaptationConfig()
+    before = dict(candidate=scored_checkpoint(.8, 20/30), control=scored_checkpoint(1., 20/30))
+    after = dict(candidate=scored_checkpoint(.8, 21/30), control=scored_checkpoint(1., 20/30))
+    del after['candidate']['metrics'][missing]
+    assert comparison_instability_reasons(before, after, settings) == [
+        'candidate_local_object_success_robust_fraction_not_stable']
+
+
 def test_training_must_reach_the_failure_region_and_update_both_networks():
     report = dict(actor_updates=50, critic_updates=100, actor_parameter_delta_l2=.01,
         critic_parameter_delta_l2=.1, frame_samples=[2048]*26, max_reference_frame=25)

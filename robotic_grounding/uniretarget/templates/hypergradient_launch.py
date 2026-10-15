@@ -19,6 +19,9 @@ def configure_hypergradient(command, config, phase, worlds, base):
                   and arg.split('=', 1)[0] not in replace_keys]
     command.extend([
         '+bilevel=wrench_hypergradient',
+        'bilevel.hypergradient.inner_optimizer=adam',
+        'bilevel.hypergradient.cost_scale=0.01',
+        'bilevel.hypergradient.trial_mc_weight=1.0',
         f'bilevel.warmup={interval}', f'bilevel.interval={interval}',
         f'training.total_environment_steps={total}',
         'training.replay.capacity=1048576',
@@ -37,8 +40,8 @@ def configure_hypergradient(command, config, phase, worlds, base):
         config.pop(obsolete, None)
     config.update(
         engine='wrench_hypergradient', upper_optimizer='wrench_hypergradient',
-        ablation_variant='wrench_hypergradient_measured_feedback_bounded_sac',
-        experiment_name='wrench-feedback-fast', experiment_date='20261016',
+        ablation_variant='wrench_hypergradient_adam_measured_feedback_bounded_sac',
+        experiment_name='wrench-adam-feedback', experiment_date='20261016',
         total_environment_steps=total, upper_search_interval=interval,
         voc_probe_interval=interval,
         upper_search_warmup=interval, checkpoint_interval=checkpoint,
@@ -49,7 +52,9 @@ def configure_hypergradient(command, config, phase, worlds, base):
         upper_updates_per_batch=4,
         upper_proposal_method='one bounded actor proposal per detected window; finite-step response hypergradient',
         upper_feedback='discounted CHORD-style wrench-support cost; not net six-axis wrench',
-        proposal_response='3 projected SGD actor updates on replay; frozen lower critics and statistics',
+        proposal_response='3 projected Adam actor updates from incoming moments and schedule; frozen lower critics and statistics',
+        proposal_inner_optimizer='adam', upper_cost_scale=0.01,
+        trial_mc_weight=1.0, outer_validation='current-round unassisted baseline only',
         lower_response='matched full FlashSAC training on fresh data for candidate and unchanged control',
         adaptation_budget_mode='bounded_window',
         adaptation_minimum_vector_steps=64,
@@ -58,7 +63,7 @@ def configure_hypergradient(command, config, phase, worlds, base):
         adaptation_window_tail_vector_steps=16,
         adaptation_maximum_transitions_per_branch=448*worlds,
         adaptation_budget_rule='three checkpoints covering the common scoring interval where possible; strict 448-vector-step cap',
-        measured_critic_feedback='completed unassisted candidate/control rollout segments, including rejected proposals; branch reference and policy kept separate',
+        measured_critic_feedback='complete measured unassisted baseline and candidate/control returns, including rejected proposals; branch reference and policy kept separate',
         adaptation_clock='separate from main environment steps; main training pauses during validation',
         acceptance_score='stable matched-training comparison, local pose/wrench improvement, per-object and archived-prefix guards',
         guarantee_scope='gradient of short finite actor response and learned cost surrogate; long training is validation, not differentiated',

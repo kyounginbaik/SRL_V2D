@@ -6,7 +6,9 @@ import jax.numpy as jnp
 import numpy as np
 import pytest
 
-from flash_chord.retargeting.wrench_hypergradient_editor import WrenchHypergradientEditor, support_cost
+from flash_chord.retargeting.wrench_hypergradient_editor import (
+    WrenchHypergradientEditor, support_cost,
+)
 from flash_chord.retargeting.wrench_hypergradient import ReferenceReplay, HypergradientConfig, TrialRollout
 from flash_chord.retargeting.lower_adaptation import AdaptationConfig
 
@@ -30,6 +32,9 @@ def test_hydra_recipe_selects_new_engine_and_preserves_runtime_reset_contract():
     assert cfg.bilevel.engine == 'wrench_hypergradient'
     assert cfg.bilevel.eval_worlds == cfg.scene.world_count
     assert cfg.bilevel.hypergradient.inner_steps == 3
+    assert cfg.bilevel.hypergradient.inner_optimizer == 'adam'
+    assert cfg.bilevel.hypergradient.cost_scale == .01
+    assert cfg.bilevel.hypergradient.trial_mc_weight == 1.
     assert list(cfg.bilevel.adaptation.checkpoints) == [50000,100000,200000]
     assert cfg.bilevel.adaptation.budget_mode == 'bounded_window'
     assert cfg.bilevel.adaptation.maximum_vector_steps == 448
@@ -37,16 +42,22 @@ def test_hydra_recipe_selects_new_engine_and_preserves_runtime_reset_contract():
     assert cfg.reset.fixed_initial_state and cfg.reset.voc_decay_steps == 0
 
 
-def test_capture_materializes_pre_step_values_and_penalizes_termination(monkeypatch):
+@pytest.mark.parametrize('frames, expected_done, expected_valid', [
+    ([2, 3], [0, 0], [False, False]),
+    ([8, 8], [1, 1], [True, True]),
+])
+def test_capture_preserves_cost_and_marks_early_cutoffs_unfit_for_td(
+        monkeypatch, frames, expected_done, expected_valid):
     import flash_chord.retargeting.wrench_hypergradient_editor as module
     monkeypatch.setattr(module, 'to_jax', lambda value, shape: jnp.asarray(value).reshape(shape))
     editor = WrenchHypergradientEditor.__new__(WrenchHypergradientEditor)
     editor.replay = ReferenceReplay(10); editor.version = 4; editor.wrench_tolerance = .1
     editor.binding = NS(num_frames=10)
+    editor.hg_config = HypergradientConfig()
     obs = np.ones((2, 3), np.float32)
     context = np.ones((2, 2), np.float32)
     action = np.ones((2, 56), np.float32)
-    editor._before(None, obs, context, action, np.array([2, 3]), np.array([0, 1]), 0)
+    editor._before(None, obs, context, action, np.array(frames), np.array([0, 1]), 0)
     obs[:] = 77; action[:] = 77; context[:] = 77
     objective = NS(num_hands=2, num_bodies=2, num_basis=3,
                    current_wrench_support=np.ones(24), wrench_support_target=np.ones(24))
@@ -57,9 +68,12 @@ def test_capture_materializes_pre_step_values_and_penalizes_termination(monkeypa
     np.testing.assert_array_equal(editor.replay.storage['observation'][:2], 1.)
     np.testing.assert_array_equal(editor.replay.storage['action'][:2], 1.)
     np.testing.assert_array_equal(editor.replay.storage['next_observation'][:2], 9.)
-    np.testing.assert_array_equal(editor.replay.storage['done'][:2], 1.)
-    assert editor.replay.storage['cost'][0] == 0
-    assert editor.replay.storage['cost'][1] >= 20
+    np.testing.assert_array_equal(editor.replay.storage['done'][:2], expected_done)
+    np.testing.assert_array_equal(editor.replay.storage['critic_valid'][:2], expected_valid)
+    np.testing.assert_array_equal(editor.replay.storage['cost'][:2], 0.)
+    # The lower controller still receives its original lifecycle flags.
+    np.testing.assert_array_equal(transition.terminated, [0, 1])
+    np.testing.assert_array_equal(transition.truncated, [1, 0])
     assert editor.pending is None
 
 
@@ -77,6 +91,7 @@ def test_publication_uses_measured_physics_and_commits_the_tested_pair(monkeypat
     monkeypatch.setattr(environment, 'WarpRLEnv', lambda env, **kw: env)
     monkeypatch.setattr(base, 'assert_device_binding', lambda *a: None)
     monkeypatch.setattr(module, 'command_digest', lambda *a: 'immutable')
+    monkeypatch.setattr(module, 'actor_policy_digest', lambda *a: 'policy')
     monkeypatch.setattr(module, 'save_snapshot', lambda *a, **kw: None)
     monkeypatch.setattr(module, 'binding_for_q', lambda editor, q: NS(joint_q=q))
     monkeypatch.setattr(module.ReferenceRelabel, 'from_editor', lambda *a: NS(validate_zero=lambda *a: 0.))
@@ -94,7 +109,8 @@ def test_publication_uses_measured_physics_and_commits_the_tested_pair(monkeypat
     editor.command_sha256='immutable'; editor.metadata={}
     editor.replay=ReferenceReplay(1024); editor.replay.clear(0)
     editor.replay.add(0, observation=np.ones((400, 12), np.float32), context=np.zeros((400, 3), np.float32),
-        action=np.zeros((400, 56), np.float32), frame=np.ones(400, np.int32), source=np.arange(400)%2)
+        action=np.zeros((400, 56), np.float32), frame=np.ones(400, np.int32), source=np.arange(400)%2,
+        generation=np.zeros(400,np.int32))
     editor.binding=NS(joint_q=np.zeros((3, 58)), num_frames=3)
     original_binding=editor.binding
     editor.baseline=NS(joint_q=np.zeros((3, 58)))
@@ -120,6 +136,11 @@ def test_publication_uses_measured_physics_and_commits_the_tested_pair(monkeypat
     calls=[]
     def rollout(binding, learner, seed, **kw):
         calls.append((binding, learner))
+        if editor.capture_evaluation:
+            editor.replay.add(0, observation=np.full((4,12),2.,np.float32),
+                context=np.zeros((4,3),np.float32),action=np.zeros((4,56),np.float32),
+                frame=np.ones(4,np.int32),source=np.ones(4,np.int32),
+                generation=np.full(4,editor.upper_round,np.int32))
         cost=(.5 if improves else 2.) if learner is candidate_policy else 1.
         result=({'cost':cost}, None, None)
         return (*result, trace) if kw.get('return_feedback') else result
@@ -140,9 +161,15 @@ def test_publication_uses_measured_physics_and_commits_the_tested_pair(monkeypat
     editor._adaptation_branch=branch
     editor.publish=lambda step: None
     # Always predict improvement: rejection must depend on actual simulation.
-    diag=dict(predicted_wrench_return_gain=10., gradient_norm=1., direct_gradient_norm=.4, response_gradient_norm=.6)
+    diag=dict(predicted_wrench_return_gain=10., gradient_norm=1., direct_gradient_norm=.4,
+              response_gradient_norm=.6,response_gradient_fraction=.6)
+    def propose(context, learner, batches, validation, relabel):
+        # Old baseline rows have observation1; only current-generation2 is valid.
+        np.testing.assert_array_equal(validation['observation'],2.)
+        return (np.zeros(56), 'candidate', 'control', diag)
     editor.hyper=NS(fit_critic=lambda *a: {'replay_rows':400},
-        propose=lambda *a: (np.zeros(56), 'candidate', 'control', diag),
+        fit_trial_critic=lambda *a: dict(trial_feedback_complete_rows=0,trial_critic_skipped=1),
+        propose=propose,
         upper_params={}, upper_state={}, cost_params={}, target_params={}, cost_state={})
     env=NS(world_count=4, env=NS(observation_strategy=object(), config={}))
     result=editor(env, policy, 10, NS(voc_scale=0.))
@@ -156,6 +183,10 @@ def test_publication_uses_measured_physics_and_commits_the_tested_pair(monkeypat
     assert report['accepted'] == improves
     assert report['candidates'][0]['predicted_wrench_return_gain'] > 0
     assert report['candidates'][0]['adaptation']['selected_environment_steps'] == 16
+    assert report['windows'][0]['candidate_count'] == 1
+    assert report['baseline_metrics']['cost'] == 1.
+    assert report['critic_feedback'][0]['branch'] == 'baseline'
+    assert report['outer_validation_generation'] == 1
 
 
 def test_trial_evaluation_teaches_rejected_pair_without_polluting_main_replay(monkeypatch, tmp_path):
@@ -164,6 +195,7 @@ def test_trial_evaluation_teaches_rejected_pair_without_polluting_main_replay(mo
     editor.capture_evaluation=False; editor.trial_capture=None; editor.pending=None
     editor.replay=ReferenceReplay(20); editor.replay.clear(7)
     editor.version=7; editor.wrench_tolerance=.1; editor._round_critic_feedback=[]
+    editor.hg_config=HypergradientConfig()
     editor.output=tmp_path/'references'; editor.output.mkdir()
     editor.hyper_rng=np.random.default_rng(0)
     editor.binding=NS(num_frames=4, joint_q=np.zeros((4,58), np.float32))

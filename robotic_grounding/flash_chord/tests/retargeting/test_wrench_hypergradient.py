@@ -52,9 +52,21 @@ def test_reference_replay_copies_labels_rejects_stale_and_splits_sources():
         replay.sample(np.random.default_rng(1), 1, frame_range=(0, 3))
 
 
+def test_reference_replay_samples_only_current_baseline_generation():
+    replay = ReferenceReplay(16)
+    replay.add(0, frame=np.zeros(6, int), source=np.array([1, 1, 1, 1, 0, 0]),
+               generation=np.array([1, 1, 2, 2, 2, 2]), cost=np.arange(6, dtype=np.float32))
+    current, _ = replay.sample(np.random.default_rng(1), 32, source=1, generation=2)
+    assert set(np.asarray(current['cost'])) == {2., 3.}
+    assert set(np.asarray(current['generation'])) == {2}
+    with pytest.raises(ValueError, match='no replay'):
+        replay.sample(np.random.default_rng(1), 1, source=1, generation=3)
+
+
 def make_network_case():
     from flash_chord.training.flash_sac.config import TrainingConfig, NetworkConfig
     from flash_chord.training.flash_sac.network import Actor, Critic, project_unit_parameters
+    from flash_chord.training.flash_sac.learner import _create_adam
     config = TrainingConfig(world_count=4, total_environment_steps=3000000,
         network=NetworkConfig(actor_head_mode='residual', actor_hidden_dim=16, critic_hidden_dim=16,
                               actor_blocks=1, critic_blocks=1))
@@ -68,6 +80,8 @@ def make_network_case():
     learner = NS(actor=NS(params=project_unit_parameters(variables['params']), batch_stats=variables['batch_stats']),
         critic=NS(params=project_unit_parameters(cv['params']), batch_stats=cv['batch_stats']),
         temperature=NS(log_temperature=jnp.array(-2.)))
+    learner.actor.optimizer_state = _create_adam(config).init(learner.actor.params)
+    learner.actor.schedule_step = jnp.array(0, jnp.int32)
     batch = dict(observation=obs, context=context, action=jnp.zeros((8, 56)),
                  frame=jnp.arange(8), noise=jax.random.normal(jax.random.PRNGKey(5), (8, 56)))
     return config, learner, batch
@@ -85,6 +99,8 @@ def test_real_flashsac_actor_unroll_updates_upper_and_has_nonzero_response_gradi
     theta, params, control, metrics = engine.propose(jnp.ones(7), learner, batches, batch, relabel)
     assert metrics['gradient_norm'] > 1e-8
     assert metrics['response_gradient_norm'] > 1e-8
+    assert metrics['inner_optimizer'] == 'adam'
+    assert metrics['inner_optimizer_state_preserved']
     assert np.linalg.norm(theta) > 0
     assert abs(theta).max() <= settings.radius
     assert any(not np.array_equal(a, b) for a, b in zip(jax.tree.leaves(before), jax.tree.leaves(engine.upper_params)))
@@ -92,19 +108,35 @@ def test_real_flashsac_actor_unroll_updates_upper_and_has_nonzero_response_gradi
     assert any(not np.array_equal(a, b) for a, b in zip(jax.tree.leaves(control), jax.tree.leaves(params)))
 
 
-def test_critic_trains_on_measured_costs_and_bootstraps_terminal_correctly():
+def test_critic_trains_on_measured_costs_and_excludes_invalid_cutoff_targets():
     config, learner, batch = make_network_case()
     engine = WrenchHypergradient(config, 12, 3, 7,
-        HypergradientConfig(critic_updates=16, batch_size=8), 11)
+        HypergradientConfig(critic_updates=16, batch_size=8, cost_scale=1.), 11)
     replay = ReferenceReplay(64)
     replay.add(1, observation=np.tile(batch['observation'], (4, 1)),
         context=np.ones((32, 3), np.float32), action=np.zeros((32, 56), np.float32),
         next_observation=np.tile(batch['observation'], (4, 1)), next_context=np.ones((32, 3), np.float32),
-        cost=np.full(32, 2., np.float32), done=np.ones(32, np.float32),
+        cost=np.r_[np.full(24, 2., np.float32), np.full(8, 1.e6, np.float32)],
+        done=np.ones(32, np.float32), critic_valid=np.arange(32)<24,
         frame=np.arange(32), source=np.zeros(32, np.int32))
     metrics = engine.fit_critic(replay, learner, np.random.default_rng(2))
     assert np.isfinite(metrics['critic_heldout_td_mae'])
     assert metrics['critic_heldout_td_mae'] < 1.5
+    assert metrics['critic_valid_rows'] == 24 and metrics['critic_cutoff_rows'] == 8
+    actor_batch, _ = replay.sample(np.random.default_rng(3), 32)
+    assert (~np.asarray(actor_batch['critic_valid'])).any()
+
+
+def test_td_fit_skips_when_only_unusable_cutoffs_are_available():
+    config, learner, _ = make_network_case()
+    engine = WrenchHypergradient(config, 12, 3, 7, HypergradientConfig(batch_size=8), 11)
+    replay = ReferenceReplay(10)
+    replay.add(0, frame=np.arange(8), critic_valid=np.zeros(8, bool))
+    before = jax.tree.map(np.array, engine.cost_params)
+    metrics = engine.fit_critic(replay, learner, np.random.default_rng(2))
+    assert metrics['critic_skipped'] == 1 and metrics['critic_cutoff_rows'] == 8
+    for a, b in zip(jax.tree.leaves(before), jax.tree.leaves(engine.cost_params)):
+        np.testing.assert_array_equal(a, b)
 
 
 def trial_rows(frame, cost, done, *, observation_dim=12, context_dim=3):
@@ -160,7 +192,7 @@ def test_trial_rejects_capture_gaps_instead_of_fabricating_monte_carlo_return():
 def test_bad_trial_improves_critic_calibration_without_touching_main_replay_or_lower_actor():
     config, learner, batch = make_network_case()
     engine = WrenchHypergradient(config, 12, 3, 7,
-        HypergradientConfig(trial_critic_updates=32, batch_size=8), 11)
+        HypergradientConfig(trial_critic_updates=32, batch_size=8, cost_scale=1.), 11)
     policy_key = actor_policy_digest(learner)
     trial = TrialRollout('rejected-candidate', policy_key)
     row = trial_rows(np.zeros(32, int), np.full(32, 2.), np.ones(32))
@@ -211,9 +243,84 @@ def test_trial_fit_never_optimizes_heldout_rows():
     assert metrics['trial_critic_heldout_rows'] == 8
 
 
+def constant_cost_parameters(engine, value):
+    params = jax.tree.map(jnp.zeros_like, engine.cost_params)
+    for member in range(2):
+        params[f'out_{member}']['bias'] = jnp.full_like(params[f'out_{member}']['bias'], value)
+    return params
+
+
+@pytest.mark.parametrize('weight', [.5, 1.])
+def test_measured_return_calibration_cannot_cancel_against_wrong_td_target(weight):
+    config, learner, _ = make_network_case()
+    engine = WrenchHypergradient(config, 12, 3, 7,
+        HypergradientConfig(trial_mc_weight=weight, cost_scale=1., batch_size=8), 11)
+    params = constant_cost_parameters(engine, 5.)
+    target = constant_cost_parameters(engine, 2.)
+    batch = {k: jnp.asarray(v) for k, v in
+             trial_rows(np.arange(8), np.zeros(8), np.zeros(8)).items()}
+    batch['measured_return'] = jnp.full(8, 100.)
+    # Previously .5 Huber(5, 1.98) + .5 Huber(5, 100) had EXACTLY zero
+    # parameter gradients, despite severely underestimating the measured return.
+    after, _, _, loss = engine._trial_critic_update(params, target, engine.cost_opt.init(params),
+        learner.actor.params, learner.actor.batch_stats, batch)
+    assert np.isfinite(float(loss))
+    assert float(after['out_0']['bias'][0]) > 5.
+    assert float(after['out_1']['bias'][0]) > 5.
+
+
+def test_td_mc_and_outer_regularization_use_one_consistent_cost_scale():
+    config, learner, validation = make_network_case()
+    settings = HypergradientConfig(cost_scale=.01, trial_mc_weight=1., batch_size=8)
+    engine = WrenchHypergradient(config, 12, 3, 7, settings, 11)
+    params = constant_cost_parameters(engine, 0.)
+    target = constant_cost_parameters(engine, 123.)
+    batch = {k: jnp.asarray(v) for k, v in
+             trial_rows(np.arange(8), np.full(8, 5.), np.ones(8)).items()}
+    batch['measured_return'] = jnp.full(8, 5.)
+    args = (params, target, engine.cost_opt.init(params), learner.actor.params,
+            learner.actor.batch_stats, batch)
+    *_, td_loss = engine._critic_update(*args)
+    *_, mc_loss = engine._trial_critic_update(*args)
+    # Terminal targets are .01*5=.05; the arbitrary future prediction123 must
+    # not bootstrap. Both paths use exactly the same normalized target units.
+    np.testing.assert_allclose([td_loss, mc_loss], [.5*.05**2]*2, rtol=1e-6)
+    engine.cost_params = params
+    _, outer = engine.objectives(learner, lambda obs, frame, theta: obs, validation)
+    np.testing.assert_allclose(outer(jnp.ones(56), learner.actor.params),
+                               settings.cost_scale*settings.regularization, rtol=1e-6)
+
+
+def test_long_measured_return_calibrates_production_critic_in_normalized_units():
+    config, learner, _ = make_network_case()
+    engine = WrenchHypergradient(config, 12, 3, 7,
+        HypergradientConfig(trial_critic_updates=32, batch_size=32), 11)
+    identity = actor_policy_digest(learner)
+    trial = TrialRollout('long-bad-trial', identity)
+    for frame in range(335):
+        row = trial_rows([frame], [5.], [float(frame == 334)])
+        row['observation'][0, 0] = frame/335
+        row['next_observation'][0, 0] = (frame+1)/335
+        trial.add(trial.reference_key, identity, **row)
+    data, _ = trial.completed_batch(engine.config.discount)
+    assert data['measured_return'][0] > 480.
+    metrics = engine.fit_trial_critic(trial, learner, np.random.default_rng(8))
+    assert metrics['trial_critic_parameter_delta_l2'] > 0
+    assert metrics['trial_critic_heldout_return_mae_after_normalized'] < \
+           metrics['trial_critic_heldout_return_mae_before_normalized']
+    assert metrics['trial_critic_prediction_after_normalized'] > \
+           metrics['trial_critic_prediction_before_normalized']
+    assert metrics['trial_critic_measured_return_raw'] > 100.
+    for name in ('prediction_before', 'prediction_after', 'measured_return',
+                 'heldout_return_mae_before', 'heldout_return_mae_after'):
+        np.testing.assert_allclose(metrics['trial_critic_'+name+'_normalized'],
+            engine.config.cost_scale*metrics['trial_critic_'+name+'_raw'], rtol=1e-6)
+
+
 @pytest.mark.parametrize('kwargs', [{'inner_steps': 0}, {'discount': 1.}, {'radius': np.nan},
                                    {'trial_critic_updates': 0}, {'trial_mc_weight': 0.},
-                                   {'trial_mc_weight': 1.1}])
+                                   {'trial_mc_weight': 1.1}, {'cost_scale': 0.},
+                                   {'cost_scale': float('nan')}])
 def test_invalid_configuration_rejected(kwargs):
     with pytest.raises(ValueError):
         HypergradientConfig(**kwargs)

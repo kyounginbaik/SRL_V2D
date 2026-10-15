@@ -1,16 +1,20 @@
-WRENCH HYPERGRADIENT ENGINE: MEASURED FEEDBACK AND BOUNDED VALIDATION
+WRENCH HYPERGRADIENT ENGINE: ADAM RESPONSE AND MEASURED FEEDBACK
 Updated 2026-10-16
 
-This is the current wrench-feedback-fast implementation. It is separate from
-response_bilevel and supersedes the 2026-10-15 validation recipe. Older frozen
-runs do not acquire these changes. Use a new source snapshot and output root.
+This is the current wrench-adam-feedback implementation. It is separate from
+response_bilevel and supersedes both the 2026-10-15 validation recipe and the
+first wrench-feedback-fast revision. Older frozen runs do not acquire these
+changes. Use current main, record its exact commit, and prepare a new source
+snapshot/output root. New GPU performance has not yet been measured.
 
 ACTUAL ALGORITHM
 
 1. Ordinary lower FlashSAC trains with the configured tracking, physics and
    regularization rewards. Capture 32 worlds every four vector steps into a
    32,768-row auxiliary buffer: frame, observation, action, critic context,
-   next observation, done, and measured wrench-support cost. This main/baseline
+   next observation, done, critic_valid, measured wrench-support cost and
+   upper-round generation.
+   This main/baseline
    buffer belongs to one accepted-reference version; mixing versions is rejected.
 2. Every 501,760 main environment transitions, evaluate the current pair from
    the fixed start without VOC. Add these transitions to that auxiliary buffer.
@@ -20,9 +24,18 @@ ACTUAL ALGORITHM
    recipe does not use a critic-ranked shortlist to skip selected proposals.
 3. Fit twin discounted wrench-cost critics from main/baseline replay. Current
    lower deterministic actions supply TD targets; max(twin cost) is pessimistic.
+   Early tracking resets have terminal observations at a stale reference frame
+   because that lifecycle did not advance. Mark these rows critic_valid=false
+   and exclude them from upper TD fitting. Keep their current observations in
+   the inner actor replay. The upper done flag represents only the reference
+   horizon; ordinary lower FlashSAC termination remains unchanged.
    Hold out rows from the current fitting round and report their TD error.
-   The outer evaluation batch comes from unassisted rollouts. Measured trial
-   feedback below provides an additional update, including for rejected edits.
+   Then calibrate for 32 updates on the complete measured return of THIS round's
+   unassisted baseline, using its exact incoming controller. Only after this
+   calibration generate proposals. The outer evaluation batch filters both
+   source=baseline and the current generation; old controllers' baseline states
+   under the same reference version cannot enter it. Measured trial feedback
+   below adds further calibration, including for rejected edits.
 4. For each window, compute feasible coefficient intervals using joint,
    cumulative-offset and correction-speed bounds. Build a local reference
    Jacobian with finite differences (normalized radius at most 0.01) through
@@ -33,10 +46,16 @@ ACTUAL ALGORITHM
    are not differentiated; this is a local reference linearization.
 5. The upper MLP produces one bounded 56D correction: 12 wrist and 44 finger
    dimensions. Starting from the incoming lower actor, take three differentiable
-   projected SGD steps on the SAC actor loss using relabeled replay. All actor
-   parameters are editable; lower critics, temperature, batch statistics and
-   sampled noise remain fixed. These are learning updates, not simulator steps
-   or complete FlashSAC updates, and this is not the old ridge-head response.
+   projected Adam steps on the SAC actor loss using relabeled replay. Start from
+   that actor's actual Adam moments/count and learning-rate schedule clock.
+   Use the configured Adam betas, epsilon, learning-rate multipliers, residual
+   mean scaling and parameter projection. For differentiability at zero second
+   moments, use sqrt(v_hat + 1e-12) + epsilon instead of sqrt(v_hat) + epsilon.
+   This is an explicitly regularized approximation to production Adam.
+   All actor parameters are editable; lower critics, temperature, batch
+   statistics and sampled noise remain fixed. These are learning updates, not
+   simulator steps or complete FlashSAC updates. The old fixed-rate SGD and
+   ridge-head responses do not describe this version.
 6. Score the adapted actor using the learned upper cost critic. Differentiate
    through the three actor updates and reference observations into the upper
    actor. Four upper Adam steps produce the proposal, with normalized radius
@@ -74,17 +93,24 @@ ACTUAL ALGORITHM
 10. Record each evaluation in an isolated TrialRollout, identified by its exact
     reference and actor-policy digest. Capture transitions before mutation or
     donation. Require physically consecutive frames within each segment.
-    Keep only segments ending in termination or finite-horizon truncation;
-    discard an incomplete final suffix rather than treating it as a full return.
-    For each completed segment, compute its discounted observed return G_t.
+    Evaluation disables early tracking resets and continues through the full
+    reference horizon, observing actual failed-object motion. Keep completed
+    horizon segments; discard incomplete collections rather than treating them
+    as full returns. Compute each completed segment's discounted observed G_t.
 11. Fit the upper critic for 32 updates on that branch's recorded observations
-    and actions, using an equal mixture of two Huber losses:
+    and actions. Complete rollouts default to measured-return calibration:
 
-      TD target = observed cost + .99*(1-done)*max(target twin cost
+      scale = .01; default MC weight w = 1
+      TD target = scale*observed cost + .99*(1-done)*max(target twin cost
                     at next observation and THIS branch's lower action)
-      loss = .5*Huber(prediction, TD target) + .5*Huber(prediction, G_t)
+      blended target = (1-w)*TD target + w*scale*G_t
+      loss = Huber(prediction, blended target)
 
-    Both twin critics are trained and their targets updated. Check that the
+    Ordinary replay TD labels use the same scale. If a different MC weight is
+    configured, blend TARGETS before applying Huber: averaging separate clipped
+    losses could cancel their opposite gradients despite a large measured error.
+    The default w=1 uses the observed return directly. Both twin critics are
+    trained and their targets updated. Check that the
     provided bootstrap learner matches the recorded actor-policy digest.
     Hold out rows from parameter updates; log before/after return prediction
     error, measured return, update count and critic parameter change. This is
@@ -96,8 +122,10 @@ ACTUAL ALGORITHM
     Trial data retain their recorded branch context: they are not relabeled
     as accepted-reference samples and never enter the main lower replay or
     current-reference actor-proposal replay. The shared critic weights retain
-    these updates. They can inform later proposals, but their accuracy is not
-    guaranteed and policy changes still make this an approximate value model.
+    these updates. Trial datasets are discarded after their fit; there is no
+    persistent cross-policy trial replay. Each new round recalibrates against
+    its fresh baseline. Updates can inform later proposals, but their accuracy
+    is not guaranteed and policy changes still make this an approximate value model.
 13. Train the unchanged control curve once and reuse it at matching budgets
     for all candidate windows. Candidate training continues between checkpoints
     with its own physics, replay and optimizer state. At most one extra vector
@@ -110,7 +138,11 @@ ACTUAL ALGORITHM
     the interval's final frame. A control that still fails earlier remains a
     valid negative comparison; its actual coverage is recorded.
     Tolerances: cost 5% with unit floor, position 3 mm, orientation .03 rad,
-    success .02 and support error .05. Extend only to the next scheduled
+    success max(.02, 1/N) for N locally scored frames, and support error .05.
+    Success fractions are discrete: a one-frame change must not fail a tolerance
+    narrower than their actual resolution. This adjustment affects the adjacent
+    stability test; physical improvement and regression guards still apply.
+    Extend only to the next scheduled
     checkpoint. Reject unresolved comparisons at the cap. These are empirical
     stability checks, not convergence certificates. A shorter budget may reject
     an edit that would help after substantially more lower training.
@@ -127,23 +159,37 @@ WHAT THE WRENCH LABEL MEANS
 The cost is an object-centric contact wrench SUPPORT descriptor, not measured
 six-axis net force/torque. It uses squared relative tolerance-band error
 (weight 5), missed support and unintended support energy. All hands participate,
-objects receive equal weight, and targets remain immutable. Termination incurs
-at least 20 cost. Termination and finite-horizon truncation stop bootstrapping.
-VOC/reset context is included in the cost critic input. Costs are dimensionless.
+objects receive equal weight, and targets remain immutable. The upper objective
+is measured full-horizon support cost. Full-horizon baseline/trial evaluations
+supply actual continued-failure evidence after a missed grasp or bad contact.
+Early training resets have stale-frame terminal observations and are excluded
+from upper TD fitting with critic_valid=false; they remain available to the
+inner actor replay. Upper done marks reference-horizon completion only. This
+filter does not change the lower FlashSAC termination/reset behavior.
+VOC/reset context is included in the critic input. Stored labels are raw
+dimensionless support costs; critic targets and predictions use scale=.01.
+Both normalized and raw diagnostic aliases are logged. These are not meters,
+Newtons or official Track 3 scores. The physical acceptance score is unchanged.
 
 MATHEMATICAL SCOPE (PLAIN TEXT)
 
 theta = 56 local reference coefficients; phi = full lower actor parameters.
-phi_0 = incoming lower actor, held constant at proposal initialization.
-phi_{k+1}(theta) = Project(phi_k(theta) - inner_rate * grad_phi SAC_loss).
+z_0 = incoming lower actor parameters, Adam moments/count and schedule clock.
+z_{k+1}(theta) = projected, differentiable Adam actor update on SAC_loss,
+                 with the configured schedule and eps_root=1e-12.
+phi_K(theta) = actor parameters extracted from z_K(theta).
 F_K(theta) = mean(Q_wrench(obs(theta), pi_phi_K(theta)(obs(theta))))
-             + regularization * mean(theta^2).
+             + .01 * regularization * mean(theta^2).
+
+Q_wrench predicts the .01-scaled return. Scaling the edit regularizer by the
+same amount preserves the intended return-versus-edit tradeoff. Use *_raw
+metric aliases to recover unscaled dimensionless return units.
 
 Autodiff computes the gradient of this finite K=3 response and learned
 surrogate, including the reference-observation path. Log total gradient,
 direct gradient with phi_K detached, and their difference, which isolates
 the contribution through lower learning. Reference finite differences and
-fixed replay/state distributions are additional approximations.
+fixed replay/state distributions and regularized Adam are additional approximations.
 
 This is finite-step bilevel optimization with an approximate learned objective.
 It is not an inverse-Hessian implicit-gradient method, stock upper FlashSAC,
@@ -191,11 +237,14 @@ rollouts, critic fitting and rendering also take time.
 
 OBSERVABILITY
 
-W&B run names begin wrench-feedback-fast-full-d56-w2048-.
+W&B run names begin wrench-adam-feedback-full-d56-w2048-.
 Existing gradient, predicted gain, measured gain, acceptance, committed wrist
 and finger changes, physics videos and historical reference overlays remain.
 upper_feedback/* reports measured rows, critic updates, parameter movement,
-held-out return errors and fitting time. Adaptation and main transition clocks
+held-out return errors and fitting time, with explicit normalized/raw units.
+Each round records baseline_critic and baseline_metrics, as well as candidate
+control_guard_reasons and baseline_guard_reasons to separate their vetoes.
+Adaptation and main transition clocks
 remain separate; total work includes all trials and evaluations.
 
 upper_updates.jsonl / search_batches/step_*/scores.json record each window,
@@ -210,9 +259,12 @@ physical local score (pose/support/stability/edit penalty) have different scales
 TEST COVERAGE AND LIMITATIONS
 
 Focused tests cover independent finite-difference/analytic hypergradients,
-production FlashSAC learning, feasible reference relabeling, terminal handling,
+production FlashSAC Adam-response comparisons, incoming optimizer-state reuse,
+regularized zero-moment derivatives, feasible reference relabeling, terminal handling,
 copy/donation safety, matched branch identity, complete-segment MC returns,
-rejected-candidate feedback, held-out rows, bounded budgets, fixed starts and
+rejected-candidate feedback, non-cancelling calibration, consistent return
+scaling, current-generation baseline sampling, invalid reset-transition filtering,
+one-frame success stability, held-out rows, bounded budgets, fixed starts and
 accepted/rejected publication. Launcher tests reject a disconnected feedback
 loop or exceeded cap. CPU checks do not establish GPU task improvement.
 The fresh full-shape smoke and subsequent runs provide integration and measured

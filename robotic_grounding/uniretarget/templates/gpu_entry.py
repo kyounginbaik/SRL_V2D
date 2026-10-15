@@ -15,7 +15,8 @@ if a.phase in ('smoke','full'):
   env={**os.environ,'JAX_PLATFORMS':'cpu'},check=True)
  if '__UPPER_OPTIMIZER__' == 'wrench_hypergradient':
   subprocess.run([sys.executable,'-m','pytest','tests/retargeting/test_lower_adaptation.py',
-   'tests/retargeting/test_reference_relabel.py','tests/retargeting/test_wrench_hypergradient.py',
+   'tests/retargeting/test_reference_relabel.py','tests/retargeting/test_actor_response.py',
+   'tests/retargeting/test_wrench_hypergradient.py',
    'tests/retargeting/test_wrench_hypergradient_editor.py','-q','-p','no:cacheprovider'],
    env={**os.environ,'JAX_PLATFORMS':'cpu'},check=True)
 for phase in (('smoke','pilot') if a.phase=='full' else (a.phase,)):

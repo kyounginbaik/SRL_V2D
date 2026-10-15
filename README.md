@@ -4,7 +4,7 @@ UniRetarget refines a reconstructed robot reference using feedback from a physic
 controller. The current implementation uses **lower FlashSAC training**, an **upper actor
 with a TD wrench-cost critic**, and local corrections to both wrists and all finger joints.
 The critic also learns from measured candidate/control rollouts, including rejected edits.
-The current `wrench-feedback-fast` recipe bounds validation work while retaining every
+The current `wrench-adam-feedback` recipe bounds validation work while retaining every
 selected window, rather than ranking windows and discarding proposals before testing.
 Five prepared Track 3 episodes, object meshes, collision assets and robot assets are included
 through Git LFS.
@@ -13,8 +13,8 @@ through Git LFS.
 - **[Instructions to give another agent](robotic_grounding/uniretarget/AGENT_HANDOFF.txt)** — reproduce the current three-seed full training experiment.
 - **[Method, equations and limitations](robotic_grounding/flash_chord/docs/wrench_hypergradient.txt)**.
 
-The current experiment is **episode 1, seeds 43/44/45**, using training code from
-commit `4e762541`. Each job runs a full-size GPU integration check, then automatically
+The current experiment is **episode 1, seeds 43/44/45**, using the current `main`
+implementation with Adam response updates and measured-return calibration. Each job runs a full-size GPU integration check, then automatically
 starts fresh **100,663,296-step training** if validation passes. The commands below
 run the same method on another server without the original `/data1` directories.
 
@@ -41,7 +41,7 @@ docker build -f robotic_grounding/uniretarget/Dockerfile.media \
 2. Choose a fresh output directory and configure logging:
 
 ```bash
-export UNIRETARGET_RUN_ROOT="$PWD/.uniretarget/wrench-feedback-fast-full-run1"
+export UNIRETARGET_RUN_ROOT="$PWD/.uniretarget/wrench-adam-feedback-full-run1"
 export UNIRETARGET_IMAGE=uniretarget:chord100m
 export WANDB_MODE=online
 export WANDB_ENTITY=DexDreamer
@@ -145,18 +145,24 @@ $UNIRETARGET_RUN_ROOT/episode_000001/runs/pilot/episode_000001/chunk/seed_43/
   wandb_sync/run.json                 actual W&B URL
 ```
 
-Full-run W&B names begin `wrench-feedback-fast-full-d56-w2048-pilot-episode_000001-s`.
+Full-run W&B names begin `wrench-adam-feedback-full-d56-w2048-pilot-episode_000001-s`.
 Validation has a separate `smoke` run. Queued jobs do not appear in W&B until started.
 View `videos/physics_checkpoint`, `videos/reference_overlay`, `reference_change/*`
 and `upper_feedback/*` to inspect motion changes and critic learning.
 
-The upper differentiates through three temporary lower actor learning updates to propose
-an edit. Bounded, complete FlashSAC adaptation then checks that edit in physics against
+The upper differentiates through three temporary lower actor Adam updates to propose
+an edit, carrying the incoming optimizer moments and learning-rate schedule. A tiny
+variance regularizer keeps the derivative finite at zero Adam moments; the lower
+critic, running statistics and sampled state distribution remain fixed in this approximation. Bounded, complete FlashSAC adaptation then checks that edit in physics against
 an equally trained unchanged control. Accepted edits publish the reference and the complete
 adapted lower learning state together; rejected edits retain the incoming pair and replay.
-At each adaptation checkpoint, the unassisted evaluation's actual costs train the upper
-critic, even when the reference is rejected. Complete rollout segments provide discounted
-return targets alongside branch-matched TD targets. Branch observations stay paired with
+Before proposing edits, the fresh current-controller baseline calibrates the upper critic.
+Proposal validation uses only this round's baseline states. At each adaptation checkpoint,
+the unassisted evaluation's actual costs train the upper critic, even when the reference is
+rejected. Complete rollouts provide direct measured discounted-return targets. Ordinary
+replay still uses TD learning; both targets share a fixed 0.01 scale. If TD/return blending
+is enabled, targets are blended before the Huber loss so opposing clipped gradients cannot
+cancel. Raw and normalized diagnostics are logged separately. Branch observations stay paired with
 their exact reference and lower actor; they are not relabeled as accepted-reference data
 or mixed into the main actor replay. This is a finite-step bilevel approximation.
 Physical adaptation is validation, outside the
@@ -173,7 +179,10 @@ self-comparison, not a measurement against the hidden scan.
 Validate the new smoke report on your server. It now requires measured feedback from
 every tested branch, actual upper-critic parameter changes, and adaptation within the
 configured cap, in addition to finite learning, fixed starts and checkpoint videos.
-Passing integration does not establish improved task performance or require accepting an edit.
+Early training cutoffs with stale next-reference times are excluded from upper TD fitting;
+complete evaluations supply the actual continuation costs. Success stability accounts for one frame of the scored interval;
+object-pose and prefix guards still apply. Passing integration does not establish improved
+task performance or require accepting an edit.
 
 | Code | Purpose |
 | --- | --- |

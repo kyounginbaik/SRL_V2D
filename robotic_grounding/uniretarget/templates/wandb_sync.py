@@ -43,9 +43,13 @@ def feedback_summary(records):
     for key in ('trial_feedback_rows', 'trial_feedback_complete_rows',
                 'trial_feedback_discarded_rows', 'trial_feedback_trajectories'):
         result[key] = sum(record.get(key, 0) for record in records)
-    for key in ('trial_critic_heldout_return_mae_before', 'trial_critic_heldout_return_mae_after',
-                'trial_critic_prediction_before', 'trial_critic_prediction_after',
-                'trial_critic_measured_return', 'trial_critic_train_loss'):
+    value_keys = ('trial_critic_heldout_return_mae_before', 'trial_critic_heldout_return_mae_after',
+                  'trial_critic_prediction_before', 'trial_critic_prediction_after',
+                  'trial_critic_measured_return')
+    keys = [key+suffix for key in value_keys for suffix in ('', '_normalized', '_raw')]
+    keys += ['trial_critic_train_loss', 'trial_critic_train_loss_normalized',
+             'trial_critic_cost_scale', 'trial_critic_mc_weight']
+    for key in keys:
         values = [record[key] for record in fitted if key in record]
         if values:
             result[key] = sum(values)/len(values)
@@ -106,6 +110,10 @@ def main():
         for metric in ('auc', 'sp_sr', 'mp_sr', 'mppe_cm', 'rpe_cm', 'cd_o_cm'):
             run.define_metric(f'{scope}/{metric}', step_metric='environment_steps')
     run.summary['track3_estimates_notice'] = 'Reference poses and meshes are proxy GT; CD-O is mesh self-comparison; main panel is VOC=0.'
+    if hypergradient:
+        run.summary['upper_cost_units'] = (
+            f'Critic normalized return = {config.get("upper_cost_scale", 1.)} * raw dimensionless wrench-support return. '
+            'Explicit *_raw and *_normalized metrics distinguish them; physical acceptance cost has different terms.')
     run.define_metric('voc_schedule/*', hidden=True)
     # Explicit definitions also hide previously logged metadata on run pages;
     # a namespace glob does not reliably update existing metric definitions.

@@ -1,5 +1,5 @@
 AGENT HANDOFF: current UniRetarget wrench-hypergradient experiment
-Updated 2026-10-16: measured trial feedback and bounded adaptation
+Updated 2026-10-16: wrench-adam-feedback, normalized returns and fresh baselines
 
 Set up the current UniRetarget implementation on this GPU server and run FULL
 EPISODE-1 TRAINING for seeds 43, 44 and 45. Use --upper wrench_hypergradient
@@ -12,9 +12,9 @@ its logs before retrying with a fresh output root.
 
 Repository: https://github.com/kyounginbaik/SRL_V2D
 Checkout: current main in a new isolated directory; record git rev-parse HEAD.
-Implementation baseline: 4e762541 or a later main commit containing these
-measured-feedback/bounded-validation changes. Earlier wrench-hypergradient
-commits lack the trial feedback loop.
+Use current main containing the Adam-response, cost-normalization and fresh
+baseline-calibration fixes below. Earlier wrench-feedback-fast revisions are
+superseded; record the actual new commit rather than reusing their frozen source.
 Full setup/commands: robotic_grounding/uniretarget/RUNNING.txt
 Method/math: robotic_grounding/flash_chord/docs/wrench_hypergradient.txt
 
@@ -75,8 +75,12 @@ Smoke contract:
   Same batch 1,024 and replay settings as full training, so GPU shape is tested.
 - Upper: 56D local full-hand correction, one actor proposal per selected window,
   up to four windows chosen from baseline object failure/onset/history.
-- Upper TD critic learns discounted wrench-support cost. Proposal gradients
-  differentiate three temporary lower actor learning updates.
+- Upper critic learns .01-scaled discounted wrench-support cost. Proposal
+  gradients differentiate three temporary lower actor Adam updates starting
+  from its actual incoming moments/count and learning-rate schedule. Production
+  multipliers/projection are preserved; sqrt(v_hat+1e-12) regularizes zero-moment
+  derivatives. Lower critics, temperature, statistics and experience stay frozen:
+  this remains a finite actor-response approximation, not full SAC differentiation.
 - Actual validation trains the full lower FlashSAC on fresh experience for
   both candidate and unchanged references, starting from the same learner.
 - Adaptation uses three checkpoints chosen from the scoring interval: at least
@@ -85,11 +89,27 @@ Smoke contract:
   Early intervals can use 64 / 96 / 128 vector steps. Later windows receive more
   time within the cap. Real coverage and actor/critic learning remain required.
   All selected proposals are physically tested; no critic-ranked shortlist.
+- Before proposals, the exact incoming controller's fresh unassisted baseline
+  calibrates the critic for 32 updates. Proposal validation uses only that
+  round's baseline generation. Old same-version baselines are excluded.
 - At EVERY candidate/control checkpoint, the actual unassisted rollout trains
-  the upper critic, regardless of later acceptance. Complete discounted rollout
-  returns and matching-branch TD targets are used. Recorded observations/actions
-  stay paired with that exact reference and lower actor. Branch data never enter
-  current-reference actor replay or get relabeled as the accepted reference.
+  the upper critic, regardless of later acceptance. Complete discounted returns
+  default to MC weight1. For other weights, Huber applies to a blended TARGET;
+  separate clipped TD/MC losses must not cancel. TD labels, MC targets and upper
+  regularization all use scale=.01. Report explicit normalized/raw values.
+  Recorded observations/actions stay paired with that reference and lower actor.
+  Branch data never enter current-reference actor replay or get relabeled as
+  accepted data. Trial datasets are discarded after fitting, not stored in a
+  persistent cross-policy replay; upper models/optimizer states retain updates.
+- The upper objective is measured full-horizon support cost. Early tracking
+  resets have stale reference-frame terminal observations (lifecycle did not
+  advance): mark critic_valid=false and omit them from upper TD fitting, but
+  retain them for inner actor replay. Full-horizon baseline/trial MC supplies
+  actual continued-failure evidence. Upper done marks only reference-horizon
+  completion; lower FlashSAC termination behavior remains unchanged.
+- Adjacent-checkpoint success stability uses max(.02, 1/N) for N scored frames,
+  allowing the actual resolution of success fractions. Physical improvement,
+  per-object regression and archived-prefix guards still apply.
 - Publish the accepted reference and complete adapted lower learning state
   together. A rejected proposal preserves the incoming learner and replay.
 - Fixed initial physical state, immutable object targets, pot 0.2kg, lid 0.1kg,
@@ -111,8 +131,9 @@ Use a new checkout/root for changes or retries. No complete resume is supported.
 Require exit code zero and reports/smoke_validation_episode_000001_sNN.json
 with passed=true. Do not rely only on stage.json or a final checkpoint. The
 validator checks proposals, real lower learning, finite state, fixed starts
-and media, plus complete measured feedback and nonzero upper-critic parameter
-changes from EVERY tested branch checkpoint, and compliance with the cap.
+and media, plus fresh-baseline calibration/current-generation evidence,
+complete measured feedback and nonzero upper-critic parameter changes from
+EVERY tested branch checkpoint, and compliance with the cap.
 Zero accepted edits is a valid integration result, not improvement. In phase
 full, the launcher enforces this validation before starting full training.
 
@@ -120,8 +141,12 @@ Report back: job status and hardware, validation result, upper acceptance
 count, wrist movement in cm, finger change in degrees, failure/onset and window
 times, actual candidate/control adaptation budgets and cost gains, VOC=0 videos,
 reference overlays and W&B URLs. Include upper_feedback/* counts, parameter
-changes, held-out return prediction error, and measured upper-round duration.
-Distinguish predicted upper cost from actual physical gain. If blocked, report the concrete error and preserve logs.
+changes, normalized/raw held-out return errors, and measured upper-round duration.
+Inspect baseline_metrics, baseline_critic, control_guard_reasons and
+baseline_guard_reasons in saved round records. Distinguish predicted upper cost
+from actual physical gain. The new GPU recipe has not yet demonstrated a speed
+or refinement improvement; measure both. If blocked, report the concrete error
+and preserve logs.
 
 Optional staged alternative: --phase smoke intentionally stops after the GPU
 validation. After its report passes, use --phase pilot for that episode/seed/root.
@@ -131,7 +156,7 @@ For this task, prefer --phase full on untouched episode/seed paths so smoke and
 fresh full training run automatically in one allocation. Full training retains the same bounded validation
 profile as the smoke. At most five branches run per round (one reused unchanged
 control plus four candidate windows); do not quote only main-step runtime.
-Expected W&B names start with wrench-feedback-fast-full-d56-w2048-.
+Expected W&B names start with wrench-adam-feedback-full-d56-w2048-.
 
 Mathematical description: finite-step bilevel gradient proposals with a learned
 cost surrogate and longer physical validation. Long adaptation is outside the

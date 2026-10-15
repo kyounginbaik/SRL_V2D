@@ -49,6 +49,9 @@ class LaunchRecipesTest(unittest.TestCase):
             self.assertNotIn('upper_trials', config)
             self.assertNotIn('lower_surrogate', config)
             self.assertIn('+bilevel=wrench_hypergradient', command)
+            self.assertIn('bilevel.hypergradient.inner_optimizer=adam', command)
+            self.assertIn('bilevel.hypergradient.cost_scale=0.01', command)
+            self.assertIn('bilevel.hypergradient.trial_mc_weight=1.0', command)
             self.assertIn('bilevel.interval=501760', command)
             self.assertIn('+adaptive_voc.interval=501760', command)
             self.assertIn('training.total_environment_steps=524288', command)
@@ -70,7 +73,10 @@ class LaunchRecipesTest(unittest.TestCase):
         self.assertIn('bilevel.adaptation.budget_mode=bounded_window', command)
         self.assertIn('bilevel.adaptation.maximum_vector_steps=448', command)
         self.assertEqual(config['adaptation_maximum_transitions_per_branch'], 917504)
-        self.assertEqual(config['experiment_name'], 'wrench-feedback-fast')
+        self.assertEqual(config['experiment_name'], 'wrench-adam-feedback')
+        self.assertEqual(config['proposal_inner_optimizer'], 'adam')
+        self.assertEqual(config['upper_cost_scale'], .01)
+        self.assertEqual(config['trial_mc_weight'], 1.)
         self.assertNotIn('adaptation_minimum_reference_passes', config)
         self.assertNotIn('lower_response_error_tolerance', config)
 
@@ -87,13 +93,19 @@ class LaunchRecipesTest(unittest.TestCase):
             critic_feedback=[dict(branch=branch, environment_steps=count,
                 trial_feedback_rows=40, trial_feedback_complete_rows=40,
                 trial_critic_skipped=0, trial_critic_updates=32,
-                trial_critic_parameter_delta_l2=.1)
-                for branch in ('noedit', 'window_0') for count in budgets])
-        self.assertEqual(validate(row, config)['critic_feedback_complete_rows'], 240)
+                trial_critic_parameter_delta_l2=.1, trial_critic_cost_scale=.01)
+                for branch, count in [('baseline', 0)]+
+                    [(branch, count) for branch in ('noedit', 'window_0') for count in budgets]])
+        self.assertEqual(validate(row, config)['critic_feedback_complete_rows'], 280)
         missing = copy.deepcopy(row)
         missing['critic_feedback'] = [r for r in missing['critic_feedback'] if r['branch'] == 'noedit']
-        with self.assertRaisesRegex(AssertionError, 'Missing candidate/control'):
+        with self.assertRaisesRegex(AssertionError, 'Missing baseline/candidate/control'):
             validate(missing, config)
+        missing_baseline = copy.deepcopy(row)
+        missing_baseline['critic_feedback'] = [r for r in missing_baseline['critic_feedback']
+                                               if r['branch'] != 'baseline']
+        with self.assertRaisesRegex(AssertionError, 'Missing baseline/candidate/control'):
+            validate(missing_baseline, config)
         unchanged = copy.deepcopy(row)
         unchanged['critic_feedback'][-1]['trial_critic_parameter_delta_l2'] = 0
         with self.assertRaisesRegex(AssertionError, 'did not change'):
@@ -103,6 +115,21 @@ class LaunchRecipesTest(unittest.TestCase):
         with self.assertRaises(AssertionError):
             validate(row, unbounded)
 
+    def test_smoke_rejects_stale_generation_or_reset_adam_state(self):
+        validate = module('hypergradient_smoke').validate_current_proposal
+        row = dict(upper_round=3, outer_validation_generation=3)
+        candidate = dict(validation_generation=3, inner_optimizer='adam',
+                         inner_optimizer_state_preserved=True, critic_cost_scale=.01)
+        validate(row, candidate)
+        with self.assertRaisesRegex(AssertionError, 'Stale candidate'):
+            validate(row, {**candidate, 'validation_generation': 2})
+        with self.assertRaisesRegex(AssertionError, 'Stale outer'):
+            validate({**row, 'outer_validation_generation': 2}, candidate)
+        with self.assertRaisesRegex(AssertionError, 'Adam state'):
+            validate(row, {**candidate, 'inner_optimizer_state_preserved': False})
+        with self.assertRaisesRegex(AssertionError, 'cost scale'):
+            validate(row, {**candidate, 'critic_cost_scale': 1.})
+
     def test_feedback_panels_include_rejected_trial_learning(self):
         summary = module('wandb_sync').feedback_summary
         result = summary([dict(branch='window_0', accepted=False, trial_critic_skipped=0,
@@ -110,7 +137,10 @@ class LaunchRecipesTest(unittest.TestCase):
                                trial_feedback_discarded_rows=10, trial_feedback_trajectories=1,
                                trial_critic_parameter_delta_l2=.2,
                                trial_critic_heldout_return_mae_before=3.,
-                               trial_critic_heldout_return_mae_after=1.),
+                               trial_critic_heldout_return_mae_after=1.,
+                               trial_critic_heldout_return_mae_after_normalized=1.,
+                               trial_critic_heldout_return_mae_after_raw=100.,
+                               trial_critic_cost_scale=.01),
                           dict(branch='noedit', trial_critic_skipped=1,
                                trial_feedback_rows=1, trial_feedback_discarded_rows=1)])
         self.assertEqual(result['fitted_branch_checkpoints'], 1)
@@ -118,6 +148,9 @@ class LaunchRecipesTest(unittest.TestCase):
         self.assertEqual(result['trial_feedback_discarded_rows'], 11)
         self.assertEqual(result['trial_critic_parameter_delta_l2_max'], .2)
         self.assertEqual(result['trial_critic_heldout_return_mae_after'], 1.)
+        self.assertEqual(result['trial_critic_heldout_return_mae_after_normalized'], 1.)
+        self.assertEqual(result['trial_critic_heldout_return_mae_after_raw'], 100.)
+        self.assertEqual(result['trial_critic_cost_scale'], .01)
 
     def test_upper_records_accept_both_engines_and_skipped_windows(self):
         summary = module('wandb_sync').candidate_summary

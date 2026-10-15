@@ -2,8 +2,9 @@
 
 This is a truncated-unrolling hypergradient, not implicit differentiation.
 The lower critic, temperature, batch statistics, sampled states and noise are
-fixed within a meta update. All lower ACTOR parameters take K projected SGD
-steps on the SAC loss. The upper cost critic is a learned physics surrogate;
+fixed within a meta update. All lower ACTOR parameters take K projected Adam
+steps from their incoming optimizer state (or explicitly selected legacy SGD).
+The upper cost critic is a learned physics surrogate;
 its gradient is always subject to subsequent simulator validation.
 """
 from dataclasses import dataclass
@@ -19,6 +20,7 @@ from flash_chord.training.flash_sac.network import (
     Actor, Critic, deterministic_action, policy_sample_from_noise, project_unit_parameters,
 )
 from flash_chord.training.flash_sac.update import actor_loss
+from flash_chord.retargeting.actor_response import unroll_adam_actor
 
 
 class UpperActor(nn.Module):
@@ -54,6 +56,8 @@ class WrenchCostCritic(nn.Module):
 class HypergradientConfig:
     inner_steps: int = 3
     inner_rate: float = 1e-4
+    inner_optimizer: str = 'adam'
+    inner_adam_eps_root: float = 1e-12
     upper_rate: float = 1e-3
     upper_steps: int = 4
     radius: float = .25
@@ -62,7 +66,8 @@ class HypergradientConfig:
     critic_rate: float = 3e-4
     critic_updates: int = 64
     trial_critic_updates: int = 32
-    trial_mc_weight: float = .5
+    trial_mc_weight: float = 1.  # Complete rollouts supply an observed finite-horizon return.
+    cost_scale: float = .01  # All critic targets/objectives share these dimensionless units.
     batch_size: int = 128
     target_rate: float = .01
 
@@ -71,12 +76,15 @@ class HypergradientConfig:
                self.trial_critic_updates, self.batch_size) < 1:
             raise ValueError('positive update counts and batch size required')
         values = (self.inner_rate, self.upper_rate, self.radius, self.regularization,
-                  self.critic_rate, self.discount, self.target_rate, self.trial_mc_weight)
+                  self.critic_rate, self.discount, self.target_rate, self.trial_mc_weight,
+                  self.cost_scale, self.inner_adam_eps_root)
         if not all(np.isfinite(x) and x > 0 for x in values):
             raise ValueError('finite positive hypergradient settings required')
         if (not 0 < self.discount < 1 or not 0 < self.target_rate <= 1 or self.radius > 1
                 or self.trial_mc_weight > 1):
             raise ValueError('invalid discount, target rate or normalized trust radius')
+        if self.inner_optimizer not in ('adam', 'sgd'):
+            raise ValueError('inner_optimizer must be adam or legacy sgd')
 
 
 def unroll_actor(theta, params, batches, loss, *, steps, rate, project=lambda x: x):
@@ -136,7 +144,8 @@ class ReferenceReplay:
         self.cursor = (self.cursor+n) % self.capacity
         self.size = min(self.size+n, self.capacity)
 
-    def sample(self, rng, size, *, frame_range=None, exclude=None, source=None):
+    def sample(self, rng, size, *, frame_range=None, exclude=None, source=None, generation=None,
+               critic_valid=None):
         ids = np.arange(self.size)
         if exclude is not None:
             ids = np.setdiff1d(ids, exclude)
@@ -145,6 +154,10 @@ class ReferenceReplay:
             ids = ids[(f >= frame_range[0]) & (f < frame_range[1])]
         if source is not None:
             ids = ids[self.storage['source'][ids] == source]
+        if generation is not None:
+            ids = ids[self.storage['generation'][ids] == generation]
+        if critic_valid is not None and 'critic_valid' in self.storage:
+            ids = ids[self.storage['critic_valid'][ids] == critic_valid]
         if not len(ids):
             raise ValueError('no replay rows for requested window/split')
         ids = rng.choice(ids, size=size, replace=len(ids) < size)
@@ -277,8 +290,10 @@ class WrenchHypergradient:
         next_action = self._action(lower_params, lower_stats, batch['next_observation'])
         future = self.cost_model.apply({'params': target}, batch['next_observation'],
                                       batch['next_context'], next_action).max(axis=0)
-        # Both true termination and the finite demonstration's end stop return.
-        target_cost = jax.lax.stop_gradient(batch['cost'] + self.config.discount*(1-batch['done'])*future)
+        # Only the finite demonstration's end stops this full-horizon return.
+        # Early sampling cutoffs are excluded by fit_critic (stale next phase).
+        target_cost = jax.lax.stop_gradient(self.config.cost_scale*batch['cost'] +
+                                           self.config.discount*(1-batch['done'])*future)
         def loss(p):
             pred = self.cost_model.apply({'params': p}, batch['observation'], batch['context'], batch['action'])
             return jnp.mean(optax.huber_loss(pred, target_cost[None], delta=1.))
@@ -290,10 +305,16 @@ class WrenchHypergradient:
 
     def fit_critic(self, replay, learner, rng):
         # Hold out complete rows from every optimization batch in this round.
-        validation, held_ids = replay.sample(rng, min(self.config.batch_size, max(1, replay.size//5)))
+        valid = replay.storage.get('critic_valid', np.ones(replay.size, bool))[:replay.size]
+        valid_count = int(np.count_nonzero(valid))
+        if valid_count < 2:
+            return dict(critic_skipped=1, replay_rows=replay.size,
+                        critic_valid_rows=valid_count, critic_cutoff_rows=replay.size-valid_count)
+        validation, held_ids = replay.sample(rng,
+            min(self.config.batch_size, max(1, valid_count//5)), critic_valid=True)
         losses = []
         for _ in range(self.config.critic_updates):
-            batch, _ = replay.sample(rng, self.config.batch_size, exclude=held_ids)
+            batch, _ = replay.sample(rng, self.config.batch_size, exclude=held_ids, critic_valid=True)
             self.cost_params, self.target_params, self.cost_state, value = self._critic_update(
                 self.cost_params, self.target_params, self.cost_state,
                 learner.actor.params, learner.actor.batch_stats, batch)
@@ -303,9 +324,15 @@ class WrenchHypergradient:
         next_action = self._action(learner.actor.params, learner.actor.batch_stats, validation['next_observation'])
         future = self.cost_model.apply({'params': self.target_params}, validation['next_observation'],
                                       validation['next_context'], next_action).max(axis=0)
-        target = validation['cost'] + self.config.discount*(1-validation['done'])*future
+        target = self.config.cost_scale*validation['cost'] + self.config.discount*(1-validation['done'])*future
         metrics = dict(critic_train_loss=float(np.mean(losses)),
-                       critic_heldout_td_mae=float(jnp.mean(abs(prediction-target))), replay_rows=replay.size)
+                       critic_heldout_td_mae=float(jnp.mean(abs(prediction-target))),
+                       critic_cost_scale=self.config.cost_scale, replay_rows=replay.size,
+                       critic_skipped=0, critic_valid_rows=valid_count,
+                       critic_cutoff_rows=replay.size-valid_count)
+        metrics.update(critic_train_loss_normalized=metrics['critic_train_loss'],
+            critic_heldout_td_mae_normalized=metrics['critic_heldout_td_mae'],
+            critic_heldout_td_mae_raw=metrics['critic_heldout_td_mae']/self.config.cost_scale)
         if not all(np.isfinite(x) for x in metrics.values()):
             raise FloatingPointError('nonfinite wrench critic fit')
         return metrics
@@ -314,18 +341,21 @@ class WrenchHypergradient:
         next_action = self._action(lower_params, lower_stats, batch['next_observation'])
         future = self.cost_model.apply({'params': target}, batch['next_observation'],
                                       batch['next_context'], next_action).max(axis=0)
-        td_target = jax.lax.stop_gradient(batch['cost']+self.config.discount*(1-batch['done'])*future)
-        measured = jax.lax.stop_gradient(batch['measured_return'])
+        td_target = self.config.cost_scale*batch['cost']+self.config.discount*(1-batch['done'])*future
+        measured = self.config.cost_scale*batch['measured_return']
+        weight = self.config.trial_mc_weight
+        target_cost = jax.lax.stop_gradient((1-weight)*td_target+weight*measured)
         def loss(p):
             prediction = self.cost_model.apply({'params': p}, batch['observation'],
                                                batch['context'], batch['action'])
             # MC labels connect a rejected edit's observed outcome directly to
             # its prediction, without treating the physical gate's mixed-unit
             # score as a wrench reward or bootstrapping from another policy.
-            td = optax.huber_loss(prediction, td_target[None], delta=1.)
-            mc = optax.huber_loss(prediction, measured[None], delta=1.)
-            weight = self.config.trial_mc_weight
-            return (1-weight)*jnp.mean(td)+weight*jnp.mean(mc)
+            # Blend targets BEFORE robustification. Averaging separately clipped
+            # TD and MC losses can cancel their opposite saturated gradients,
+            # leaving a grossly underestimated measured return uncorrected.
+            # Complete rollout calibration defaults to the observed MC target.
+            return jnp.mean(optax.huber_loss(prediction, target_cost[None], delta=1.))
         value, grads = jax.value_and_grad(loss)(params)
         updates, state = self.cost_opt.update(grads, state, params)
         params = optax.apply_updates(params, updates)
@@ -335,11 +365,14 @@ class WrenchHypergradient:
     def fit_trial_critic(self, trial, learner, rng):
         """Learn from accepted AND rejected branch rollouts in their own context.
 
-        The TD continuation uses precisely the branch policy that generated the
+        Complete rollouts default to direct measured-return calibration. An
+        optional TD blend uses precisely the branch policy that generated the
         evidence. The shared critic remains an approximate policy-value model:
         it is not conditioned on network weights and cannot provide a guaranteed
         value for an arbitrary subsequent policy. Held-out row errors below are
         calibration diagnostics, not independent-episode generalization tests.
+        Unsuffixed prediction/error metrics are normalized critic units; explicit
+        *_raw aliases recover the unscaled dimensionless wrench-support return.
         """
         if actor_policy_digest(learner) != trial.policy_key:
             raise ValueError('trial feedback policy does not match bootstrap learner')
@@ -366,10 +399,11 @@ class WrenchHypergradient:
                 learner.actor.params, learner.actor.batch_stats, batch(ids))
             losses.append(float(value))
         after = prediction()
-        measured = validation['measured_return']
+        measured = self.config.cost_scale*validation['measured_return']
         delta = sum(float(jnp.sum((a-b)**2)) for a, b in
                     zip(jax.tree.leaves(self.cost_params), jax.tree.leaves(before_params)))**.5
         metrics.update(trial_critic_skipped=0, trial_critic_train_loss=float(np.mean(losses)),
+            trial_critic_cost_scale=self.config.cost_scale,
             trial_critic_updates=self.config.trial_critic_updates, trial_critic_training_rows=len(train_ids),
             trial_critic_heldout_rows=len(held_ids),
             trial_critic_heldout_return_mae_before=float(jnp.mean(abs(before-measured))),
@@ -378,6 +412,12 @@ class WrenchHypergradient:
             trial_critic_prediction_after=float(jnp.mean(after)),
             trial_critic_measured_return=float(jnp.mean(measured)),
             trial_critic_parameter_delta_l2=delta)
+        metrics['trial_critic_train_loss_normalized'] = metrics['trial_critic_train_loss']
+        for name in ('heldout_return_mae_before', 'heldout_return_mae_after',
+                     'prediction_before', 'prediction_after', 'measured_return'):
+            key = 'trial_critic_'+name
+            metrics[key+'_normalized'] = metrics[key]
+            metrics[key+'_raw'] = metrics[key]/self.config.cost_scale
         if not all(np.isfinite(value) for value in metrics.values()):
             raise FloatingPointError('nonfinite measured trial critic fit')
         return metrics
@@ -401,15 +441,25 @@ class WrenchHypergradient:
             obs = relabel(validation['observation'], validation['frame'], theta)
             action = self._action(params, learner.actor.batch_stats, obs)
             cost = self.cost_model.apply({'params': self.cost_params}, obs, validation['context'], action).max(axis=0)
-            return jnp.mean(cost) + config.regularization*jnp.mean(theta**2)
+            return jnp.mean(cost) + config.cost_scale*config.regularization*jnp.mean(theta**2)
         return lower, outer
 
     def propose(self, context, learner, batches, validation, relabel):
         lower, outer = self.objectives(learner, relabel, validation)
         cfg = self.config
         project = lambda p: project_unit_parameters(p, self.training.network.projection_epsilon)
-        evaluate = jax.jit(lambda theta: gradient_parts(theta, learner.actor.params, batches,
-            lower, outer, steps=cfg.inner_steps, rate=cfg.inner_rate, project=project))
+        def adam_gradient(theta):
+            def composed(t):
+                adapted = unroll_adam_actor(t, learner.actor, batches, lower,
+                    self.training, steps=cfg.inner_steps, eps_root=cfg.inner_adam_eps_root)
+                return outer(t, adapted), adapted
+            (value, adapted), total = jax.value_and_grad(composed, has_aux=True)(theta)
+            fixed = jax.tree.map(jax.lax.stop_gradient, adapted)
+            direct = jax.grad(lambda t: outer(t, fixed))(theta)
+            return value, total, direct, total-direct, adapted
+        evaluate = jax.jit(adam_gradient if cfg.inner_optimizer == 'adam' else
+            lambda theta: gradient_parts(theta, learner.actor.params, batches,
+                lower, outer, steps=cfg.inner_steps, rate=cfg.inner_rate, project=project))
         context = jnp.asarray(context)[None]
         def proposal(p):
             raw = self.upper_model.apply({'params': p}, context)[0]
@@ -425,9 +475,18 @@ class WrenchHypergradient:
         theta = proposal(self.upper_params)
         value, total, direct, response, params = evaluate(theta)
         control_value, _, _, _, control_params = evaluate(jnp.zeros_like(theta))
-        return np.asarray(theta), params, control_params, dict(
+        metrics = dict(
             predicted_cost=float(value), predicted_noedit_cost=float(control_value),
             predicted_wrench_return_gain=float(control_value-value), gradient_norm=float(jnp.linalg.norm(total)),
             direct_gradient_norm=float(jnp.linalg.norm(direct)),
             response_gradient_norm=float(jnp.linalg.norm(response)),
-            inner_steps=cfg.inner_steps, upper_actor_updates=cfg.upper_steps)
+            response_gradient_fraction=float(jnp.linalg.norm(response)/jnp.maximum(jnp.linalg.norm(total),1e-12)),
+            inner_optimizer=cfg.inner_optimizer,
+            inner_optimizer_state_preserved=cfg.inner_optimizer == 'adam',
+            inner_adam_eps_root=cfg.inner_adam_eps_root,
+            critic_cost_scale=cfg.cost_scale, inner_steps=cfg.inner_steps, upper_actor_updates=cfg.upper_steps)
+        for name in ('predicted_cost', 'predicted_noedit_cost', 'predicted_wrench_return_gain',
+                     'gradient_norm', 'direct_gradient_norm', 'response_gradient_norm'):
+            metrics[name+'_normalized'] = metrics[name]
+            metrics[name+'_raw'] = metrics[name]/cfg.cost_scale
+        return np.asarray(theta), params, control_params, metrics

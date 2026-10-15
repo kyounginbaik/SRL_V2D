@@ -267,7 +267,7 @@ def comparison_stable(previous, current, settings):
 
 
 def comparison_instability_reasons(previous, current, settings):
-    """Name every failed plateau check; preserve the acceptance tolerances."""
+    """Plateau checks, with success fractions resolved to one scored frame."""
     def close(a, b, absolute=None):
         a, b = np.asarray(a), np.asarray(b)
         tolerance = absolute if absolute is not None else settings.cost_relative_tolerance*np.maximum(1., np.maximum(abs(a), abs(b)))
@@ -276,12 +276,29 @@ def comparison_instability_reasons(previous, current, settings):
     reasons = []
     for side in ('candidate', 'control'):
         old, new = previous[side], current[side]
+        success_tolerance = settings.success_tolerance
+        interval_keys = ('local_start_frame', 'local_stop_frame_exclusive')
+        if all(key in item['metrics'] for item in (old, new) for key in interval_keys):
+            intervals = [tuple(item['metrics'][key] for key in interval_keys) for item in (old, new)]
+            valid = all(all(isinstance(value, (int, float, np.integer, np.floating))
+                            and not isinstance(value, (bool, np.bool_))
+                            and np.isfinite(value) and int(value) == value for value in interval)
+                        and 0 <= interval[0] < interval[1] for interval in intervals)
+            if not valid:
+                reasons.append(side+'_local_scoring_interval_invalid')
+            elif intervals[0] != intervals[1]:
+                reasons.append(side+'_local_scoring_interval_changed')
+            else:
+                # At N scored frames, one changed success label moves the
+                # fraction by 1/N. A smaller tolerance requires exact agreement.
+                count = intervals[0][1]-intervals[0][0]
+                success_tolerance = max(success_tolerance, 1./count)+1e-8
         if not close(old['cost'], new['cost']):
             reasons.append(side+'_cost_not_stable')
         for key, tolerance in (
             ('local_per_object_position_mean_m', settings.position_tolerance_m),
             ('local_per_object_orientation_mean_rad', settings.orientation_tolerance_rad),
-            ('local_object_success_robust_fraction', settings.success_tolerance),
+            ('local_object_success_robust_fraction', success_tolerance),
             ('local_cws_tolerance_error', settings.cost_relative_tolerance)):
             if not close(old['metrics'][key], new['metrics'][key], tolerance):
                 reasons.append(side+'_'+key+'_not_stable')

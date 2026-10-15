@@ -26,6 +26,9 @@ hyper_capture_stride: 4
 hyper_capture_worlds: 32
 hypergradient:
   inner_steps: 3
+  inner_optimizer: adam
+  inner_adam_eps_root: 1.0e-12
+  # Used only by the optional legacy SGD response.
   inner_rate: 0.0001
   upper_rate: 0.001
   upper_steps: 4
@@ -37,7 +40,8 @@ hypergradient:
   batch_size: 128
   target_rate: 0.01
   trial_critic_updates: 32
-  trial_mc_weight: 0.5
+  trial_mc_weight: 1.0
+  cost_scale: 0.01
 adaptation:
   # Bounded failure-window adaptation; all windows still receive matched tests.
   # 448 vector steps covers this 335-frame episode including the checkpoint tail.
