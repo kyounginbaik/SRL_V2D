@@ -1,226 +1,268 @@
-Portable CHORD-response UniRetargeting (2026-10-15)
+RUN UNIRETARGET ON ANOTHER GPU SERVER
+Current method: wrench_hypergradient (updated 2026-10-15)
 
-NEW ENGINE: wrench hypergradient with matched full lower training
----------------------------------------------------------------
-The new engine is optional; gaussian/flashsac retain their original recipes below.
-For the new method, use the CURRENT checkout, not the old commit pinned by the
-legacy AGENT_HANDOFF.txt. See HYPERGRADIENT_HANDOFF.txt for a concise handoff.
+Repository: https://github.com/kyounginbaik/SRL_V2D
+Agent handoff: AGENT_HANDOFF.txt in this directory
+Method/math: ../flash_chord/docs/wrench_hypergradient.txt
+Implementation baseline: 721cf423fec736430b158db1d3009c3824b856ea or a later
+main commit containing these instructions. Record the actual checkout commit.
 
-  python3 robotic_grounding/uniretarget/launch.py --episode 1 --seed 43 \
-    --upper wrench_hypergradient --phase smoke --gpu 0
+Always pass --upper wrench_hypergradient. The CLI's default is still the older
+Gaussian candidate-search method. These instructions reproduce the NEW method.
+Initial experiment: episode 1, seeds 43/44/45, three GPU smoke jobs. Other bundled
+episodes are 3, 5, 6 and 35. Each invocation uses one allocated GPU.
 
-This smoke trains 64 worlds for 131,072 main transitions, with one upper round at
-65,536 and final checkpoint/media at 131,072. Main replay capacity is 262,144,
-minimum 8,192, batch 1,024. It preserves physics, rewards, fixed initial state,
-VOC performance gate, reference overlay opacity/history and six estimated metrics.
-Its name uses w64 (training worlds), not c64/2048 (candidate population).
+1. HOST AND CLEAN CHECKOUT
 
-The upper actor proposes one local 56D wrist-and-finger edit per selected window,
-up to four windows. A learned TD critic predicts discounted wrench-support cost.
-The proposal gradient differentiates three temporary lower actor updates. Actual
-acceptance requires matched full FlashSAC training for candidate and unchanged
-control, fresh data, stable comparison and object/prefix guards. At 64 worlds in
-episode 1 the comparison budgets are 50,048 / 100,032 / 200,000 transitions PER
-branch; one control curve is reused across all windows. These extra transitions
-are separate from the main training clock. A smoke can reject every edit and
-still validate integration; it must actually exercise proposals and adaptation.
+Use Linux, NVIDIA Container Toolkit and Docker access. The pinned Dockerfile
+requires a compatible NVIDIA driver >=580. Reserve one GPU, 12 CPUs and 96GB
+host RAM per job, as in the submitted smoke recipe. The existing cluster uses
+L40S 48GB and B200 GPUs; the new full-training memory fit/runtime must still be
+validated. Inspect disk space before downloading inputs and building images.
+Host Python 3 only needs the standard library; dependencies run in Docker.
 
-For --phase full, this new smoke must pass before fresh 2,048-world/100,663,296-step
-training starts (the latter retains the output label pilot). Upper interval is
-501,760 main transitions. Adaptation budgets grow with horizon and world count:
-episode 1 at 2,048 worlds uses 684,032 / 1,368,064 / 2,736,128 per branch. A full run
-can therefore cost much more than the older candidate-search experiment. Three
-seeds are separate jobs; there is no automatic full launch after --phase smoke.
+  nvidia-smi
+  docker version
+  git lfs version
+  df -h .
 
-Smoke CPU/config checks: python3 -m unittest discover -s robotic_grounding/uniretarget/tests
-Method details: ../flash_chord/docs/wrench_hypergradient.txt
-No full neural-RL convergence or true-physics hypergradient guarantee is claimed.
-Long adaptation is validation, not part of the differentiated computation.
+On a managed cluster use its allocated GPU; do not share an occupied GPU.
+Clone into a fresh directory using your existing GitHub authentication:
 
-Slurm supports optional fourth argument PHASE (default full):
+  GIT_LFS_SKIP_SMUDGE=1 git clone --branch main https://github.com/kyounginbaik/SRL_V2D.git SRL_V2D_uniretarget
+  cd SRL_V2D_uniretarget
+  git rev-parse HEAD
+  git lfs install --local
+  git lfs pull --include='robotic_grounding/uniretarget/**,robotic_grounding/flash_chord/src/flash_chord/assets/**' --exclude=''
 
-  sbatch --partition=YOUR_PARTITION robotic_grounding/uniretarget/train.sbatch \
-    1 43 wrench_hypergradient smoke
+SSH cloning is also supported. All following commands run from this repository
+root. Selective LFS includes the five references, submitted visual/collision
+meshes, URDFs, Sharpa assets and finger PCA prior (roughly 0.42 GiB; Docker and
+Git history need additional space). No reconstruction weights, ComPose archive,
+source video, final_submission.zip or recursive submodules are needed.
+Reference-overlay videos compare robot trajectories, not source RGB footage.
 
-UNIRETARGET_IMAGE and UNIRETARGET_RUN_ROOT set optional image/output defaults;
-explicit --image/--run-root options take precedence. Use fresh output roots for
-changed code. Source checksums include YAML configs as well as Python sources.
-The remaining gaussian/flashsac descriptions below concern the older engine.
+Keep this checkout unchanged while any jobs use it. The portable launcher
+bind-mounts source; prepared flash_chord is a symlink, not an immutable snapshot.
+Preparation verifies checksums, including package documentation, Python and
+YAML configs. Updating code or these docs after preparation can invalidate a
+run root on its next launch. Pull updates BEFORE preparing. Use a separate
+checkout and fresh root for later changes; do not pull into an active checkout.
 
-Included: current FlashCHORD implementation, all five frozen references (episodes
-1, 3, 5, 6, 35), submitted visual meshes, convex collision pieces, object URDFs,
-Sharpa hand URDF/meshes in flash_chord/assets, and the finger PCA prior. Git LFS
-materializes binary inputs. No ComPose, reconstruction models, or old experiment
-folders are needed to train from these frozen references. Training checkpoints,
-replays, videos, caches and credentials are deliberately runtime outputs.
+2. BUILD THE PINNED CONTAINER
 
-From the cloned repository root:
-
-  git lfs install
-  git lfs pull
   docker build -f robotic_grounding/flash_chord/docker/Dockerfile \
     -t flash_chord:chord100m-base robotic_grounding/flash_chord
   docker build -f robotic_grounding/uniretarget/Dockerfile.media \
     -t uniretarget:chord100m robotic_grounding/uniretarget
 
-Linux with NVIDIA Container Toolkit and a compatible NVIDIA driver is required;
-the pinned environment uses JAX CUDA 13 (driver >= 580). The tested cluster uses
-48GB L40S and B200 GPUs. Reserve one GPU, 12 CPUs and 96GB host RAM per full run.
-The Docker image installs Python and all scientific dependencies; the host only
-needs Python 3, Git LFS and Docker. See flash_chord/docker/Dockerfile and uv.lock.
+The first image installs the checked-in uv.lock; the second adds video tooling.
+Do not replace the locked environment with latest pip packages. Record image IDs:
 
-First validate input preparation (no GPU required):
+  docker image inspect uniretarget:chord100m --format '{{.Id}}'
 
-  python3 robotic_grounding/uniretarget/launch.py --prepare-only
+An existing compatible image can be selected with --image or UNIRETARGET_IMAGE.
+The original cluster's flash_chord:mixed-ep01-media tag is not required elsewhere.
 
-For online W&B, authenticate in the environment (never commit credentials):
+3. OUTPUT LOCATION AND W&B
+
+Choose a NEW root on persistent storage. This example stays inside the checkout:
+
+  export UNIRETARGET_RUN_ROOT="$PWD/.uniretarget/wrench-hypergradient-run1"
+  export UNIRETARGET_IMAGE=uniretarget:chord100m
+
+Seeds and episodes may share this root; each has a separate run directory and
+lock. Never launch the same episode/seed twice concurrently. A retry after
+training has started needs a fresh root. No complete bilevel resume is supported.
+An actor checkpoint alone cannot restore the full learner, upper models/replay
+and optimizer states. --phase pilot also starts fresh; it is not resume.
+
+For online W&B:
 
   export WANDB_MODE=online
   export WANDB_ENTITY=DexDreamer
   export WANDB_PROJECT=v2d-track3-uniretarget
-  # Set WANDB_API_KEY through your shell/secret manager.
-  # WANDB_BASE_URL is forwarded when using a private W&B instance.
+  export WANDB_BASE_URL=https://api.wandb.ai
 
-Without WANDB_MODE=online, portable runs log offline. Local media/metrics are
-always retained. Run IDs include a host/output-path hash to avoid collisions.
-Set UNIRETARGET_RUN_TAG before launch to choose an explicit experiment tag.
+Provide WANDB_API_KEY securely through this server's environment/secret store.
+The portable launcher forwards it, but does not mount the host's .netrc or copy
+credentials from the other server. For a private deployment, set its actual API
+endpoint instead. A W&B browser/proxy URL is not necessarily an API endpoint.
+Leave UNIRETARGET_RUN_TAG unset to get a unique host/output-root hash. If you
+set it explicitly, use a fresh tag per server/experiment/root to avoid run-ID
+collisions. Episode, seed and phase are added to the run ID automatically.
 
-  python3 robotic_grounding/uniretarget/launch.py --episode 1 --seed 43 --gpu 0
+Without WANDB_MODE=online, portable runs default to offline and will not appear
+in the web UI. Metrics and videos are still retained locally. Check
+wandb_sync/run.json for the actual run URL, and live_sync.log for upload errors.
+Queued Slurm jobs do not appear in W&B until their training phase starts.
 
-The default phase is full: a separate 64-world smoke (65,536 steps) validates
-integration, then fresh 2048-world training runs for 100,663,296 steps. A failed
-smoke blocks full training. Full phase is named pilot in output paths/W&B for
-compatibility; its budget is the full 100.7M. Search every 501,760 steps (~500K),
-2048 candidates, one world per candidate; about 200 upper rounds. Checkpoints,
-physics videos and six-metric reports every 1,003,520 steps, plus the final save.
-Three seeds: 43, 44, 45. Repeat for episodes 1, 3, 5, 6 and 35.
+4. PREPARE INPUTS, WITHOUT A GPU
 
-Matched upper optimizer ablation:
+  python3 robotic_grounding/uniretarget/launch.py \
+    --upper wrench_hypergradient --prepare-only --gpu 0
 
-  python3 robotic_grounding/uniretarget/launch.py --episode 1 --seed 43 --gpu 0 --upper gaussian
-  python3 robotic_grounding/uniretarget/launch.py --episode 1 --seed 43 --gpu 0 --upper flashsac
+Preparation runs inside Docker and verifies/relocates every required input.
+--gpu 0 here is only a single-device parser argument; prepare-only allocates
+no GPU. It also avoids a comma-separated CUDA_VISIBLE_DEVICES causing a parser
+error. The exported root and image above apply to subsequent commands too.
 
-Default output roots are separate for gaussian/flashsac. Both use the same 2048
-candidate physics budget, candidate-specific lower solves, adaptive windows and
-acceptance gates. Gaussian proposes independent N(0,0.5^2) increments. FlashSAC
-learns a contextual Gaussian mean/std with an identity action transform (the same
-local feasible projection bounds actual robot edits). Its initial std is 0.5.
-It performs 32 critic and 16 actor updates per search round, with 256-sample batches
-(64 in smoke), actor/critic widths 64/128, two blocks each, learning rate 1e-4.
-Upper reward = clip(adapted no-edit cost - candidate solved-response cost, -5,5).
-All transitions are terminal: no bootstrap crosses reference/lower-policy changes.
-Upper replay is cleared each round; actor/critic/optimizer parameters persist.
-Upper checkpoints and actor/critic change diagnostics are saved at every search.
-The learned proposal distribution does not change the lower-response error bound
-or establish whole-loop/global convergence. Compare VOC=0 object metrics, accepted
-edit quality and GPU-hours; more edits alone do not establish better performance.
+Optional launcher inspection (does not train):
 
---phase smoke runs only integration validation. --phase pilot skips smoke.
---run-root /absolute/output/path changes the output location; --image changes
-the image tag. --dry-run prints the Docker command. One GPU ID or UUID is accepted.
-No complete bilevel resume is implemented: use a fresh run-root for retries after
-training starts, or for changed code. Each root is checksum-locked to its inputs,
-code and launch templates. Concurrent seeds may share a root; preparation is locked.
+  python3 robotic_grounding/uniretarget/launch.py \
+    --upper wrench_hypergradient --episode 1 --seed 43 --phase smoke \
+    --gpu 0 --dry-run
 
-Optional Slurm (submit from the repository root):
+5. RUN A SMOKE ON AN ALLOCATED GPU
 
-  sbatch --partition=YOUR_PARTITION robotic_grounding/uniretarget/train.sbatch 1 43 gaussian
-  sbatch --partition=YOUR_PARTITION robotic_grounding/uniretarget/train.sbatch 1 43 flashsac
+Replace GPU_UUID_OR_INDEX with the actual allocated device:
 
-Override partition, nodelist, time and output with sbatch options. The portable
-script has no node01/node100/node200 assumption and requests 40 hours per job.
-Docker access must be configured on compute nodes; do not bypass scheduler GPU
-allocation. The default script resolves the allocated GPU to its UUID.
+  python3 robotic_grounding/uniretarget/launch.py \
+    --upper wrench_hypergradient --episode 1 --seed 43 --phase smoke \
+    --gpu GPU_UUID_OR_INDEX
 
-Method and scope
-----------------
-The lower learner is full-hand FlashSAC with a finger PCA exploration basis.
-Training resets always use frame-zero wrist/finger joints, object poses, and
-zero velocities. fixed_initial_state=true disables both random frame selection
-and sampled finger opening; reset_finger_openness=0 alone would NOT do this.
-Training still explores through stochastic SAC actions. All three seeds use
-the same physical starting state; they differ in learning/proposal randomness.
-The upper proposes a local 56D correction (both wrists and all fingers).
-One deterministic VOC=0 rollout from the same start identifies the first
-sustained crossing by either object: position error >5 cm OR orientation error
->20 degrees for 0.15 seconds. Earlier error growth and sampled history guide
-up to four candidate windows. There are no perturbed baseline worlds.
-No failure falls back to full-episode window exploration. These are tunable
-search heuristics, not Track 3's official thresholds or causal diagnoses.
-Each search saves nominal_baseline.npz. initial_state_checks.jsonl verifies the
-same robot/object generalized positions and zero velocities across training,
-reference changes, baseline evaluation, and every candidate world. The shared
-2048-candidate budget and 500K-step search schedule are unchanged.
-Object trajectories remain fixed. Every candidate gets
-its own solved, strongly convex policy-head response before physical evaluation.
-The accepted reference and adapted head are published together. Rejected edits
-preserve replay. An adapted no-edit head is kept only when it preserves the
-saved successful prefix; otherwise the incoming learner is retained. CHORD-style wrench support
-replaces contact-position guidance in the upper score. Acceptance uses the
-original demonstration start, with no three-perturbed-reset veto. Candidates
-share one scoring interval from detected error onset through failure+1 second
-(clipped to episode end); both objects' pose and wrench errors enter the cost.
-Before-onset prefix mean/p95 errors remain protected. Per-object whole-episode
-and post-interval mean pose regressions above 5 cm or 20 degrees, or new
-instability, are rejected. Those are tunable guards, not robustness guarantees.
-Historical protection also compares each candidate against the saved best
-policy/reference pair, not just a possibly regressed current controller.
-An earlier sustained failure or excessive per-object mean/p95 error in that
-saved prefix rejects the candidate. Saved best pairs prefer the longest
-successful prefix, then lower full-horizon cost among prefix-preserving pairs.
-training/demo_archive stores immutable accepted/promoted actor/reference pairs;
-training/best_demo.json points to the preferred pair. Checkpoints are checked
-from the same start and cannot overwrite a better archived demonstration.
-This retains a deployable pair, not a complete training-resume snapshot;
-training continues exploring and is not automatically rolled back.
-W&B progress/current_first_failure_seconds, progress/best_success_prefix_seconds,
-and progress/current_prefix_preserved distinguish current behavior from retained
-progress. Partial improvements need not solve a failure;
-upper/failure_resolved_through_lookahead is true only after passing the full scoring interval.
-W&B upper/local_cost_gain and upper/scoring_region show the accepted gain and
-scoring interval; selected_window reports the actual edit window only when
-an edit was accepted. Full-horizon costs remain diagnostic charts.
+Repeat for seeds 44 and 45 on separate allocated GPUs, or sequentially on one.
+Use the scheduler alternative below when available. For a standalone server,
+keep the launch process in a persistent session and retain stdout/stderr.
 
-See ../flash_chord/docs/response_bilevel.txt for equations, residual bounds and
-assumptions. Bounds concern the explicit per-stage convex head surrogate, not a
-global optimum of full neural SAC or whole-training convergence. The upper uses
-finite candidate search; no implicit-function hypergradient is implemented.
+The smoke runs targeted CPU tests, then 64-world training for 131,072 MAIN
+environment transitions. It performs one upper round at 65,536 and saves final
+checkpoint videos. Full lower adaptation is retained: episode 1 uses matched
+checkpoints of 50,048 / 100,032 / 200,000 transitions PER branch, separate from
+main training. One unchanged control is trained and reused across up to four
+candidate windows. Main training pauses during these comparisons.
 
-Physics: pot 0.2kg, lid/spoon 0.1kg; full object inertia tensors. Wrist kp=100,
-kd=12, effort cap=90, matching the earlier successful s44 controller; no added
-wrist speed cap. Hand-keypoint weight=2, finger-joint weight=0.25. VOC starts at
-1 and decreases only when both/all objects pass the performance gate repeatedly.
-A matching training budget does not guarantee a fixed wall-clock runtime; search
-and synchronous checkpoint rendering are included in the allocation time.
+Require process exit code zero AND this report to contain passed=true:
 
-W&B and evidence
-----------------
-track3_estimated/{auc,sp_sr,mp_sr,mppe_cm,rpe_cm,cd_o_cm} uses VOC=0 rollouts.
-track3_assisted_estimated/* uses the current training VOC and is separate.
-Scores use immutable reconstructed object poses as proxy ground truth, with one
-initial scene alignment, reconstructed mesh centroids/samples, and the public
-lid half-turn symmetry. The lid normal is estimated from proxy-mesh surface PCA.
-AUC/SP-SR/MP-SR are fractions [0,1] (higher better); MPPE/RPE/CD-O are centimetres
-(lower better). Single-object RPE is zero by definition, not evidence of success.
-CD-O compares the supplied mesh with itself, so it is identically zero and cannot
-measure reconstruction quality against the hidden scan. Confidential mesh samples,
-anchors, axes and true poses are unavailable: these are estimates, not leaderboard
-scores. The five pose formulas were checked against the official 2026-10-06 scorer.
+  $UNIRETARGET_RUN_ROOT/reports/smoke_validation_episode_000001_s43.json
 
-The pose recording is taken after each action and before episode reset, matching
-the evaluator's timing. Every reference frame must be present. No extra rollout
-is added: existing unassisted/assisted checkpoint videos supply the poses.
-reference_overlay keeps original hands at 45% opacity with current hands solid,
-plus closeups; checkpoint and overlay versions retain their W&B history.
+  python3 -m json.tool "$UNIRETARGET_RUN_ROOT/reports/smoke_validation_episode_000001_s43.json"
 
-Outputs live under RUN_ROOT/episode_XXXXXX/runs/{smoke,pilot}/episode_XXXXXX/chunk/
-seed_N/: training/upper_updates.jsonl and search_batches retain acceptance, windows,
-correction magnitudes and lower-solve evidence; checkpoint_videos/step_*/ contains
-object_poses.npz, track3_estimates.json and physics MP4. voc_checkpoint_videos has
-assisted results. reference_overlays retains each accepted reference version.
+The validator requires actual learned proposals, nonzero lower actor/critic
+learning, finite saved state, identical initial-state audits and saved media.
+A completed training stage alone is insufficient: the validator runs afterward.
+Zero accepted edits can pass integration; report that outcome honestly and do
+not infer task improvement merely from a nonzero upper gradient.
+--phase smoke stops here; it does not automatically start full training.
 
-Validation: 114 targeted CPU tests passed before queueing the fixed-start 100.7M batch;
-randomized 1/2-object, 1/3-world score comparisons agreed with official formulas
-within 3e-14. New GPU integration is enforced by each job's smoke, and has not yet
-run while the cluster is fully occupied. A full Docker rebuild on a second server
-has not been exercised here; the CPU checks use the cluster's pinned runtime image.
+6. START FULL TRAINING AFTER VALIDATION
+
+After the same episode/seed/root's smoke report passes:
+
+  python3 robotic_grounding/uniretarget/launch.py \
+    --upper wrench_hypergradient --episode 1 --seed 43 --phase pilot \
+    --gpu GPU_UUID_OR_INDEX
+
+pilot skips smoke and does not itself verify the earlier report; inspect the
+report first. It starts FRESH 2,048-world training for 100,663,296 main steps,
+not a continuation of smoke weights. Upper updates occur every 501,760 steps;
+checkpoint/media interval is 1,003,520 plus final save. The name "pilot" is an
+output-path compatibility label, not a short training budget.
+
+For a fresh episode/seed/root with no earlier smoke, use --phase full to run
+smoke followed automatically by fresh full training in the same allocation.
+A failed smoke prevents full training. Do not use full after already running
+smoke for that same episode/seed/root; rerunning smoke rejects existing outputs.
+
+Full episode-1 adaptation checkpoints are 684,032 / 1,368,064 / 2,736,128 EXTRA
+transitions per branch. Up to one control plus four candidates are trained per
+upper round. These counts are not included in the 100.7M main budget, so runtime
+can greatly exceed older runs. Comparisons extend while changing and reject
+inconclusive edits at the cap. Budget depends on episode length/world count.
+There are no 2,048 upper candidates: there is one learned proposal per window.
+
+7. SLURM: THREE SMOKE JOBS
+
+Submit from the repository root with the output/image/W&B environment above.
+Replace YOUR_PARTITION and add your site's account/QoS options if needed. The
+portable script uses this server's Slurm GPU allocation, not original node names.
+
+  mkdir -p slurm_logs
+  for seed in 43 44 45; do
+    sbatch --partition=YOUR_PARTITION --time=08:00:00 \
+      --job-name="whg-e1-smoke-s${seed}" \
+      --output="slurm_logs/%j.out" --error="slurm_logs/%j.err" \
+      robotic_grounding/uniretarget/train.sbatch 1 "$seed" wrench_hypergradient smoke
+  done
+
+Arguments: EPISODE SEED UPPER PHASE. The fourth argument defaults to full when
+omitted. The script requests one GPU, 12 CPUs, 96GB RAM; default time is 40 hours.
+The 8-hour smoke request above is a queue limit, not a measured runtime estimate.
+Ensure your scheduler exports the required environment to jobs. Do not run the
+direct-GPU commands and submit duplicate Slurm jobs for the same output paths.
+
+After the three smoke reports pass, change the last argument to pilot and set
+a suitable time limit to submit the corresponding full runs. Use full only for
+untouched episode/seed paths. Other episodes are selected by 3, 5, 6 or 35; run
+only the requested subset, rather than automatically submitting a large matrix.
+
+8. WHAT TO REPORT
+
+Run directory:
+  RUN_ROOT/episode_XXXXXX/runs/{smoke,pilot}/episode_XXXXXX/chunk/seed_N/
+
+Evidence inside that directory:
+  run_config.json                         exact launch/physics/method settings
+  stage.json                              training/media stage (see validation report too)
+  training/upper_updates.jsonl             accepted/rejected edits, windows and reasons
+  training/adaptation_progress.jsonl       live candidate/control learning checkpoints
+  training/search_batches/step_*/          scores, upper state and reference snapshot
+  training/initial_state_checks.jsonl      fixed physical-start audits
+  training/progress_checks.jsonl           current versus archived progress
+  training/best_demo.json                  preferred saved policy/reference pair
+  checkpoint_videos/step_*/                VOC=0 physics + six estimated Track 3 metrics
+  voc_checkpoint_videos/step_*/            current-assistance videos
+  reference_overlays/version_*/           original/current reference comparison
+  wandb_sync/run.json                      actual W&B URL
+
+Expected W&B smoke names:
+  wrench-hypergradient-full-d56-w64-smoke-episode_000001-s43
+  wrench-hypergradient-full-d56-w64-smoke-episode_000001-s44
+  wrench-hypergradient-full-d56-w64-smoke-episode_000001-s45
+Here "full-d56" means full-hand edits, not full-length training.
+
+Useful panels:
+  hypergradient/accepted, hypergradient/critic_heldout_td_mae
+  hypergradient/gradient_norm, hypergradient/response_gradient_norm
+  hypergradient/predicted_wrench_return_gain, hypergradient/actual_local_cost_gain
+  adaptation/*, reference_change/*
+  progress/current_first_failure_seconds, progress/best_success_prefix_seconds
+  videos/physics_checkpoint, videos/assisted_voc, videos/reference_overlay
+  track3_estimated/{auc,sp_sr,mp_sr,mppe_cm,rpe_cm,cd_o_cm}
+
+Report job ID/status, GPU/driver/image/code version, main steps and extra
+adaptation work, accepted rounds/total, wrist changes in cm, finger changes in
+degrees, failure/onset times, chosen windows and VOC=0 physical outcomes.
+Predicted discounted cost and measured local physical cost have different
+scales. The six Track 3 metrics use reconstructed reference poses as proxy GT;
+CD-O is mesh self-comparison (zero), not hidden-scan reconstruction accuracy.
+Keep historical videos and original hands at 45% overlay opacity. Detailed
+video metadata stays out of voc_schedule/video_context panels.
+
+METHOD CONTRACT / VALIDATION LIMITS
+
+The upper outputs a local 56D correction (12 wrist + 44 finger dimensions),
+using a TD wrench-support cost critic and a gradient through three temporary
+lower actor SGD updates. This is not three simulator timesteps. Full FlashSAC
+adaptation on fresh experience compares the edited and unchanged references
+from the same incoming learner. Accepted pairs publish all tested learning
+state; rejected edits preserve the incoming pair/replay. Long adaptation is
+outside the gradient graph, and empirical stability is not proven convergence.
+The cost describes object-centric wrench support, not measured net force/torque.
+
+Keep the bundled objects/references, fixed frame-zero physical starts, pot
+0.2kg and lid/spoon 0.1kg, wrist kp=100/kd=12/effort=90, no added wrist speed cap,
+hand-keypoint reward weight=2 and finger-joint tracking weight=0.25. VOC starts
+at 1 and decreases by performance gates. Upper evaluations remain VOC=0.
+Object trajectories/contact targets are immutable during refinement.
+
+As of initial submission (2026-10-15), 31 focused core CPU tests, four launcher
+tests and three exact composed launch configurations passed. A fresh Docker
+build, GPU integration, memory fit and actual refinement must be checked on the
+destination server. Prior experiments do not establish this method's success.
+
+Legacy --upper gaussian / --upper flashsac remain available for the earlier
+candidate-search/convex-head-response ablation. They use different algorithms
+and budgets. Historical instructions are in RUNNING.txt at commit 721cf423;
+their formulation is ../flash_chord/docs/response_bilevel.txt. Do not omit the
+new --upper flag or apply the old convex residual guarantee to this engine.

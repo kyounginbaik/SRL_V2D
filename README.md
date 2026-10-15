@@ -1,67 +1,91 @@
-# UniRetargeting
+# UniRetarget: Unify Kinematics & Physics Retargeting via Bi-Level Optimization
 
-Refine robot reference trajectories using feedback from a physics-trained policy.
-The current Track 3 experiment uses two floating Sharpa hands, FlashSAC at the lower
-level, and adaptive local corrections to both wrists and finger joints at the upper
-level. Five prepared episodes and their object/collision assets are included through
-Git LFS, so training can run on another GPU server without the reconstruction folders.
+UniRetarget refines a reconstructed robot reference using feedback from a physics-trained
+controller. The current implementation uses **lower FlashSAC training**, an **upper actor
+with a TD wrench-cost critic**, and local corrections to both wrists and all finger joints.
+Five prepared Track 3 episodes, object meshes, collision assets and robot assets are included
+through Git LFS.
 
-**[Portable setup and launch instructions](robotic_grounding/uniretarget/RUNNING.txt)**
+- **[Run on another GPU server](robotic_grounding/uniretarget/RUNNING.txt)** — setup, W&B, smoke runs, full training and Slurm.
+- **[Instructions to give another agent](robotic_grounding/uniretarget/AGENT_HANDOFF.txt)** — reproduce the current three-seed smoke experiment.
+- **[Method, equations and limitations](robotic_grounding/flash_chord/docs/wrench_hypergradient.txt)**.
+
+From a clean checkout of this repository's current `main`:
 
 ```bash
-git lfs install
-git lfs pull
+git lfs install --local
+git lfs pull --include='robotic_grounding/uniretarget/**,robotic_grounding/flash_chord/src/flash_chord/assets/**' --exclude=''
 docker build -f robotic_grounding/flash_chord/docker/Dockerfile \
   -t flash_chord:chord100m-base robotic_grounding/flash_chord
 docker build -f robotic_grounding/uniretarget/Dockerfile.media \
   -t uniretarget:chord100m robotic_grounding/uniretarget
-python3 robotic_grounding/uniretarget/launch.py --episode 1 --seed 43 --gpu 0
+
+python3 robotic_grounding/uniretarget/launch.py \
+  --upper wrench_hypergradient --prepare-only --gpu 0
+python3 robotic_grounding/uniretarget/launch.py \
+  --upper wrench_hypergradient --episode 1 --seed 43 --phase smoke --gpu 0
 ```
 
-Configure `WANDB_MODE=online`, `WANDB_API_KEY`, `WANDB_ENTITY`, and `WANDB_PROJECT`
-for online logging; the portable launcher defaults to offline logging. See the guide
-for Slurm, input preparation, fresh output directories and the required GPU driver.
+Replace `0` with your allocated GPU index or UUID. The pinned image requires a compatible
+NVIDIA driver (>=580), Docker and NVIDIA Container Toolkit. The host needs Python 3 and
+Git LFS; scientific Python dependencies run inside Docker. The guide covers authentication
+and a fresh output root. **Always specify `--upper wrench_hypergradient`: omitting it
+selects the older Gaussian-search engine.**
 
-| Setting | Current experiment |
-| --- | --- |
-| Episodes | 000001, 000003, 000005, 000006, 000035 |
-| Seeds | 43, 44, 45 |
-| Full training | 100,663,296 environment steps; 2048 worlds |
-| Upper search | Every 501,760 steps; 2048 candidates |
-| Upper optimizer ablation | Independent Gaussian proposals vs learned FlashSAC proposals |
-| Reference action | 56D local increments: both wrists and all finger joints |
-| Window selection | Persistent object error, earlier error onset, and sampled history |
-| Upper objective | Object motion and CHORD-style wrench support, plus stability/edit penalties |
-| Lower response per candidate | Solved regularized policy-head surrogate; frozen critic/backbone during search |
-| Validation | Fresh paired resets; every object and successful prefix protected |
-| Physics | Pot 200g, lid/spoon 100g; s44 wrist controller settings |
+For W&B, set `WANDB_MODE=online`, `WANDB_API_KEY`, `WANDB_ENTITY=DexDreamer` and
+`WANDB_PROJECT=v2d-track3-uniretarget` in the launch environment. Otherwise the portable
+launcher logs offline. It does not automatically mount the host's W&B login file.
 
-An accepted update publishes the reference and adapted policy head together. Replay
-is cleared when the reference changes. After a rejected edit, replay remains and the
-adapted no-edit head is retained. VOC starts at 1 and decreases through a performance
-gate. Each full launch first runs an integration smoke in the same GPU allocation.
+| Setting | Smoke | Full training (`pilot` output phase) |
+| --- | --- | --- |
+| Training worlds | 64 | 2,048 |
+| Main environment transitions | 131,072 | 100,663,296 |
+| Upper update interval | 65,536; one round | 501,760; about 200 rounds |
+| Upper proposals | One per selected window, up to four | Same |
+| Upper action | Local 56D correction: 12 wrist + 44 finger dimensions | Same |
+| Episode 1 adaptation checkpoints, per branch | 50,048 / 100,032 / 200,000 | 684,032 / 1,368,064 / 2,736,128 |
+| Checkpoint/media interval | Final checkpoint | 1,003,520 plus final checkpoint |
 
-The explicit per-stage lower problem is strongly convex and has a checked numerical
-residual bound. This does not establish global convergence of neural SAC or of the
-complete alternating loop. The upper evaluates a finite candidate population, proposed by independent Gaussian
-sampling or a learned FlashSAC actor (`--upper gaussian` / `--upper flashsac`).
-Both retain the same candidate-specific lower solve and acceptance gates.
-[Equations and guarantee scope](robotic_grounding/flash_chord/docs/response_bilevel.txt).
+Adaptation transitions are additional to the main training budget. Each comparison trains
+an unchanged-reference control and candidate controllers from the same incoming learner
+on fresh experience. The main run pauses during this work. The control curve is reused
+across up to four candidate windows; full training can take substantially longer than the
+main step count suggests. The 2,048 worlds are training worlds, not 2,048 upper candidates.
 
-W&B records training, accepted corrections, historical checkpoint videos, and original
-hands overlaid at 45% opacity. Six Track 3 curves use reconstructed poses as proxy ground
-truth under `track3_estimated/*`, evaluated with VOC=0. Assisted scores are separate.
-CD-O is a labelled mesh self-comparison (zero); hidden-scan reconstruction accuracy
-cannot be estimated from object poses alone. Single-object RPE is also zero by definition.
+`--phase smoke` stops after integration validation. Once its report says `passed: true`,
+use `--phase pilot` with the same episode, seed and run root to start fresh full training.
+`--phase full` runs smoke then fresh full training automatically, and should only be used
+when that episode/seed has not already run in the chosen root. Full training does not
+continue the smoke weights. There is no complete training resume; keep the checkout
+unchanged while jobs run and use a fresh checkout/root for changes or retries.
+
+The upper differentiates through three temporary lower actor learning updates to propose
+an edit. Longer, complete FlashSAC adaptation then checks that edit in physics against
+an equally trained unchanged control. Accepted edits publish the reference and the complete
+adapted lower learning state together; rejected edits retain the incoming pair and replay.
+This is a finite-step bilevel approximation. Long adaptation is validation, outside the
+gradient calculation; no full neural-RL convergence guarantee is claimed.
+
+Both hands share a fixed demonstration start. Window selection uses object failure and
+earlier error onset/history. Object targets stay fixed. Pot mass is 200 g; lid/spoon mass
+is 100 g. VOC starts at 1 and decreases through performance gates. Main evaluation uses
+VOC=0. W&B includes gradient/acceptance metrics, wrist and finger edit sizes, historical
+physics videos, and original/current reference overlays at 45% original opacity.
+Six `track3_estimated/*` metrics use reference poses as proxy ground truth; CD-O is mesh
+self-comparison, not a measurement against the hidden scan.
+
+The initial submission passed 31 focused core tests, four launcher tests and three exact
+launch-configuration checks. These establish integration checks on CPU, not improved
+GPU task performance. Validate the smoke report and measured refinement on your server.
 
 | Code | Purpose |
 | --- | --- |
-| [Portable workflow](robotic_grounding/uniretarget/) | Inputs, preparation, Docker and Slurm launchers |
-| [Response editor](robotic_grounding/flash_chord/src/flash_chord/retargeting/response_editor.py) | Candidate-specific lower responses and paired acceptance |
-| [Adaptive windows](robotic_grounding/flash_chord/src/flash_chord/retargeting/failure_windows.py) | Failure/onset detection and window selection |
-| [Convex lower response](robotic_grounding/flash_chord/src/flash_chord/retargeting/response_bilevel.py) | Ridge solve and residual/error bounds |
-| [Track 3 estimates](robotic_grounding/flash_chord/src/flash_chord/evaluation/track3_estimates.py) | Six-metric checkpoint reporting and proxy assumptions |
-| [Historical guide](robotic_grounding/flash_chord/UNIRETARGETING.md) | Earlier Vega/tissue-box method and experiments |
+| [Portable workflow](robotic_grounding/uniretarget/) | Included inputs, Docker, W&B and Slurm launchers |
+| [Upper optimizer](robotic_grounding/flash_chord/src/flash_chord/retargeting/wrench_hypergradient.py) | Upper actor, TD cost critic and finite-step response gradient |
+| [Refinement editor](robotic_grounding/flash_chord/src/flash_chord/retargeting/wrench_hypergradient_editor.py) | Window proposals, physical comparison and publication |
+| [Lower adaptation](robotic_grounding/flash_chord/src/flash_chord/retargeting/lower_adaptation.py) | Matched full FlashSAC training on fresh data |
+| [Track 3 estimates](robotic_grounding/flash_chord/src/flash_chord/evaluation/track3_estimates.py) | Six-metric reporting and proxy assumptions |
 
-The queued 100.7M batch passed 102 targeted CPU tests; full GPU integration remains gated
-by each job's smoke. Current experiments have not yet established improved task success.
+The older `--upper gaussian` and `--upper flashsac` candidate-search experiments remain
+available. Their [convex-response formulation](robotic_grounding/flash_chord/docs/response_bilevel.txt)
+is a separate method; its numerical residual bounds do not apply to the new neural response.
