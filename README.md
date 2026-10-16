@@ -14,14 +14,33 @@ through Git LFS.
 - **[Instructions to give another agent](robotic_grounding/uniretarget/AGENT_HANDOFF.txt)** — reproduce the current three-seed full training experiment.
 - **[Method, equations and limitations](robotic_grounding/flash_chord/docs/wrench_hypergradient.txt)**.
 
-The current experiment is **episode 1, seeds 43/44/45**, using the current `main`
+The recommended experiment is **episode 1, seeds 43/44/45**, using the current `main`
 implementation with Adam response updates, measured-return calibration and finite-response
 acceptance. Each job runs a full-size GPU integration check, then automatically
 starts fresh **100,663,296-step training** if validation passes. The commands below
 run the same method on another server without the original `/data1` directories.
 
+To hand this task to an agent on the destination server, copy this:
+
+```text
+Clone https://github.com/kyounginbaik/SRL_V2D (main) into a fresh directory.
+Follow robotic_grounding/uniretarget/AGENT_HANDOFF.txt and RUNNING.txt to run
+episode 1, seeds 43/44/45, with --upper wrench_hypergradient --phase full.
+Use allocated GPUs and a new output root. Each seed must pass its integration
+check before full training. Report the commit, job IDs, W&B URLs, accepted
+refinements, and measured wrist/finger changes. Keep this checkout unchanged
+while jobs run.
+```
+
+The finite-response correction is in **`e5c25f246bd361e74873fb31b94fff30265a4ab8`
+or a descendant**. It keeps useful earlier adaptation checkpoints and requires a
+frozen physics confirmation before accepting an edit. At this documentation update
+(2026-10-16), 85 focused CPU tests passed; GPU confirmation of this correction is
+still pending. The preceding training runs were stopped. A fresh integration check
+can pass without accepting an edit, so inspect acceptance and motion changes separately.
+
 Use Linux, Docker with NVIDIA Container Toolkit, a compatible NVIDIA driver (>=580),
-host Python 3 and Git LFS. The submitted jobs request **one GPU, 12 CPUs and 96 GB
+host Python 3.8+ and Git LFS. The Slurm script requests **one GPU, 12 CPUs and 96 GB
 host RAM per seed**; the cluster has L40S 48 GB and B200 GPUs. Scientific Python
 dependencies are installed inside Docker.
 
@@ -32,6 +51,7 @@ GIT_LFS_SKIP_SMUDGE=1 git clone --branch main \
   https://github.com/kyounginbaik/SRL_V2D.git SRL_V2D_uniretarget
 cd SRL_V2D_uniretarget
 git rev-parse HEAD
+git merge-base --is-ancestor e5c25f246bd361e74873fb31b94fff30265a4ab8 HEAD || exit 1
 git lfs install --local
 git lfs pull --include='robotic_grounding/uniretarget/**,robotic_grounding/flash_chord/src/flash_chord/assets/**' --exclude=''
 docker build -f robotic_grounding/flash_chord/docker/Dockerfile \
@@ -64,7 +84,7 @@ python3 robotic_grounding/uniretarget/launch.py \
   --upper wrench_hypergradient --prepare-only --gpu 0
 ```
 
-4. Start the validated full run on an allocated GPU. Replace `GPU_UUID_OR_INDEX`
+4. Start the integration check followed by full training on an allocated GPU. Replace `GPU_UUID_OR_INDEX`
 with its actual device UUID or index:
 
 ```bash
@@ -79,13 +99,16 @@ allocated GPUs. Use a persistent terminal session for direct launches. Episodes
 
 For **Slurm**, use this alternative to the direct launch. Submit from the repository
 root after exporting the variables above; replace `YOUR_PARTITION` and add any required
-account/QoS options. The script selects the allocated GPU automatically:
+account/QoS options. Each eligible compute node needs Docker/NVIDIA access, the built
+image in its Docker daemon, and access to the checkout/output at the submitted absolute
+paths. Building the image only on a login node is insufficient when its daemon is separate.
+The script selects the allocated GPU automatically:
 
 ```bash
 mkdir -p slurm_logs
 for seed in 43 44 45; do
   sbatch --export=ALL --partition=YOUR_PARTITION --time=7-00:00:00 \
-    --job-name="wff-e1-s${seed}" \
+    --job-name="wfinite-e1-s${seed}" \
     --output="slurm_logs/%j.out" --error="slurm_logs/%j.err" \
     robotic_grounding/uniretarget/train.sbatch 1 "$seed" wrench_hypergradient full
 done
@@ -97,7 +120,7 @@ according to the site's Slurm configuration. The original node01/node100/node200
 uses `minor`; export that setting before `sbatch` there. An explicit
 `UNIRETARGET_GPU_UUID` can disambiguate a device within the allocation.
 
-The seven-day time limit matches the submitted full jobs; it is not a measured runtime
+The seven-day time limit is a scheduling allowance, not a measured runtime
 estimate. Choose a limit supported by the destination scheduler. Each job validates
 its own seed before continuing to full training. Do not launch the same seed both
 directly and through Slurm. **Always specify `--upper wrench_hypergradient` (or its
@@ -105,6 +128,13 @@ Slurm positional argument): the default selects the older Gaussian-search engine
 
 To inspect the Docker command without training, add `--dry-run` to a direct launch.
 All commands and phase options are described in [RUNNING.txt](robotic_grounding/uniretarget/RUNNING.txt).
+
+These commands start fresh training using bundled inputs. They do not transfer or resume
+the stopped runs. The optional
+[recorded-checkpoint diagnostic](robotic_grounding/flash_chord/scripts/validate_finite_response_checkpoint.py)
+needs the original learner checkpoint, upper state, recorded proposal and archived errors,
+plus the input paths referenced by that run. Those run artifacts are not in Git LFS;
+see section 9 of [RUNNING.txt](robotic_grounding/uniretarget/RUNNING.txt) before using it.
 
 | Setting | Smoke | Full training (`pilot` output phase) |
 | --- | --- | --- |

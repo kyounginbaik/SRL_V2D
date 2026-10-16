@@ -12,6 +12,11 @@ its logs before retrying with a fresh output root.
 
 Repository: https://github.com/kyounginbaik/SRL_V2D
 Checkout: current main in a new isolated directory; record git rev-parse HEAD.
+Require e5c25f246bd361e74873fb31b94fff30265a4ab8 or a descendant:
+
+  git merge-base --is-ancestor e5c25f246bd361e74873fb31b94fff30265a4ab8 HEAD
+
+Stop setup on a nonzero result and fetch the correct revision before preparing.
 Use current main containing finite-response checkpoint selection, frozen-pair
 confirmation, Adam-response and critic-calibration fixes below. Earlier
 wrench-adam-feedback and wrench-feedback-fast revisions are
@@ -20,11 +25,21 @@ Full setup/commands: robotic_grounding/uniretarget/RUNNING.txt
 Method/math: robotic_grounding/flash_chord/docs/wrench_hypergradient.txt
 
 Discover the destination server's scheduler, available GPUs, Docker permissions,
-NVIDIA driver and storage. Follow RUNNING.txt to clone with selective Git LFS,
+NVIDIA driver, host Python 3.8+ and storage. Follow RUNNING.txt to clone with selective Git LFS,
 build the two pinned Docker images, configure W&B and prepare a new output root.
+For Slurm, verify the image is present on eligible compute-node Docker daemons
+and the checkout/output paths are accessible there; a login-node build alone
+may not be available to scheduled jobs.
 The package includes all five prepared episodes (1,3,5,6,35), object/robot assets
 and PCA prior. No original /data1 paths, source videos, ComPose, reconstruction
 weights, final_submission.zip or original run directories are needed.
+
+These are FRESH runs, not a resume or checkpoint transfer. The separate recorded
+checkpoint diagnostic requires old artifacts and recorded absolute paths; see
+RUNNING.txt section 9 only if the user supplies that run separately. Do not block
+fresh training on obtaining it. As of 2026-10-16, the corrected code passed 85
+focused CPU tests, while GPU confirmation is pending. Measure new accepted edits
+and physical outcomes; do not assume the change already improved manipulation.
 
 After completing RUNNING.txt sections 1-4, use one allocated GPU per job.
 Choose direct execution OR Slurm; never duplicate episode/seed output paths.
@@ -53,7 +68,7 @@ Slurm, three independent allocations, each smoke followed by full training:
   mkdir -p "$UNIRETARGET_RUN_ROOT/slurm_logs"
   for seed in 43 44 45; do
     sbatch --export=ALL --partition="$UNIRETARGET_PARTITION" \
-      --time="$UNIRETARGET_SLURM_TIME" --job-name="whg-e1-full-s${seed}" \
+      --time="$UNIRETARGET_SLURM_TIME" --job-name="wfinite-e1-s${seed}" \
       --output="$UNIRETARGET_RUN_ROOT/slurm_logs/%j.out" \
       --error="$UNIRETARGET_RUN_ROOT/slurm_logs/%j.err" \
       robotic_grounding/uniretarget/train.sbatch 1 "$seed" wrench_hypergradient full

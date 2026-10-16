@@ -10,6 +10,12 @@ the actual checkout commit. Earlier wrench-adam-feedback and wrench-feedback-fas
 revisions do not include all of these changes; do not use
 their frozen checkout or an existing prepared output root for this recipe.
 
+Required implementation: e5c25f246bd361e74873fb31b94fff30265a4ab8 or a descendant.
+As of this documentation update (2026-10-16), 85 focused CPU tests passed, but
+the new finite-response GPU confirmation is still pending. The old training
+runs were stopped. Do not describe a successful integration check as evidence
+that a reference edit was accepted; report both results separately.
+
 Always pass --upper wrench_hypergradient. The CLI's default is still the older
 Gaussian candidate-search method. These instructions reproduce the NEW method.
 Recommended task: FULL episode-1 training, seeds 43/44/45. Use --phase full:
@@ -26,7 +32,7 @@ host RAM per job, as in the submitted training recipe. The existing cluster uses
 L40S 48GB and B200 GPUs. The smoke now uses the full 2,048-world shape
 to validate memory fit and the feedback loop before full training. Inspect
 disk space before downloading inputs and building images.
-Host Python 3 only needs the standard library; dependencies run in Docker.
+Host Python 3.8+ only needs the standard library; dependencies run in Docker.
 
   nvidia-smi
   docker version
@@ -39,6 +45,7 @@ Clone into a fresh directory using your existing GitHub authentication:
   GIT_LFS_SKIP_SMUDGE=1 git clone --branch main https://github.com/kyounginbaik/SRL_V2D.git SRL_V2D_uniretarget
   cd SRL_V2D_uniretarget
   git rev-parse HEAD
+  git merge-base --is-ancestor e5c25f246bd361e74873fb31b94fff30265a4ab8 HEAD || exit 1
   git lfs install --local
   git lfs pull --include='robotic_grounding/uniretarget/**,robotic_grounding/flash_chord/src/flash_chord/assets/**' --exclude=''
 
@@ -70,6 +77,11 @@ Do not replace the locked environment with latest pip packages. Record image IDs
 
 An existing compatible image can be selected with --image or UNIRETARGET_IMAGE.
 The original cluster's flash_chord:mixed-ep01-media tag is not required elsewhere.
+For Slurm, make the image available in each eligible compute node's Docker
+daemon (build there or distribute the same image via your site's registry or
+docker save/load workflow). A login-node build is not automatically visible
+to a different daemon. Compute nodes also need Docker/NVIDIA access and the
+checkout/output directories available at the submitted absolute paths.
 
 3. OUTPUT LOCATION AND W&B
 
@@ -273,7 +285,7 @@ UNIRETARGET_GPU_UUID; do not reuse one fixed UUID across the three Slurm jobs.
   mkdir -p "$UNIRETARGET_RUN_ROOT/slurm_logs"
   for seed in 43 44 45; do
     sbatch --export=ALL --partition="$UNIRETARGET_PARTITION" \
-      --time="$UNIRETARGET_SLURM_TIME" --job-name="whg-e1-full-s${seed}" \
+      --time="$UNIRETARGET_SLURM_TIME" --job-name="wfinite-e1-s${seed}" \
       --output="$UNIRETARGET_RUN_ROOT/slurm_logs/%j.out" \
       --error="$UNIRETARGET_RUN_ROOT/slurm_logs/%j.err" \
       robotic_grounding/uniretarget/train.sbatch 1 "$seed" wrench_hypergradient full
@@ -342,6 +354,54 @@ The six Track 3 metrics use reconstructed reference poses as proxy GT;
 CD-O is mesh self-comparison (zero), not hidden-scan reconstruction accuracy.
 Keep historical videos and original hands at 45% overlay opacity. Detailed
 video metadata stays out of voc_schedule/video_context panels.
+
+9. OPTIONAL: REPLAY ONE RECORDED CHECKPOINT
+
+Fresh training above is the portable path: the clone, selective LFS inputs and
+container are sufficient. It does not require old training outputs. The separate
+scripts/validate_finite_response_checkpoint.py diagnostic tests a recorded
+proposal from a saved learner with the new selection rule. It does not resume
+main training and is not part of --phase full.
+
+To replay an old run, transfer these artifacts separately (they are not in Git):
+
+  RUN_DIR/launch_resolved.yaml
+  RUN_DIR/training/state_STEP.safetensors
+  RUN_DIR/training/search_batches/step_STEP/scores.json
+  RUN_DIR/training/search_batches/step_STEP/upper_state.msgpack
+  RUN_DIR/training/best_demo.json
+  object_errors.npz inside the archive directory named in best_demo.json
+
+Also make every input path referenced by launch_resolved.yaml available inside
+the container, including the exact reference, robot/mesh assets and prior.
+The diagnostic currently loads absolute paths from that YAML and the archive
+manifest; the recorded parquet can also contain absolute mesh paths. Merely
+copying the checkpoint or cloning this repository is not enough. Preserve the
+recorded paths through container mounts. Relocating all these dependencies is
+not automated or validated by this diagnostic. Never modify the original run.
+
+Once the artifacts and paths are available, run inside the configured container
+on one allocated GPU, from robotic_grounding/flash_chord with PYTHONPATH=src:
+
+  python scripts/validate_finite_response_checkpoint.py \
+    --run-dir /absolute/path/to/copied/seed_44 \
+    --step 19066880 --window 1 \
+    --output /absolute/path/to/new/checkpoint_validation_s44 \
+    --device cuda:0
+
+This example identifies the recorded seed-44 proposal at step 19,066,880,
+window 1. Other records must satisfy the diagnostic's version-0 reference and
+2,048-world checks. The output must not already exist and must be separate
+from the source directory (neither inside it nor its parent).
+
+The diagnostic restores the learner and upper state, runs the three matched
+adaptation budgets for candidate/control, and confirms a physically eligible
+pair from the same fixed start. It writes validation_report.json locally and
+disables W&B. Inspect accepted, status, adaptation, confirmation and
+reference_change. Exit code zero also covers a correctly rejected proposal;
+it does not mean acceptance. A rejected saved pair is diagnostic evidence,
+not accepted robot data. The new-server full-training route does not depend
+on this optional replay.
 
 METHOD CONTRACT / VALIDATION LIMITS
 
