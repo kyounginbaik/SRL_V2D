@@ -26,6 +26,7 @@ TESTS = (
     'tests/retargeting/test_finite_response_acceptance.py',
     'tests/retargeting/test_critic_audit.py',
     'tests/retargeting/test_demo_archive.py',
+    'tests/retargeting/test_reference_snapshot.py',
     'tests/runtime/test_wrist_limits.py',
     'tests/runtime/test_wrist_residual_slew.py',
     'tests/data/test_hand_validity.py',

@@ -21,12 +21,24 @@ commands remain full dimensional, including independent correction outside the P
 Episode 1 includes a tabletop and floor fitted from its calibrated stereo depth.
 The scene uses those measured planes without shifting hand or object targets. The table
 has a fixed root: representing it as a free body with very large artificial inertia caused
-unstable initial contacts. A two-second unassisted CPU check with the fixed table keeps
-the pot within 1.1 cm of its initial position. The lid moves about 8 cm while resolving
-existing pot/lid collision-proxy overlap; this check establishes support stability, not
-successful reference tracking. Fit provenance, diagnostic scripts and trajectories are
-copied into `frozen/episode_000001/assets/support_validation/`. GPU integration is still
-checked at job start.
+unstable initial contacts. The fixed table keeps the pot within 1.1 cm of its initial
+position in a two-second CPU check, but the initial scene is still unsuitable for full
+training: a no-hand physics rollout reproduces sustained lid rotation above the 20-degree
+tracking threshold. Progress reports place that failure at 0.10 s; accounting for the
+post-step measurement gives 0.15 s of physical simulation. Existing pot/lid collision
+proxy overlap and initialization require validation before full training. The measured
+support fit alone does not establish a stable initial object configuration. Fit provenance,
+diagnostic scripts and trajectories are copied into
+`frozen/episode_000001/assets/support_validation/`.
+
+Both comparison jobs completed their 1,048,576-transition smoke training and then failed
+while evaluating the archived best policy because its robot-reference snapshot omitted
+the object/contact command digest. The archive writer now stores that digest. Legacy
+archives load only when their original `pair.json` matches the snapshot checksum and
+identity and its command digest matches the actual reference. Evaluation/export can be
+retried from those immutable policies without repeating smoke training. This metadata
+fix does not fix the physical initialization failure, and full training remains pending
+collision/initialization validation.
 
 The existing exploration implementation follows [EigenDEXplore](https://eigendexplore.github.io/)
 with the published Sharpa basis (nine directions per hand), independent joint noise,
@@ -63,7 +75,8 @@ PY
 Use `episode1_inputs/local-inventory.json`, `episode1_inputs/priors`,
 `episode1_inputs/submission_kit`, and `episode1_inputs/measured-support` below.
 
-Prepare two fresh directories from an inventory containing only episode 1:
+After collision/initialization validation passes, prepare two fresh directories from an
+inventory containing only episode 1:
 
 ```bash
 for scope in full wrists_only; do
@@ -224,7 +237,8 @@ experiments; the logger appends seed and phase to each run identifier.
 
 The upper actor receives reference/correction summaries, signed hand-tracking errors,
 execution quality, window/failure timing and local per-object pose errors. Its output
-is 56 local correction coefficients. The cost critic receives lower observations,
+is 56 local correction coefficients for `full` or 12 wrist coefficients for `wrists_only`.
+The cost critic receives lower observations,
 critic context and lower robot actions. Four intermediate TD updates run every
 16 vector steps after the first upper round, requiring at least 256 valid recent
 rows and filtering by current reference and outer generation. Existing outer-round

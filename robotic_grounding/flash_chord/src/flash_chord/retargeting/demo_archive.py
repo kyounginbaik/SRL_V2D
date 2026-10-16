@@ -55,7 +55,8 @@ class DemoArchive:
         reference=directory/'reference.npz'
         digest=save_snapshot(reference,binding,editor.projector.layout,
             provenance=dict(step=step,origin=origin,version=editor.version,
-                            initial_state_sha256=editor.initial_state_sha256))
+                            initial_state_sha256=editor.initial_state_sha256,
+                            object_contact_sha256=editor.command_sha256))
         config=deepcopy(editor.config)
         config['task']['robot_reference_path']=str(reference)
         config['task']['robot_reference_sha256']=digest

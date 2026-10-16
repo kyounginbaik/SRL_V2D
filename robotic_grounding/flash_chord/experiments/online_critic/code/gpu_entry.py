@@ -25,6 +25,7 @@ if args.phase in ('smoke', 'full') and not certified:
     subprocess.run([sys.executable, '-m', 'pytest', '-q', '-p', 'no:cacheprovider',
         'tests/retargeting/test_wrench_hypergradient.py',
         'tests/retargeting/test_wrench_hypergradient_editor.py',
+        'tests/retargeting/test_reference_snapshot.py',
         'tests/retargeting/test_lower_adaptation.py',
         'tests/retargeting/test_reference_relabel.py',
         'tests/retargeting/test_actor_response.py',
