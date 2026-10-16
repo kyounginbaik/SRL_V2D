@@ -236,7 +236,7 @@ def copy_public_kit(source, destination):
     validate_kit_roster(source)
     destination.mkdir()
     shutil.copytree(source / "v2dlb", destination / "v2dlb", ignore=IGNORE)
-    for relative in ("tools/pack_submission.py", "tools/pack_reconstruction.py", "config/tracks.json",
+    for relative in ("tools/pack_submission.py", "tools/pack_reconstruction.py", "submit/v2d_submit.py", "config/tracks.json",
                      "data/track_3_evaluation_objects.json", "data/track_3_sample_submission.csv",
                      "data/track_3_mesh_sample_submission.parquet", "requirements.txt"):
         original = source / relative

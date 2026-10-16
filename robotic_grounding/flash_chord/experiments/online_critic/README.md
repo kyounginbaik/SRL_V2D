@@ -40,7 +40,7 @@ The current portable input bundle on the original server is
 `/data1/SRL_V2D/challenge_reconstruction/uniretarget_ep01_stable_20261016/episode1_final_recon_inputs.tar.gz`
 (6 MB), with an adjacent `.sha256` file. It contains the exact reference and asset
 closure, prior, measured support evidence and public participant packer subset.
-Archive SHA-256: `19e43f13d701ff8f3908b439f374e841f69ec54c5d152322b3821870d1c587f8`.
+Archive SHA-256: `4dca9d75288bddaee6f22824a0486493cc1d57206af7b2801eeb749cee0c53b2`.
 Copy both files, verify with `sha256sum -c episode1_final_recon_inputs.tar.gz.sha256`,
 then extract with `tar -xzf episode1_final_recon_inputs.tar.gz`.
 After extraction, resolve the inventory paths for that server without changing the inputs:
