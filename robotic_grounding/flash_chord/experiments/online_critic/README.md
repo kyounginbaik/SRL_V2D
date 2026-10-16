@@ -97,6 +97,9 @@ git clone --branch uniretarget/online-critic-full-training \
 cd SRL_V2D
 git lfs install
 git lfs pull
+python3 -m venv .venv-uniretarget-prepare
+source .venv-uniretarget-prepare/bin/activate
+python -m pip install numpy==2.2.5 pyarrow==22.0.0
 cd robotic_grounding/flash_chord
 docker build -f docker/Dockerfile --target dev -t flash_chord:uniretarget-base .
 docker build -f experiments/online_critic/Dockerfile \
