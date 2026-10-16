@@ -13,7 +13,7 @@ the container limit is 90 GiB. Allow substantial storage for checkpoints and vid
 
 ```bash
 git clone --branch uniretarget/online-critic-full-training \
-  git@github.com:exaFLOPs26/SRL_V2D.git
+  git@github.com:kyounginbaik/SRL_V2D.git
 cd SRL_V2D
 git lfs install
 git lfs pull
