@@ -104,9 +104,10 @@ docker build -f experiments/online_critic/Dockerfile \
 cd ../..
 ```
 
-The second image adds pinned OpenCV for checkpoint overlays without replacing numpy.
-On the original server, set `UNIRETARGET_IMAGE=flash_chord:mixed-ep01-media` to use
-the tested existing image. Runtime code comes from the prepared snapshot.
+The second image adds pinned OpenCV for checkpoint overlays and pandas for the official
+submission packer without replacing numpy. On the original server, set
+`UNIRETARGET_IMAGE=flash_chord:uniretarget-ep01-stable-20261016` to use the tested
+image. Runtime code comes from the prepared snapshot.
 
 ## Legacy single-episode input bundle
 
