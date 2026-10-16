@@ -21,15 +21,26 @@ commands remain full dimensional, including independent correction outside the P
 Episode 1 includes a tabletop and floor fitted from its calibrated stereo depth.
 The scene uses those measured planes without shifting hand or object targets. The table
 has a fixed root: representing it as a free body with very large artificial inertia caused
-unstable initial contacts. The fixed table keeps the pot within 1.1 cm of its initial
-position in a two-second CPU check, but the initial scene is still unsuitable for full
-training: a no-hand physics rollout reproduces sustained lid rotation above the 20-degree
-tracking threshold. Progress reports place that failure at 0.10 s; accounting for the
-post-step measurement gives 0.15 s of physical simulation. Existing pot/lid collision
-proxy overlap and initialization require validation before full training. The measured
-support fit alone does not establish a stable initial object configuration. Fit provenance,
-diagnostic scripts and trajectories are copied into
-`frozen/episode_000001/assets/support_validation/`.
+unstable initial contacts. The original poses also intersect the table by 14.7 mm and
+the pot/lid by 23.0 mm. Even without hands, those contacts rotate the lid beyond the
+20-degree tracking threshold at reported time 0.10 s (physical post-step time 0.15 s).
+
+The current input bundle includes a physically settled frame-zero initialization.
+Original objects are separated, freely settled under gravity, then their settled poses
+are stored with zero initial velocity. The pot starts 12.2 mm/13.1 degrees and the lid
+15.2 mm/5.3 degrees from the original reference. Those errors remain scored against the
+unchanged targets. This changes only the physical starting pose; the original 32+32
+collision pieces, masses, friction, reference motion and subsequent dynamics remain
+unchanged. Frame-zero overrides are shared by training and evaluation and do not apply
+to later reference frames.
+
+Independent CPU checks with production collision processing show 0.15/0.33 mm of
+pot/lid drift over two seconds. A 2 N upward force freely removes the lid. Both objects
+remain inside the original 5 cm/20-degree tracking limits. The initialization report
+binds these poses to the source reference, object assets and measured support by SHA-256.
+Reports and diagnostic traces are copied into
+`frozen/episode_000001/assets/support_validation/`. A full-scene GPU check is required
+before launching replacement training; these initial checks do not establish task success.
 
 Both comparison jobs completed their 1,048,576-transition smoke training and then failed
 while evaluating the archived best policy because its robot-reference snapshot omitted
@@ -37,8 +48,8 @@ the object/contact command digest. The archive writer now stores that digest. Le
 archives load only when their original `pair.json` matches the snapshot checksum and
 identity and its command digest matches the actual reference. Evaluation/export can be
 retried from those immutable policies without repeating smoke training. This metadata
-fix does not fix the physical initialization failure, and full training remains pending
-collision/initialization validation.
+fix is separate from the physical initialization correction. Replacement experiments
+start fresh with the corrected scene; saved policies remain available for diagnosis.
 
 The existing exploration implementation follows [EigenDEXplore](https://eigendexplore.github.io/)
 with the published Sharpa basis (nine directions per hand), independent joint noise,
@@ -49,12 +60,13 @@ between independent and eigen noise; wrists receive no eigen perturbation. Basis
 joint ordering and source revision are stored with the prepared prior.
 
 The current portable input bundle on the original server is
-`/data1/SRL_V2D/challenge_reconstruction/uniretarget_ep01_stable_20261016/episode1_final_recon_inputs.tar.gz`
+`/data3/exaFLOPs/uniretarget_ep01_collisionfix_20261017/episode1_settled_inputs.tar.gz`
 (6 MB), with an adjacent `.sha256` file. It contains the exact reference and asset
-closure, prior, measured support evidence and public participant packer subset.
-Archive SHA-256: `4dca9d75288bddaee6f22824a0486493cc1d57206af7b2801eeb749cee0c53b2`.
-Copy both files, verify with `sha256sum -c episode1_final_recon_inputs.tar.gz.sha256`,
-then extract with `tar -xzf episode1_final_recon_inputs.tar.gz`.
+closure, prior, measured support and settled-initialization evidence, and public
+participant packer subset. The older input archive lacks the initialization correction.
+Archive SHA-256: `c771078a7f42bc22ad5d70ba8ac366edf68353178ecd73a0ea4c1a664525ef6b`.
+Copy both files, verify with `sha256sum -c episode1_settled_inputs.tar.gz.sha256`,
+then extract with `tar -xzf episode1_settled_inputs.tar.gz`.
 After extraction, resolve the inventory paths for that server without changing the inputs:
 
 ```bash
@@ -75,8 +87,12 @@ PY
 Use `episode1_inputs/local-inventory.json`, `episode1_inputs/priors`,
 `episode1_inputs/submission_kit`, and `episode1_inputs/measured-support` below.
 
-After collision/initialization validation passes, prepare two fresh directories from an
-inventory containing only episode 1:
+Prepare two fresh directories from an inventory containing only episode 1. The GPU
+gate runs the actual scene with 1 and 2,048 worlds, first without hand collisions and
+then with normal contacts and zero residual actions. It requires two seconds of passive
+tracking, the first half-second of reference control, finite simulation states and
+unsaturated contact buffers. Later untrained grasp failures are recorded separately.
+The Slurm example runs this gate before submitting each training job:
 
 ```bash
 for scope in full wrists_only; do
@@ -86,11 +102,18 @@ for scope in full wrists_only; do
     --support-root /absolute/path/to/measured-support \
     --upper-edit-scope "$scope" --seed 43 --run-root "/absolute/path/to/$scope-run"
   bash "/absolute/path/to/$scope-run/run.sh" preflight
+  srun --partition=debug --gres=gpu:1 --cpus-per-task=12 --mem=96G --time=00:45:00 \
+    bash "/absolute/path/to/$scope-run/run.sh" physics-gate 43 episode_000001
   sbatch --output="/absolute/path/to/$scope-run/slurm/%j.out" \
     --error="/absolute/path/to/$scope-run/slurm/%j.err" \
     "/absolute/path/to/$scope-run/cluster/train_full.sbatch" "/absolute/path/to/$scope-run" 43
 done
 ```
+
+On a standalone GPU server, run `bash "$RUN_ROOT/run.sh" physics-gate 43 episode_000001`
+after CPU preflight, then `bash "$RUN_ROOT/run.sh" full 43 episode_000001` after it passes.
+Fresh gate reports appear under `reports/physics_gates/` and bind the tested source,
+inputs and configuration hashes. The suite reuses compiled Warp kernels.
 
 This submits exactly two GPU jobs. Each validates integration, starts its separate full
 training phase, exports actual unassisted episode-1 trajectories and writes readiness
