@@ -6,7 +6,7 @@ PHASE=${1:-full}
 SEED=${2:-43}
 EPISODE=${3:-episode_000001}
 [[ "$EPISODE" =~ ^episode_[0-9]{6}$ ]] || exit 2
-case "$PHASE" in preflight|smoke|pilot|full|pack-smoke|pack-pilot) ;; *) echo 'Invalid phase' >&2; exit 2;; esac
+case "$PHASE" in preflight|physics-gate|smoke|pilot|full|pack-smoke|pack-pilot) ;; *) echo 'Invalid phase' >&2; exit 2;; esac
 [[ "$SEED" =~ ^[0-9]+$ ]] || exit 2
 python3 "$RUN_ROOT/cluster/check_source.py"
 mkdir -p "$RUN_ROOT/flash_chord/src/flash_chord/assets/.cache" "$RUN_ROOT/warp_cache/${EPISODE}_seed_$SEED"
@@ -61,6 +61,8 @@ elif [[ "$PHASE" == preflight ]]; then
     else
         cmd+=(python "$RUN_ROOT/cluster/preflight_full.py")
     fi
+elif [[ "$PHASE" == physics-gate ]]; then
+    cmd+=(python "$RUN_ROOT/cluster/physics_gate_suite.py" --run-root "$RUN_ROOT" --seed "$SEED" --episode "$EPISODE")
 else
     cmd+=(python "$RUN_ROOT/$EPISODE/code/gpu_entry.py" --seed "$SEED" --phase "$PHASE")
 fi

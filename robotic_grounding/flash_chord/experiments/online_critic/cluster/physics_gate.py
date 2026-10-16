@@ -127,6 +127,7 @@ def main():
     parser.add_argument('--mode', choices=('no_hand_contacts', 'reference_control'), required=True)
     parser.add_argument('--seconds', type=float, default=2.)
     parser.add_argument('--device', default='cuda:0')
+    parser.add_argument('--cache-dir', type=Path, help='Optional shared Warp kernel cache; kernels remain content-addressed.')
     args = parser.parse_args()
     if args.seconds <= 0 or not np.isfinite(args.seconds):
         parser.error('--seconds must be finite and positive')
@@ -158,7 +159,7 @@ def main():
         raise ValueError('This gate requires the actual CUDA physics backend')
     output.mkdir(parents=True)
     OmegaConf.save(cfg, output/'effective_config.yaml')
-    wp.config.kernel_cache_dir = str(output/'warp_cache')
+    wp.config.kernel_cache_dir = str(args.cache_dir.resolve() if args.cache_dir else output/'warp_cache')
     import os
     os.environ['FLASH_CHORD_CACHE_DIR'] = str(output/'mesh_cache')
     report = dict(passed=False, mode=args.mode, worlds=args.worlds, seconds=args.seconds,

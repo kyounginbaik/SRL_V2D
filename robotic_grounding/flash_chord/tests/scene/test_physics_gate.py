@@ -14,6 +14,10 @@ gate = importlib.util.module_from_spec(spec)
 sys.modules[spec.name] = gate
 spec.loader.exec_module(gate)
 
+suite_spec = importlib.util.spec_from_file_location('uniretarget_physics_gate_suite', path.with_name('physics_gate_suite.py'))
+suite = importlib.util.module_from_spec(suite_spec)
+suite_spec.loader.exec_module(suite)
+
 
 def test_sustained_failure_preserves_post_step_physical_clock():
     position = np.zeros((10, 2, 2))
@@ -61,3 +65,25 @@ def test_support_force_readout_excludes_object_pair_and_unused_slots():
             2, 3, maxima, net])
         np.testing.assert_array_equal(maxima.numpy(), [100., 5.])
         np.testing.assert_array_equal(net.numpy(), [[0., 0., 7.]])
+
+
+def test_suite_requires_all_four_matching_successful_processes(tmp_path):
+    import json
+    report = tmp_path/'report.json'
+    report.write_text(json.dumps(dict(passed=True, worlds=1, mode='reference_control')))
+    assert suite.case_result(1, 'reference_control', 0, report)['passed']
+    assert not suite.case_result(1, 'reference_control', 1, report)['passed']
+    assert not suite.case_result(2048, 'reference_control', 0, report)['passed']
+    assert not suite.case_result(1, 'no_hand_contacts', 0, report)['passed']
+    cases = [dict(worlds=worlds, mode=mode, passed=True) for worlds, mode in suite.CASES]
+    assert suite.suite_passed(cases)
+    assert not suite.suite_passed(cases[:-1])
+    cases[2]['passed'] = False
+    assert not suite.suite_passed(cases)
+
+
+def test_suite_missing_or_malformed_report_fails(tmp_path):
+    report = tmp_path/'report.json'
+    assert not suite.case_result(1, 'reference_control', 0, report)['passed']
+    report.write_text('{broken')
+    assert not suite.case_result(1, 'reference_control', 0, report)['passed']
