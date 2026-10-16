@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, replace
 
 import newton
@@ -37,6 +38,7 @@ class Scene:
     object_scales: np.ndarray  # fixed isotropic scale per world and logical object [W, O]
     object_root_position_offsets_w: np.ndarray  # bottom-height-preserving root offsets [W, O, 3]
     world_count: int
+    object_initial_pose_overrides: Mapping[str, Mapping[str, Sequence[float]]] | None = None
 
     def __post_init__(self) -> None:
         if self.world_count <= 0:
@@ -418,6 +420,42 @@ def _apply_object_scales(
     return root_offsets
 
 
+def _named_initial_poses(
+    objects: list[ObjectBinding],
+    overrides: Mapping[str, Mapping[str, Sequence[float]]] | None,
+) -> dict[str, dict[str, tuple[float, ...]]] | None:
+    """Validate exact named world-space frame-zero poses without changing commands."""
+    if overrides is None:
+        return None
+    names = [binding.name for binding in objects]
+    label = 'object_initial_pose_overrides'
+    if not isinstance(overrides, Mapping) or len(set(names)) != len(names):
+        raise ValueError(f'{label} requires unique object names and a mapping')
+    if set(overrides) != set(names):
+        raise ValueError(f'{label} must cover exactly the scene object names; '
+                         f'expected {names}, received {list(overrides)}')
+    result = {}
+    for name in names:
+        pose = overrides[name]
+        if not isinstance(pose, Mapping) or set(pose) != {'position', 'quaternion_wxyz'}:
+            raise ValueError(f'{label}[{name!r}] requires exactly position and quaternion_wxyz')
+        result[name] = {}
+        for key, size in (('position', 3), ('quaternion_wxyz', 4)):
+            try:
+                value = np.asarray(pose[key], dtype=np.float64)
+            except (TypeError, ValueError) as error:
+                raise ValueError(f'{label}[{name!r}].{key} must be a finite {size}-vector') from error
+            if value.shape != (size,) or not np.isfinite(value).all() or np.any(abs(value) > np.finfo(np.float32).max):
+                raise ValueError(f'{label}[{name!r}].{key} must be a finite {size}-vector')
+            if key == 'quaternion_wxyz':
+                norm = np.linalg.norm(value)
+                if not np.isclose(norm, 1., rtol=0., atol=1e-4):
+                    raise ValueError(f'{label}[{name!r}].quaternion_wxyz must be unit length')
+                value = value / norm
+            result[name][key] = tuple(float(x) for x in value)
+    return result
+
+
 def build_scene(
     embodiment: Embodiment,
     reference: Reference,
@@ -434,6 +472,7 @@ def build_scene(
     object_scale_seed: int = 0,
     contact_friction: float = 1.0,
     object_free_joint_damping: float = 0.0,
+    object_initial_pose_overrides: Mapping[str, Mapping[str, Sequence[float]]] | None = None,
 ) -> Scene:
     """Build one copy (embodiment + objects + support), replicate to ``world_count``, and finalize.
 
@@ -442,6 +481,9 @@ def build_scene(
     Component shape ownership is captured at append time and one typed collision policy is applied before
     replication. ``decompose_objects`` convex-decomposes each object's collision mesh (CoACD) into multiple
     convex hulls so concave objects contact correctly; ``decompose_params`` overrides CoACD parameters.
+    Optional named initial poses use world-space meters and wxyz quaternions. They
+    affect frame-zero resets only, never reference targets or arbitrary later resets.
+    Existing object-scale position compensation remains additive.
     """
     collision = collision or CollisionPolicy()
     if not collision.ground and support_usda is None:
@@ -456,6 +498,13 @@ def build_scene(
     objects = spawn_objects(  # adds objects into the same copy (collision meshes convex-decomposed)
         copy, reference, decompose_collision=decompose_objects, decompose_params=decompose_params
     )
+    initial_poses = _named_initial_poses(objects, object_initial_pose_overrides)
+    if initial_poses is not None:
+        for binding in objects:
+            pose = initial_poses[binding.name]
+            root_q = binding.root.free_q_ids[0]
+            copy.joint_q[root_q:root_q+3] = pose['position']
+            copy.joint_q[root_q+3:root_q+7] = wxyz_to_xyzw(np.asarray(pose['quaternion_wxyz']))
     object_shapes = ShapeSpan(object_shape_start, len(copy.shape_body))
     support_shape_start = len(copy.shape_body)
     support = add_support_surfaces(copy, support_usda) if support_usda is not None else None
@@ -522,6 +571,7 @@ def build_scene(
         object_scales=object_scales,
         object_root_position_offsets_w=object_root_offsets,
         world_count=world_count,
+        object_initial_pose_overrides=initial_poses,
     )
 
 

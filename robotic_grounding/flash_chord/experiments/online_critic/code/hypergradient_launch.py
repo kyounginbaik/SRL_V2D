@@ -1,4 +1,5 @@
 """Portable recipe for measured critic feedback and bounded FlashSAC validation."""
+import json
 
 
 def configure_hypergradient(command, config, phase, worlds, base):
@@ -14,6 +15,7 @@ def configure_hypergradient(command, config, phase, worlds, base):
         'training.replay.minimum_size', 'training.checkpoint.save_interval_environment_steps',
         '+adaptive_voc.interval',
         'scene.support',
+        'scene.object_initial_pose_overrides',
     }
     command[:] = [arg for arg in command
                   if not arg.startswith(('+bilevel.', 'bilevel.', '+bilevel='))
@@ -56,6 +58,19 @@ def configure_hypergradient(command, config, phase, worlds, base):
     ground_plane = config['episode'].get('ground_plane')
     if ground_plane is not None:
         command.append('+collision.ground_plane=[' + ','.join(map(str, ground_plane)) + ']')
+    initial_poses = config['episode'].get('object_initial_pose_overrides')
+    if initial_poses is not None:
+        if config['episode'].get('initial_state_scope') != 'frame_zero_only':
+            raise ValueError('Initial object pose overrides require explicit frame-zero-only provenance')
+        entries = [name + ':{position:' + json.dumps(pose['position']) +
+                   ',quaternion_wxyz:' + json.dumps(pose['quaternion_wxyz']) + '}'
+                   for name, pose in initial_poses.items()]
+        command.append('scene.object_initial_pose_overrides={' + ','.join(entries) + '}')
+        config['object_initial_pose_overrides'] = initial_poses
+        config['initial_state_report_sha256'] = config['episode']['initial_state_report_sha256']
+        config['initial_state_scope'] = 'frame_zero_only'
+        config['initialization_reference_targets_modified'] = False
+        config['training_reset'] = 'frame-zero robot reference, validated object initial poses, and zero velocities'
     config['wrist_control'].update(
         linear_speed_limit_m_s=limits.get('linear_speed_limit_m_s', 1.0),
         angular_speed_limit_rad_s=limits.get('angular_speed_limit_rad_s', 12.0))

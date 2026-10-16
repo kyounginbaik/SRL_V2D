@@ -392,6 +392,7 @@ def evaluate_checkpoint(
         object_scale_seed=cfg.scene.get("object_scale_seed", 0),
         contact_friction=cfg.scene.get("contact_friction", 1.0),
         object_free_joint_damping=cfg.scene.get("object_free_joint_damping", 0.0),
+        object_initial_pose_overrides=cfg.scene.get("object_initial_pose_overrides"),
         source_frame_playback=bool(cfg.task.get("source_frame_playback", False)),
         motion_start_frame=int(cfg.task.get("motion_start_frame", 0)),
         motion_end_frame=int(cfg.task.get("motion_end_frame", -1)),

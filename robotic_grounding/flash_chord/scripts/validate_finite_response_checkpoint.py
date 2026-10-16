@@ -125,6 +125,7 @@ def main():
             object_scale_seed=cfg.scene.object_scale_seed,
             contact_friction=cfg.scene.get('contact_friction', 1.),
             object_free_joint_damping=cfg.scene.get('object_free_joint_damping', 0.),
+            object_initial_pose_overrides=cfg.scene.get('object_initial_pose_overrides'),
             source_frame_playback=bool(cfg.task.source_frame_playback),
             motion_start_frame=int(cfg.task.motion_start_frame),
             motion_end_frame=int(cfg.task.motion_end_frame),

@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, replace
 from pathlib import Path
 
@@ -46,12 +47,15 @@ def setup_scene(
     motion_end_frame: int = -1,
     robot_reference_path: str | None = None,
     robot_reference_sha256: str | None = None,
+    object_initial_pose_overrides: Mapping[str, Mapping[str, Sequence[float]]] | None = None,
 ) -> SceneSetup:
     """Load one reference, resolve its optional support, and build its scene once.
 
     This function owns only task-scene composition. Device scopes, Hydra config,
     environments, algorithms, replay, and visualization remain caller concerns.
     """
+    if object_initial_pose_overrides is not None and motion_start_frame != 0:
+        raise ValueError('object_initial_pose_overrides requires source motion_start_frame=0')
     reference = load_reference(
         parquet,
         control_fps=control_fps,
@@ -84,6 +88,8 @@ def setup_scene(
             contact_friction=contact_friction,
             object_free_joint_damping=object_free_joint_damping,
         )
+    if object_initial_pose_overrides is not None:
+        scene_kwargs['object_initial_pose_overrides'] = object_initial_pose_overrides
     scene = build_scene(embodiment, reference, **scene_kwargs)
     if robot_reference_path:
         from flash_chord.retargeting.reference_snapshot import load_snapshot

@@ -35,6 +35,11 @@ TESTS = (
     'tests/lifecycle/test_hand_validity_termination.py',
     'tests/retargeting/test_masked_contact_support.py',
     'tests/scene/test_measured_support.py',
+    'tests/scene/test_initial_object_poses.py',
+    'tests/scene/test_physics_gate.py',
+    'tests/scene/test_setup.py',
+    'tests/retargeting/test_fixed_start.py',
+    '../cluster/test_initial_state.py',
     'tests/training/flash_sac/test_eigen_exploration.py',
     'tests/visualization/test_policy_viewer_resets.py',
     'tests/training/flash_sac/test_flash_sac_runner.py::test_reference_capture_hooks_run_before_donation_and_publish_metrics',
@@ -232,6 +237,18 @@ def validate_config(episode, phase, recipe, cfg, record, bindings):
             f'{episode}: measured support setting mismatch')
     require(cfg['collision'].get('ground_plane') == record.get('ground_plane'),
             f'{episode}: measured floor setting mismatch')
+    require(cfg['scene'].get('object_initial_pose_overrides') == record.get('object_initial_pose_overrides'),
+            f'{episode}: initial object pose configuration mismatch')
+    if record.get('object_initial_pose_overrides') is not None:
+        from initial_state import validate_initial_state_report
+        import pyarrow.parquet as pq
+        initial_row = pq.ParquetFile(ROOT/'frozen'/episode/'reference.parquet').read().to_pylist()[0]
+        report = validate_initial_state_report(ROOT/'frozen'/episode/record['initial_state_report'],
+            episode=episode, source_sha256=record['source_sha256'],
+            frozen_directory=ROOT/'frozen'/episode, object_names=record['objects'],
+            object_urdf_paths=initial_row['object_urdf_paths'])
+        require(all(record.get(key) == value for key, value in report.items()),
+                f'{episode}: initial-state record differs from validated evidence')
     require(upper['engine'] == 'wrench_hypergradient' and upper['warmup'] == upper['interval'] == 501760,
             f'{episode}: wrong upper engine or schedule')
     require(upper['critic_online_interval_vector_steps'] == 16 and upper['critic_online_updates'] == 4
@@ -274,7 +291,8 @@ def check_scene(episode, cfg, expected_frames):
             control_fps=cfg['sim']['fps'], motion_speed=cfg['task']['motion_speed'],
             embodiment=instantiate(OmegaConf.create(cfg['embodiment'])),
             collision=instantiate(OmegaConf.create(cfg['collision'])), world_count=1,
-            include_support=cfg['scene']['support'], decompose_objects=cfg['scene']['decompose_objects'])
+            include_support=cfg['scene']['support'], decompose_objects=cfg['scene']['decompose_objects'],
+            object_initial_pose_overrides=cfg['scene'].get('object_initial_pose_overrides'))
         require(setup.reference.num_frames == expected_frames and
                 setup.scene.robot_reference.joint_q.shape[0] == expected_frames,
                 f'{episode}: assembled scene changed the reference length')

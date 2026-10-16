@@ -36,6 +36,11 @@ def _fill_frame_object_q(scene: Scene, reference: Reference, frame_id: int, row:
         q_ids = root.free_q_ids
         row[list(q_ids[:3])] = obj_pos[root.reference_body_id]
         row[list(q_ids[3:])] = wxyz_to_xyzw(obj_quat[root.reference_body_id])
+        initial_poses = getattr(scene, 'object_initial_pose_overrides', None)
+        if frame_id == 0 and initial_poses is not None:
+            pose = initial_poses[binding.name]
+            row[list(q_ids[:3])] = pose['position']
+            row[list(q_ids[3:])] = wxyz_to_xyzw(np.asarray(pose['quaternion_wxyz']))
         for joint in binding.articulations:
             if joint.reference_id >= articulation.shape[0]:
                 raise ValueError(
@@ -61,6 +66,8 @@ def reset_scene_to_frame(scene: Scene, reference: Reference, frame_id: int, stat
             root_q = q_base + binding.root.free_q_ids[0]
             joint_q[root_q : root_q + 3] += scene.object_root_position_offsets_w[world, object_id]
     state.joint_q.assign(joint_q.astype(np.float32))
+    if frame_id == 0 and getattr(scene, 'object_initial_pose_overrides', None) is not None:
+        state.joint_qd.zero_()
     newton.eval_fk(model, state.joint_q, state.joint_qd, state)
 
 

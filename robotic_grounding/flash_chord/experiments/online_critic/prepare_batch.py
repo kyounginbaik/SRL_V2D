@@ -21,6 +21,8 @@ RECIPE = Path(__file__).resolve().parent
 SOURCE = RECIPE.parents[1]
 sys.path.insert(0, str(RECIPE / "submission"))
 from contract import atomic_json, digest, load_roster, validate_kit_roster
+sys.path.insert(0, str(RECIPE / "cluster"))
+from initial_state import validate_initial_state_report
 
 IGNORE = shutil.ignore_patterns("__pycache__", ".pytest_cache", ".cache", "*.pyc")
 
@@ -181,6 +183,7 @@ def freeze_episode(item, root, roster, support_root=None):
     changed = _freeze_assets(source, row, destination)
     support_asset = None
     ground_plane = None
+    initialization = {}
     if support_root is not None:
         support = Path(support_root) / episode
         if (support / 'support.usda').is_file():
@@ -198,6 +201,13 @@ def freeze_episode(item, root, roster, support_root=None):
             floor = support_report.get('measured_floor')
             if floor:
                 ground_plane = [*floor['normal'], floor['offset']]
+            initial_report = support / 'initial_state_report.json'
+            if initial_report.is_file():
+                initialization = validate_initial_state_report(initial_report,
+                    episode=episode, source_sha256=source_hash, frozen_directory=destination,
+                    object_names=row['object_body_names'], object_urdf_paths=changed['object_urdf_paths'])
+                shutil.copy2(initial_report, destination/'assets/initial_state_report.json')
+                initialization['initial_state_report'] = 'assets/initial_state_report.json'
     for field, values in changed.items():
         field_index = table.schema.get_field_index(field)
         table = table.set_column(field_index, table.schema.field(field),
@@ -223,6 +233,7 @@ def freeze_episode(item, root, roster, support_root=None):
                   reference_description=item["quality_note"], source_kind=item["source_kind"],
                   source_quality=item["quality"], reference_values_preserved=True,
                   asset_path_policy="prepared-root paths; loader resolves sibling assets after relocation")
+    record.update(initialization)
     if "white_pot" in masses:
         record["pot_mass_kg"] = masses["white_pot"]
     if "white_pot_lid" in masses:

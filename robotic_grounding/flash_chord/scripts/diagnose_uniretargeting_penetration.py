@@ -47,6 +47,7 @@ def main() -> None:
         decompose_objects=cfg.scene.decompose_objects,
         contact_friction=cfg.scene.get("contact_friction", 1.0),
         object_free_joint_damping=cfg.scene.get("object_free_joint_damping", 0.0),
+        object_initial_pose_overrides=cfg.scene.get("object_initial_pose_overrides"),
         source_frame_playback=cfg.task.source_frame_playback,
         motion_start_frame=cfg.task.motion_start_frame,
         motion_end_frame=cfg.task.motion_end_frame,

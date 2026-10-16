@@ -20,6 +20,7 @@ class BaselineFailureProbe:
             world_count=worlds, include_support=scene['support'],
             decompose_objects=scene['decompose_objects'], contact_friction=scene.get('contact_friction', 1.),
             object_free_joint_damping=scene.get('object_free_joint_damping', 0.),
+            object_initial_pose_overrides=scene.get('object_initial_pose_overrides'),
             source_frame_playback=task['source_frame_playback'],
             motion_start_frame=task['motion_start_frame'], motion_end_frame=task['motion_end_frame'])
         if command_digest(self.setup.reference) != editor.command_sha256:

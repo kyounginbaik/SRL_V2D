@@ -47,6 +47,7 @@ def test_setup_scene_forwards_explicit_task_and_scene_inputs(monkeypatch):
         decompose_objects=False,
         contact_friction=0.5,
         object_free_joint_damping=0.01,
+        object_initial_pose_overrides={'vessel': {'position': [0., 0., .001], 'quaternion_wxyz': [1.,0.,0.,0.]}},
     )
 
     assert calls["load"] == (requested, 20.0, 0.5, False)
@@ -60,6 +61,7 @@ def test_setup_scene_forwards_explicit_task_and_scene_inputs(monkeypatch):
             "decompose_objects": False,
             "contact_friction": 0.5,
             "object_free_joint_damping": 0.01,
+            "object_initial_pose_overrides": {'vessel': {'position': [0., 0., .001], 'quaternion_wxyz': [1.,0.,0.,0.]}},
         },
     )
     assert result.parquet_path == resolved
@@ -91,6 +93,16 @@ def test_setup_scene_requires_configured_support_before_building(monkeypatch):
             include_support=True,
             decompose_objects=True,
         )
+
+
+def test_initial_pose_override_cannot_be_reinterpreted_at_cropped_source_frame(monkeypatch):
+    from flash_chord.scene import setup
+    monkeypatch.setattr(setup, 'load_reference', lambda *args, **kwargs: pytest.fail('invalid window must fail before load'))
+    with pytest.raises(ValueError, match='source motion_start_frame=0'):
+        setup.setup_scene(parquet='reference', control_fps=20., motion_speed=1.,
+            embodiment=object(), collision=object(), world_count=1, include_support=False,
+            decompose_objects=True, motion_start_frame=2,
+            object_initial_pose_overrides={'vessel': {'position': [0,0,0], 'quaternion_wxyz': [1,0,0,0]}})
 
 
 def test_setup_scene_skips_support_resolution_when_disabled(monkeypatch):
