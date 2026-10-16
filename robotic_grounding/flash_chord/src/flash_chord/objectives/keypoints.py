@@ -126,6 +126,7 @@ def hand_keypoints_objective(
     var: float,
     kind: int,
     threshold: float,
+    palm_weight: float,
     objective_sum: wp.array(dtype=wp.float32),  # [world_count * n_hands] atomic accumulator; caller divides by n_kp
 ) -> None:
     """Accumulate semantic-frame position tracking per hand; launch over W*n_hands*n_kp."""
@@ -140,4 +141,8 @@ def hand_keypoints_objective(
         keypoint_local_pos[keypoint],
     )
     d = sim - target_pos[tid]
-    wp.atomic_add(objective_sum, world * n_hands + hand, shaped_objective(wp.dot(d, d), var, kind, threshold))
+    # Retain the existing division by n_kp downstream and a unit maximum reward.
+    weight = float(n_kp) / (palm_weight + float(n_kp - 1))
+    if kp == 0:
+        weight *= palm_weight
+    wp.atomic_add(objective_sum, world * n_hands + hand, weight * shaped_objective(wp.dot(d, d), var, kind, threshold))

@@ -1,0 +1,69 @@
+Critic diagnostics and intermediate fitting experiment, 2026-10-16
+
+Historical evidence
+-------------------
+The reproducible audit reads only the Adam-feedback episode-1 pilot logs for
+seeds 43/44/45. Across 132 rounds and 405 proposals, 381 predicted positive
+support-return gains; 184 of those improved the selected physical task score
+against equally adapted control (48.29%). The unconditional improvement rate
+was 192/405 (47.41%). Descriptive Spearman association was 0.07435. These are
+different objectives and response horizons; this is proposal-usefulness
+evidence, not a direct test of Q calibration or hypergradient correctness.
+
+225 proposals beat control at the first checkpoint, 192 at the final checkpoint,
+and 350 at some tested checkpoint. The last figure is retrospective, optimistically
+selected, and says nothing about physical guards or frozen confirmation. No edit
+was accepted; 402 proposals encountered the old plateau-stability rejection.
+
+The historical per-row holdout metrics do not establish independent-trajectory
+generalization. Raw per-frame costs and pre-proposal critic states were not saved,
+so exact paired support-return/gradient diagnostics cannot be recovered afterward.
+
+Implementation in this separate experiment copy
+------------------------------------------------
+1. Configurable four-update critic bursts every 16 vector collection steps,
+   after the first outer round initializes the critic. Only current-reference,
+   current-outer-generation training transitions with valid successors qualify.
+   At least two minibatches of recent evidence are required. Reference changes
+   clear replay and force fresh collection. The dedicated RNG does not consume
+   the actor/proposal random stream. No actor updates or new simulations are
+   triggered by these bursts. Existing outer-round fitting is retained.
+   Set critic_online_interval_vector_steps=0 for the control configuration.
+
+2. Capture complete baseline/control/candidate trajectories before fitting.
+   Save per-frame observations, actions, physical support costs, exact finite-
+   horizon discounted returns, and predictions. Also save frozen critic weights
+   before each proposal. This makes future audits reproducible.
+
+3. At matched physical adaptation checkpoints, score candidate and no-edit
+   trajectories with the same frozen critic and identical frame coverage. Log
+   predicted and measured support-return gains, gain error and sign agreement.
+   These checks evaluate realized trajectories. They are not a numerical test
+   of the fixed-state proposal hypergradient. No acceptance rule is relaxed.
+
+Bounded GPU validation
+----------------------
+The diagnostic restores seed 44's lower learner at step 19,066,880 and its
+recorded window-1 edit. The critic comes from the PREVIOUS round, step 18,565,120,
+so fitting on the original step-19,066,880 trials cannot leak into this check.
+Candidate/control start from the same lower learner and fixed physical state.
+Each uses budgets 135,168 / 200,704 / 266,240 transitions: 532,480 total additional
+adaptation transitions, plus unassisted evaluation and possible confirmation.
+It uses one scheduler-owned GPU and has a two-hour hard limit. Historical data
+are mounted read-only. It does not test main-training schedule performance.
+
+Interpretation and next decision
+--------------------------------
+The online schedule is a tested implementation for an ablation, not a validated
+performance improvement. Assisted TD targets may still be a poor guide to
+unassisted behavior, and fitting more often can overfit. The local actor inputs,
+network shapes, support objective, and physical acceptance remain unchanged so
+the critic schedule can be tested independently. No larger actor is introduced
+before measuring whether the existing cost model predicts useful directions.
+An actor-context expansion and a matched-compute schedule ablation remain
+separate follow-up experiments. CPU tests do not substitute for physical results.
+
+Reproduce historical audit from the repository root:
+python3 challenge_reconstruction/uniretarget_critic_diagnostics_20261016/flash_chord/scripts/audit_upper_critic.py \
+  --root challenge_reconstruction/uniretarget_wrench_adam_feedback_20261016 \
+  --output challenge_reconstruction/uniretarget_critic_diagnostics_20261016/reports/historical --plot

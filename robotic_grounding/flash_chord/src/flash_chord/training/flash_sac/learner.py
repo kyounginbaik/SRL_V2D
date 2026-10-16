@@ -603,7 +603,9 @@ def _actor_temperature_update(
         has_aux=True,
     )(state.actor.params)
     actor_gradients = unscale_gradients(state.loss_scale, scaled_gradients)
-    actor_finite = gradients_are_finite(actor_gradients)
+    actor_finite = (gradients_are_finite(actor_gradients)
+                    & gradients_are_finite(actor_batch_stats)
+                    & jnp.isfinite(actor_result.loss))
     actor_rate = (
         learning_rate(
             state.actor.schedule_step,
@@ -640,7 +642,8 @@ def _actor_temperature_update(
     )
     actor_state = state.actor.replace(
         params=actor_params,
-        batch_stats=actor_batch_stats,
+        batch_stats=jax.tree.map(lambda new, old: jnp.where(actor_finite, new, old),
+                                 actor_batch_stats, state.actor.batch_stats),
         optimizer_state=actor_optimizer_state,
         schedule_step=state.actor.schedule_step + 1,
     )
@@ -665,13 +668,13 @@ def _actor_temperature_update(
         config.optimization,
         config.learning_rate_schedule_updates,
     )
-    temperature_updates, temperature_optimizer_state = optimizer.update(
-        temperature_gradients,
-        state.temperature.optimizer_state,
-        state.temperature.log_temperature,
+    temperature_finite = (actor_finite & gradients_are_finite(temperature_gradients)
+                          & jnp.isfinite(temperature_result.loss))
+    log_temperature, temperature_optimizer_state = _apply_adam_if_finite(
+        optimizer, state.temperature.log_temperature,
+        state.temperature.optimizer_state, temperature_gradients,
+        temperature_rate, temperature_finite,
     )
-    temperature_updates = jax.tree.map(lambda update: -temperature_rate * update, temperature_updates)
-    log_temperature = optax.apply_updates(state.temperature.log_temperature, temperature_updates)
     temperature_state = state.temperature.replace(
         log_temperature=log_temperature,
         optimizer_state=temperature_optimizer_state,
@@ -750,7 +753,10 @@ def _critic_update(
         has_aux=True,
     )(state.critic.params)
     critic_gradients = unscale_gradients(state.loss_scale, scaled_gradients)
-    critic_finite = gradients_are_finite(critic_gradients)
+    critic_finite = (gradients_are_finite(critic_gradients)
+                     & gradients_are_finite(critic_batch_stats)
+                     & gradients_are_finite(target_mutable["batch_stats"])
+                     & jnp.isfinite(critic_loss))
     critic_rate = learning_rate(
         state.critic.schedule_step,
         config.optimization,
@@ -773,7 +779,8 @@ def _critic_update(
     )
     critic_state = state.critic.replace(
         params=critic_params,
-        batch_stats=critic_batch_stats,
+        batch_stats=jax.tree.map(lambda new, old: jnp.where(critic_finite, new, old),
+                                 critic_batch_stats, state.critic.batch_stats),
         optimizer_state=critic_optimizer_state,
         schedule_step=state.critic.schedule_step + 1,
     )
@@ -783,7 +790,8 @@ def _critic_update(
             critic_params,
             config.optimization.target_tau,
         ),
-        batch_stats=target_mutable["batch_stats"],
+        batch_stats=jax.tree.map(lambda new, old: jnp.where(critic_finite, new, old),
+                                 target_mutable["batch_stats"], state.target_critic.batch_stats),
     )
     state = state.replace(
         critic=critic_state,

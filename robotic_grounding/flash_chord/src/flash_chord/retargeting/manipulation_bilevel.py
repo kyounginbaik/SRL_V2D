@@ -57,7 +57,7 @@ def candidate_score(metrics, wrench_weight):
 
 
 def passes_task_gate(candidate, baseline, tolerance_m=0.002):
-    return (all(np.isfinite(v) for v in candidate.values())
+    return (all(np.all(np.isfinite(v)) for v in candidate.values())
             and candidate["object_position_mean_m"] <= baseline["object_position_mean_m"] + tolerance_m
             and candidate["object_position_p95_m"] <= baseline["object_position_p95_m"] + tolerance_m
             and candidate["object_orientation_mean_rad"] <= baseline["object_orientation_mean_rad"] + 0.01
@@ -67,7 +67,8 @@ def passes_task_gate(candidate, baseline, tolerance_m=0.002):
 def assert_device_binding(env, binding):
     np.testing.assert_allclose(env.reset_table.ref_joint_q.numpy()[:, :binding.num_joint_q], binding.joint_q, atol=1e-7)
     for consumer in (env.action, env.observation_strategy):
-        np.testing.assert_allclose(consumer.reference.joint_target.numpy().reshape(binding.joint_target.shape),
+        reference = consumer.reference if hasattr(consumer, "reference") else consumer.buffers.reference
+        np.testing.assert_allclose(reference.joint_target.numpy().reshape(binding.joint_target.shape),
                                    binding.joint_target, atol=1e-7)
     keypoints = np.concatenate([binding.hand(side).keypoint_pos_w(env.objective.config.hand_keypoint_frame)
                                for side in env.objective.config.sides], axis=1)
@@ -89,8 +90,12 @@ class LocalProjector:
         scalar = self.layout.scalar_joints
         self.qids = np.asarray(scalar.q_ids)
         self.dids = np.asarray(scalar.dof_ids)
-        if len(self.qids) != baseline.num_joint_q or len(self.dids) != baseline.num_joint_dof:
-            raise ValueError("pilot requires a fixed-base all-scalar Vega/Sharpa robot")
+        self.ball_joints = [(self.builder.joint_q_start[j], self.builder.joint_qd_start[j])
+                            for j, kind in enumerate(self.builder.joint_type)
+                            if kind == newton.JointType.BALL]
+        if (len(self.qids) + 4 * len(self.ball_joints) != baseline.num_joint_q
+                or len(self.dids) + 3 * len(self.ball_joints) != baseline.num_joint_dof):
+            raise ValueError("reference editor supports scalar joints plus ball wrists")
         self.model = self.builder.finalize(device="cpu", skip_all_validations=True)
         self.state = self.model.state()
         self.state.joint_qd.zero_()
@@ -194,6 +199,12 @@ class ManipulationBilevel:
             object_free_joint_damping=scene.get("object_free_joint_damping", 0.0),
             source_frame_playback=task["source_frame_playback"],
             motion_start_frame=task["motion_start_frame"], motion_end_frame=task["motion_end_frame"])
+        self.contact_proximity = None
+        if float(self.options.get("contact_proximity_weight", 0.0)) > 0:
+            from flash_chord.retargeting.contact_proximity import ContactProximity
+            self.contact_proximity = ContactProximity(
+                self.eval_setup.reference, [hand.side for hand in self.eval_setup.scene.layout.hands]
+            )
         self.actor = None
         self.policy = None
         self.publish(0)
@@ -240,9 +251,15 @@ class ManipulationBilevel:
         self.metadata[CONFIG_METADATA_KEY] = json.dumps(self.config, sort_keys=True)
         self.metadata["robot_reference_version"] = str(self.version)
 
-    def rollout(self, binding, learner, seed, *, return_feedback=False):
+    def rollout(self, binding, learner, seed, *, return_feedback=False, voc_probe_scale=None, initial_q_delta=None):
+        probe_config=deepcopy(self.eval_config)
+        if voc_probe_scale is not None:
+            from flash_chord.runtime.object_control import VOCParams
+            probe_config=replace(probe_config,
+                voc=instantiate_typed(OmegaConf.create(self.config["env"]["voc"]), VOCParams),
+                voc_scale=float(voc_probe_scale))
         env = RLEnv(replace(self.eval_setup.scene, robot_reference=binding), self.eval_setup.reference,
-                    config=deepcopy(self.eval_config))
+                    config=probe_config)
         env.reset(frame_id=0)
         env.capture_step()
         env.reset(frame_id=0)
@@ -276,7 +293,23 @@ class ManipulationBilevel:
                 raise ValueError("penetration_rollout_stride must be positive")
             rollout_overlap = []
         adapter = WarpRLEnv(env, publish_diagnostics=False, publish_step_metrics=False)
-        observation = jnp.array(adapter.reset(), copy=True)
+        from flash_chord.runtime.jax import to_jax
+        initial_observation = env.reset(frame_id=0)
+        if initial_q_delta is not None:
+            initial_q = env.state_0.joint_q.numpy().reshape(env.world_count,-1)
+            initial_q[:,:binding.num_joint_q] += np.asarray(initial_q_delta)[None,:]
+            initial_q[:,self.projector.qids] = np.clip(initial_q[:,self.projector.qids],self.projector.lower,self.projector.upper)
+            for state in (env.state_0,env.state_1):
+                state.joint_q.assign(initial_q.reshape(-1))
+                newton.eval_fk(env.model,state.joint_q,state.joint_qd,state)
+            initial_observation = env.observation_strategy.compute(env.state_0)
+        observation = jnp.array(to_jax(initial_observation, (env.world_count, env.observation_dim)), copy=True)
+        if hasattr(self,'audit_initial_state'):
+            self.audit_initial_state(env,'nominal_rollout')
+        if voc_probe_scale is not None:
+            np.testing.assert_allclose(env.object_control_scale.numpy(),voc_probe_scale,atol=1e-7)
+            if env.command.voc_body_ids_w.size != env.world_count * env.command.layout.num_objects:
+                raise AssertionError("VOC root-body count does not match the object roster")
         state = ActorInferenceState(learner.actor.params, learner.actor.batch_stats)
         key = jax.random.PRNGKey(seed)
         if self.actor is None:
@@ -285,12 +318,31 @@ class ManipulationBilevel:
                 deterministic=bool(self.options.get("study_variant")),
                 action_transform=self.training.network.action_transform, action_scale=self.training.network.action_scale)
         positions, quats, indices, obj_errors, angles, wrench_errors = [], [], [], [], [], []
+        upper_wrench = self.new_wrench_accumulator(env) if hasattr(self, 'new_wrench_accumulator') else None
+        if self.contact_proximity is not None:
+            proximity_frame_sums, proximity_frame_counts = [], []
+            proximity_sums = np.zeros((env.world_count, len(self.contact_proximity.sides),
+                                       self.contact_proximity.num_objects))
+            proximity_counts = np.zeros_like(proximity_sums, dtype=np.int64)
+            contact_chunk_feedback = return_feedback and self.options.get("study_variant") == "chunk"
+            if contact_chunk_feedback:
+                from flash_chord.retargeting.chunk_feedback import chunk_labels
+                _, contact_chunk_count = chunk_labels(
+                    [0], binding.num_frames, binding.fps,
+                    float(self.options.get("chunk_seconds", .5))
+                )
+                contact_vectors = np.zeros((contact_chunk_count, *proximity_sums.shape, 3))
+                contact_counts = np.zeros((contact_chunk_count, *proximity_counts.shape), dtype=np.int64)
         study = bool(self.options.get("study_variant"))
         object_displacements, position_frames, orientation_frames, wrench_frames, wrench_active_frames = [], [], [], [], []
         for step_index in range(binding.num_frames - 1):
             frame = env.timestep.numpy().copy()
             action, key = self.policy(state, observation, key)
+            if hasattr(self, 'before_evaluation_step'):
+                self.before_evaluation_step(adapter, observation, action, frame)
             transition = adapter.step(action)
+            if hasattr(self, 'after_evaluation_step'):
+                self.after_evaluation_step(adapter, transition)
             self.validation_steps += env.world_count
             observation = jnp.array(transition.observation, copy=True)
             if getattr(self, "penetration_aware", False) and step_index % rollout_stride == 0:
@@ -306,6 +358,29 @@ class ManipulationBilevel:
             positions.append(p); quats.append(q); indices.append(frame)
             ids = env.command.body_ids_w.numpy().reshape(-1)
             actual = env.state_0.body_q.numpy()[ids]
+            if self.contact_proximity is not None:
+                hand_count = len(self.contact_proximity.sides)
+                if p.shape[1] != hand_count * 6:
+                    raise ValueError("contact proximity expects wrist plus five fingertips per hand")
+                proximity_result = self.contact_proximity.frame(
+                    frame, p.reshape(env.world_count, hand_count, 6, 3)[:, :, 1:],
+                    actual.reshape(env.world_count, self.contact_proximity.num_objects, 7),
+                    return_vectors=contact_chunk_feedback,
+                )
+                frame_sums, frame_counts = proximity_result[:2]
+                proximity_sums += frame_sums
+                proximity_counts += frame_counts
+                if return_feedback:
+                    proximity_frame_sums.append(frame_sums.copy())
+                    proximity_frame_counts.append(frame_counts.copy())
+                if contact_chunk_feedback:
+                    chunk_ids, _ = chunk_labels(
+                        frame, binding.num_frames, binding.fps,
+                        float(self.options.get("chunk_seconds", .5))
+                    )
+                    for world, chunk in enumerate(chunk_ids):
+                        contact_vectors[chunk, world] += proximity_result[2][world]
+                        contact_counts[chunk, world] += frame_counts[world]
             target_p = env.command.body_target_pos_w.numpy().reshape(-1,3)
             target_q = env.command.body_target_quat_w.numpy().reshape(-1,4)
             frame_pos_error = np.linalg.norm(actual[:,:3]-target_p, axis=-1)
@@ -319,6 +394,8 @@ class ManipulationBilevel:
                 orientation_frames.append(frame_angle.reshape(env.world_count,-1).mean(axis=1))
             current = env.objective.current_wrench_support.numpy().reshape(env.world_count,-1)
             target = env.objective.wrench_support_target.numpy().reshape(env.world_count,-1)
+            if upper_wrench is not None:
+                upper_wrench.add(current, target)
             active = np.mean(target**2, axis=1) > 1e-8
             if np.any(active):
                 wrench_errors.extend((np.mean((current[active]-target[active])**2,axis=1) /
@@ -341,6 +418,30 @@ class ManipulationBilevel:
             object_position_mean_m=float(np.mean(obj_errors)), object_position_p95_m=float(np.percentile(obj_errors,95)),
             object_orientation_mean_rad=float(np.mean(angles)),
             object_success_fraction=float(np.mean((np.asarray(obj_errors)<.1)&(np.asarray(angles)<.5))))
+        if upper_wrench is not None:
+            if env.world_count != 1:
+                raise ValueError('response confirmation requires one world')
+            metrics.update(upper_wrench.summaries()[0])
+        if self.contact_proximity is not None:
+            from flash_chord.retargeting.contact_proximity import summarize_contact_proximity
+            metrics.update(summarize_contact_proximity(proximity_sums, proximity_counts))
+        object_count = env.command.body_ids_w.numpy().size // env.world_count
+        per_pos = np.asarray(obj_errors).reshape(-1, env.world_count, object_count)
+        per_angle = np.asarray(angles).reshape(-1, env.world_count, object_count)
+        if hasattr(self, 'trajectory_metrics'):
+            metrics.update(self.trajectory_metrics(per_pos.mean(axis=1), per_angle.mean(axis=1)))
+        metrics["per_object_position_p95_m"] = np.percentile(per_pos,95,axis=(0,1)).tolist()
+        metrics["per_object_orientation_p95_rad"] = np.percentile(per_angle,95,axis=(0,1)).tolist()
+        metrics["per_object_gate_success_fraction"] = ((per_pos<=.05)&(per_angle<=np.deg2rad(20))).mean(axis=(0,1)).tolist()
+        metrics["robot_position_rms_m"] = float(np.sqrt(np.mean(np.sum(pe**2,axis=-1))))
+        metrics["all_errors_finite"] = bool(np.isfinite(per_pos).all() and np.isfinite(per_angle).all() and np.isfinite(pe).all())
+        if voc_probe_scale is not None:
+            np.testing.assert_allclose(env.object_control_scale.numpy(),voc_probe_scale,atol=1e-7)
+            metrics["probe_applied_voc_scale"] = float(env.object_control_scale.numpy()[0])
+            metrics["voc_object_count"] = int(env.command.layout.num_objects)
+        metrics["full_horizon"] = bool(len(indices)==binding.num_frames-1 and all(np.all(frame==i) for i,frame in enumerate(indices)))
+        metrics["per_object_position_mean_m"] = np.nan_to_num(per_pos, nan=1., posinf=1.).mean(axis=(0,1)).tolist()
+        metrics["per_object_orientation_mean_rad"] = np.nan_to_num(per_angle, nan=np.pi, posinf=np.pi).mean(axis=(0,1)).tolist()
         if study:
             from flash_chord.retargeting.ttsa_editor import robust_world_summary
             metrics.update(robust_world_summary(np.stack(position_frames), np.stack(orientation_frames),
@@ -357,12 +458,35 @@ class ManipulationBilevel:
             hand_error = pe.reshape(len(positions), env.world_count, *pe.shape[1:])
             relative_error = hand_error + np.stack(object_displacements)[:, :, None, :]
             feedback = dict(signed_bins=signed_feedback_summary(relative_error),
+                            frame_per_object_position_m=per_pos,
+                            frame_per_object_orientation_rad=per_angle,
                             signed_frames=relative_error.mean(axis=2),
+                            frame_object_position_m=np.stack(position_frames),
+                            frame_object_orientation_rad=np.stack(orientation_frames),
+                            frame_wrench_mse=np.stack(wrench_frames),
+                            frame_wrench_active=np.stack(wrench_active_frames),
                             # Large mean with little world disagreement scores
                             # above large-but-opposing per-world corrections.
                             frame_scores=consensus_frame_scores(relative_error))
+            if self.contact_proximity is not None:
+                feedback["frame_contact_sums_m"] = np.stack(proximity_frame_sums)
+                feedback["frame_contact_counts"] = np.stack(proximity_frame_counts)
+            if self.options.get("study_variant") == "chunk":
+                from flash_chord.retargeting.chunk_feedback import summarize_chunks
+                feedback["signed_bins"], feedback["chunk_sample_counts"] = summarize_chunks(
+                    relative_error, np.asarray(indices), binding.num_frames, binding.fps,
+                    float(self.options.get("chunk_seconds", .5)))
+                if self.contact_proximity is not None:
+                    summed = contact_vectors.sum(axis=1)
+                    counts = contact_counts.sum(axis=1)
+                    feedback["contact_direction_bins"] = np.divide(
+                        summed, np.maximum(counts[..., None], 1)
+                    ).astype(np.float32)
+                    feedback["contact_direction_counts"] = counts.sum(axis=(1, 2))
             if getattr(self, "penetration_aware", False):
                 overlap = np.stack(rollout_overlap)
+                feedback["frame_penetration_m"] = overlap
+                feedback["penetration_frame_ids"] = np.arange(1, binding.num_frames, rollout_stride)
                 feedback["penetration_bins"] = np.stack([
                     np.stack((overlap[ids].mean(axis=(0, 1)),
                               overlap[ids].mean(axis=0).std(axis=0)))

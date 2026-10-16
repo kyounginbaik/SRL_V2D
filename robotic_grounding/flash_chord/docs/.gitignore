@@ -6,3 +6,7 @@
 !.gitignore
 !configuration.md
 !package_structure.md
+
+!response_bilevel.txt
+!wrench_hypergradient.txt
+!critic_diagnostics_20261016.txt

@@ -227,9 +227,10 @@ def reset_worlds(
 
 @dataclass(frozen=True)
 class ReferenceResetConfig:
-    """Random reference reset with finger opening and a configurable VOC settling phase."""
+    """Reference resets with optional exact frame-zero state and VOC settling."""
 
     reset_finger_openness: float = 0.7
+    fixed_initial_state: bool = False
     always_reset_to_first_frame: bool = False
     reset_to_first_frame_probability: float = 0.1
     first_frame_voc_threshold: float = 0.1
@@ -346,6 +347,7 @@ def sample_reference_reset(
     num_frames: int,
     voc_decay_steps: int,
     always_first_frame: int,
+    fixed_initial_state: int,
     first_frame_probability: wp.array(dtype=wp.float32),
     first_frame_voc_threshold: float,
     reset_finger_openness: float,
@@ -366,14 +368,17 @@ def sample_reference_reset(
     rng = wp.rand_init(seed, offset)
     frame = int(0)
     random_frame_count = num_frames - 1
-    if always_first_frame == 0 and random_frame_count > 0:
+    if fixed_initial_state == 0 and always_first_frame == 0 and random_frame_count > 0:
         frame = int(wp.randf(rng) * float(random_frame_count))
         if curriculum_voc_scale[0] < first_frame_voc_threshold:
             if wp.randf(rng) < first_frame_probability[0]:
                 frame = 0
 
     reset_frame[world] = frame
-    finger_scale[world] = wp.randf(rng) * reset_finger_openness
+    if fixed_initial_state != 0:
+        finger_scale[world] = 1.0
+    else:
+        finger_scale[world] = wp.randf(rng) * reset_finger_openness
     steps_since_reset[world] = 0
     if voc_decay_steps == 0:
         applied_voc_scale[world] = curriculum_voc_scale[0]
@@ -549,6 +554,7 @@ class ReferenceReset:
                 self.num_frames,
                 self.config.voc_decay_steps,
                 int(self.config.always_reset_to_first_frame),
+                int(self.config.fixed_initial_state),
                 self.first_frame_probability,
                 self.config.first_frame_voc_threshold,
                 self.config.reset_finger_openness,

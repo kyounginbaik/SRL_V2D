@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import os
+import json
 import time
 from pathlib import Path
 
@@ -36,9 +37,38 @@ os.environ["TZ"] = "PST8PDT,M3.2.0,M11.1.0"
 time.tzset()
 
 
+class LocalMetricLogger:
+    """Preserve numerical-health evidence when remote logging is disabled."""
+    def __init__(self, path):
+        self.stream = Path(path).open("a")
+
+    def log(self, metrics, step):
+        self.stream.write(json.dumps({"step": step, **metrics}) + "\n")
+        self.stream.flush()
+
+    def close(self):
+        self.stream.close()
+
+
 @hydra.main(version_base="1.3", config_path="../src/flash_chord/configs", config_name="train_flash_sac")
 def main(cfg: DictConfig) -> None:
     """Compose one FlashSAC experiment and run its compiled Warp/JAX training loop."""
+    if cfg.get("adaptive_voc") is not None and cfg.adaptive_voc.get("mode") == "step_schedule":
+        # The original contact-focused arm has no direct position tracking.
+        # A separate reference-guided arm may use hand tracking so the lower
+        # controller can actually respond to edits in its hand reference.
+        guided_hands = bool(cfg.get("reference_guided_hands", False))
+        for index, stage in enumerate(cfg.curriculum.stages):
+            terms = ("object_keypoints",) if guided_hands else (
+                "object_keypoints", "hand_keypoints", "hand_joint_pos")
+            for term in terms:
+                if float(stage.objective_weights[term]) != 0.0:
+                    raise ValueError(
+                        f"step_schedule curriculum stage {index} has nonzero {term} reward"
+                    )
+            if guided_hands and any(float(stage.objective_weights[term]) <= 0.0
+                                    for term in ("hand_keypoints", "hand_joint_pos")):
+                raise ValueError(f"reference-guided curriculum stage {index} lacks hand tracking")
     env_config = instantiate_typed(cfg.env, RLEnvConfig)
     embodiment = instantiate_typed(cfg.embodiment, Embodiment)
     collision = instantiate_typed(cfg.collision, CollisionPolicy)
@@ -87,7 +117,7 @@ def main(cfg: DictConfig) -> None:
             policy_schema(env.action, env.observation_strategy),
             critic_schema(env.action, env.observation_strategy, jax_env.critic_context_names),
         )
-        logger = None
+        logger = LocalMetricLogger(output_dir / "training_metrics.jsonl") if cfg.logging.mode == "disabled" else None
         if cfg.logging.mode != "disabled":
             logger = WandbLogger(
                 training,
@@ -105,11 +135,38 @@ def main(cfg: DictConfig) -> None:
             if cfg.bilevel.get("engine") == "ttsa_flashsac":
                 from flash_chord.retargeting.ttsa_editor import TTSAReferenceEditor
                 update_class = TTSAReferenceEditor
+            if cfg.bilevel.get("engine") == "wrench_hypergradient":
+                from flash_chord.retargeting.wrench_hypergradient_editor import WrenchHypergradientEditor
+                update_class = WrenchHypergradientEditor
+            elif cfg.bilevel.get("engine") == "response_bilevel":
+                from flash_chord.retargeting.response_editor import ResponseBilevelEditor
+                update_class = ResponseBilevelEditor
+            elif cfg.bilevel.get("engine") == "adaptive_window_flashsac":
+                from flash_chord.retargeting.adaptive_editor import AdaptiveWindowEditor
+                update_class = AdaptiveWindowEditor
+            elif cfg.bilevel.get("engine") == "local_flashsac":
+                from flash_chord.retargeting.local_editor import LocalReferenceEditor
+                update_class = LocalReferenceEditor
+            elif cfg.bilevel.get("engine") == "parallel_flashsac":
+                from flash_chord.retargeting.parallel_editor import ParallelReferenceEditor
+                update_class = ParallelReferenceEditor
             reference_update = update_class(
                 options=resolved_dict(cfg.bilevel), setup=setup, embodiment=embodiment,
                 collision=collision, training=training, environment_config=environment_config,
                 checkpoint_metadata=checkpoint_metadata, output_dir=output_dir,
             )
+        voc_controller=None
+        if cfg.get("adaptive_voc") is not None:
+            if reference_update is None:raise ValueError("Adaptive VOC requires the rollout evaluator")
+            from flash_chord.lifecycle.performance_voc import PerformanceVOCController, StepVOCController
+            voc_options=resolved_dict(cfg.adaptive_voc)
+            voc_mode=voc_options.get("mode", "performance_gate")
+            if voc_mode == "step_schedule":
+                voc_controller=StepVOCController(reference_update,voc_options,output_dir)
+            elif voc_mode == "performance_gate":
+                voc_controller=PerformanceVOCController(reference_update,voc_options,output_dir)
+            else:
+                raise ValueError(f"Unknown adaptive_voc.mode: {voc_mode}")
         learner = run_training(
             jax_env,
             training,
@@ -120,6 +177,7 @@ def main(cfg: DictConfig) -> None:
             checkpoint_metadata=checkpoint_metadata,
             progress=ConsoleTrainingProgress(training.total_environment_steps, output_dir),
             reference_update=reference_update,
+            voc_controller=voc_controller,
         )
     print(f"completed {int(jax.device_get(learner.environment_steps))} environment steps; checkpoints: {output_dir}")
 

@@ -6,6 +6,8 @@
 from __future__ import annotations
 
 import re
+import os
+import json
 import time
 from collections.abc import Mapping
 from dataclasses import asdict, replace
@@ -417,6 +419,7 @@ def _run_training(
     checkpoint_metadata: Mapping[str, object] | None = None,
     progress: TrainingProgress | None = None,
     reference_update=None,
+    voc_controller=None,
 ) -> LearnerState:
     """Run one Warp interaction followed by one donated JAX state transition until the step budget is met."""
     if log_interval <= 0:
@@ -443,6 +446,16 @@ def _run_training(
         else:
             index = config.curriculum.stage_index(environment_steps)
             stage = config.curriculum.stages[index]
+        if voc_controller is not None:
+            if voc_scale_override is not None:
+                raise ValueError("Cannot combine adaptive VOC with a VOC override")
+            if hasattr(voc_controller, "index_at"):
+                index = voc_controller.index_at(environment_steps)
+                scale = voc_controller.scales[index]
+            else:
+                index = voc_controller.index
+                scale = voc_controller.scale
+            stage=replace(config.curriculum.stages[0],voc_scale=scale)
         if voc_scale_override is not None:
             stage = replace(stage, voc_scale=voc_scale_override)
         return index, stage
@@ -450,7 +463,11 @@ def _run_training(
     jax_device = resolve_jax_device(config.device)
     _, initial_stage = stage_at(0)
     env.set_curriculum(initial_stage)
+    if logger is not None and not config.resume:
+        logger.log({"curriculum/voc_scale": float(initial_stage.voc_scale)}, step=0)
     initial_observation = jax.device_put(jnp.array(env.reset(), copy=True), jax_device)
+    if hasattr(reference_update, 'audit_initial_state'):
+        reference_update.audit_initial_state(env.env, 'training_start')
     initial_context = jax.device_put(jnp.array(env.initial_critic_context, copy=True), jax_device)
     learner, executables = create_learner(
         config,
@@ -558,11 +575,38 @@ def _run_training(
         logging_boundary = (
             next_collection_index % log_interval == 0 or next_environment_steps == config.total_environment_steps
         )
+        if hasattr(reference_update, 'before_training_step'):
+            reference_update.before_training_step(env, learner, action, environment_steps)
         step = env.step(action)
+        if hasattr(reference_update, 'after_training_step'):
+            reference_update.after_training_step(env, step)
         if step.objective_terms is None:
             raise RuntimeError("environment stopped publishing raw objective terms")
         if step.terminal_observation is None or step.critic_context is None or step.terminal_critic_context is None:
             raise RuntimeError("environment stopped publishing terminal-state outputs")
+        if os.environ.get("V2D_CHECK_FINITE") == "1":
+            arrays = {"observation": step.observation,
+                      "terminal_observation": step.terminal_observation,
+                      "critic_context": step.critic_context,
+                      "terminal_critic_context": step.terminal_critic_context,
+                      "objective_terms": step.objective_terms, "action": action}
+            finite = jnp.stack([jnp.all(jnp.isfinite(value)) for value in arrays.values()])
+            if not np.asarray(jax.device_get(finite)).all():
+                bad_terminal = np.asarray(jax.device_get(~jnp.all(jnp.isfinite(step.terminal_observation), axis=1)))
+                ids = np.flatnonzero(bad_terminal)
+                detail = {"environment_steps": next_environment_steps, "invalid": {},
+                          "bad_terminal_worlds": ids.tolist(),
+                          "terminated": np.asarray(jax.device_get(step.terminated))[ids].tolist(),
+                          "truncated": np.asarray(jax.device_get(step.truncated))[ids].tolist()}
+                for name, value in arrays.items():
+                    host = np.asarray(jax.device_get(value))
+                    bad = ~np.isfinite(host)
+                    if bad.any():
+                        detail["invalid"][name] = {"shape": list(host.shape),
+                            "indices": np.argwhere(bad)[:32].tolist()}
+                if checkpoint_dir is not None:
+                    (Path(checkpoint_dir) / "nonfinite_transition.json").write_text(json.dumps(detail, indent=2))
+                raise FloatingPointError(f"Non-finite simulator transition: {detail}")
         episode_reference_progress, termination_diagnostics = env.transition_logging_inputs()
         learner, action, learner_metrics = executables.consume_transition(
             learner,
@@ -613,6 +657,22 @@ def _run_training(
 
         if reference_update is not None:
             replacement = reference_update(env, learner, environment_steps, current_stage)
+            if logger is not None and hasattr(reference_update, 'drain_metrics'):
+                upper_metrics = reference_update.drain_metrics()
+                if upper_metrics:
+                    logger.log(upper_metrics, step=environment_steps)
+            from flash_chord.training.reference_update import ReferenceLearnerUpdate
+            if isinstance(replacement, ReferenceLearnerUpdate):
+                learner = replacement.learner
+                replacement = replacement.environment
+                if replacement is None:
+                    # The reference did not change, but the lower best response
+                    # did. Reuse valid replay and resample the pending action.
+                    action, exploration, key = executables.initial_action(
+                        learner.actor.params, learner.actor.batch_stats, learner.replay.size,
+                        learner.observation, learner.exploration, learner.key,
+                    )
+                    learner = learner.replace(exploration=exploration,key=key)
             if replacement is not None:
                 # A reference version changes observations, rewards, reset targets and
                 # action feedforward together. Never retain old n-step/replay rows.
@@ -621,6 +681,8 @@ def _run_training(
                 env = replacement
                 env.set_curriculum(current_stage)
                 observation = jax.device_put(jnp.array(env.reset(), copy=True), jax_device)
+                if hasattr(reference_update, 'audit_initial_state'):
+                    reference_update.audit_initial_state(env.env, 'training_reference_update')
                 context = jax.device_put(jnp.array(env.initial_critic_context, copy=True), jax_device)
                 learner = learner.replace(
                     replay=clear_replay(learner.replay), observation=observation,
@@ -633,12 +695,32 @@ def _run_training(
                 )
                 learner = learner.replace(exploration=exploration, key=key)
 
+        if voc_controller is not None:
+            voc_controller(learner, environment_steps, logger)
+            if hasattr(voc_controller, "index_at"):
+                # A scheduled boundary may coincide with a checkpoint. Apply
+                # the new stage before recording checkpoint VOC metadata.
+                scheduled_index, scheduled_stage = stage_at(environment_steps)
+                if scheduled_index != current_stage_index:
+                    current_stage_index = scheduled_index
+                    current_stage = scheduled_stage
+                    env.set_curriculum(current_stage)
+                    objective_weights = jax.device_put(
+                        np.asarray(current_stage.weights_for(env.objective_term_names), dtype=np.float32),
+                        jax_device,
+                    )
+                    target_voc_scale = jax.device_put(
+                        np.asarray(current_stage.voc_scale, dtype=np.float32), jax_device,
+                    )
+
         should_save = checkpoint_dir is not None and (
             environment_steps >= next_checkpoint or environment_steps == config.total_environment_steps
         )
         if should_save and environment_steps != last_checkpoint_step:
             jax.block_until_ready(learner.global_update_step)
             checkpoint_start = time.perf_counter()
+            if hasattr(reference_update, 'on_checkpoint'):
+                reference_update.on_checkpoint(env, learner, environment_steps)
             curriculum_metadata = {
                 "curriculum_stage": current_stage_index,
                 "voc_scale": current_stage.voc_scale,
@@ -669,6 +751,13 @@ def _run_training(
                     environment_steps=environment_steps,
                     metadata=curriculum_metadata,
                 )
+            # Isolated mixed-reference experiment: pause before checkpoint media
+            # so GPU renderers use this allocation and the exact saved reference.
+            media_hook = os.environ.get("UNIRETARGET_CHECKPOINT_MEDIA")
+            if media_hook:
+                import subprocess
+                import sys
+                subprocess.run([sys.executable, media_hook, str(environment_steps)], check=True)
             last_checkpoint_step = environment_steps
             while next_checkpoint <= environment_steps:
                 next_checkpoint += checkpoint_interval
@@ -688,6 +777,7 @@ def run_training(
     checkpoint_metadata: Mapping[str, object] | None = None,
     progress: TrainingProgress | None = None,
     reference_update=None,
+    voc_controller=None,
 ) -> LearnerState:
     """Run FlashSAC and always close an attached external metric sink."""
     try:
@@ -701,6 +791,7 @@ def run_training(
             checkpoint_metadata=checkpoint_metadata,
             progress=progress,
             reference_update=reference_update,
+            voc_controller=voc_controller,
         )
     finally:
         if logger is not None:

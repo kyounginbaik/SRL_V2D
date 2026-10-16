@@ -185,6 +185,7 @@ class DeviceRobotReference:
     wrist_quat_w: wp.array
     arm_joint_pos: wp.array
     finger_joint_pos: wp.array
+    reference_world_count: int = 1
 
     @classmethod
     def build(

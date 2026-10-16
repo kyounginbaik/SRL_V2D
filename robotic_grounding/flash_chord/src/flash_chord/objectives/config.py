@@ -167,6 +167,7 @@ class ObjectiveConfig:
     force_closure: ForceClosureObjectiveTermConfig = field(
         default_factory=lambda: ForceClosureObjectiveTermConfig(weight=0.0, enabled=False)
     )
+    hand_keypoint_palm_weight: float = 1.0
     hand_keypoint_frame: HandKeypointFrame = "dp"
     object_keypoint_mode: str = "axis6"
     object_keypoint_count: int = 500
@@ -180,6 +181,8 @@ class ObjectiveConfig:
     sides: tuple[str, ...] = ("right", "left")
 
     def __post_init__(self) -> None:
+        if not math.isfinite(self.hand_keypoint_palm_weight) or self.hand_keypoint_palm_weight <= 0:
+            raise ValueError("Hand keypoint palm weight must be finite and positive")
         if self.object_keypoint_mode not in ("axis6", "mesh_surface"):
             raise ValueError(
                 "object_keypoint_mode must be 'axis6' or 'mesh_surface', "

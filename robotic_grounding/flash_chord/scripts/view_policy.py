@@ -304,6 +304,8 @@ class FlashSACPolicyViewer(ViewerApp):
             device=device,
         )
 
+        self._track3_samples = []
+        self._track3_frames = []
         self.env = env
         self.scene = scene
         self.reference = reference
@@ -341,6 +343,20 @@ class FlashSACPolicyViewer(ViewerApp):
             )
         action_frame = self._next_action_frame
         transition = self.jax_env.step(action)
+        # Match evaluate_policy: record post-action physics against the action's
+        # reference frame, before explicit end-of-episode reset can erase it.
+        recording = os.environ.get("UNIRETARGET_POSE_RECORDING")
+        if recording:
+            from pathlib import Path
+            ids = self.env.command.body_ids_w.numpy().reshape(-1)
+            poses = self.env.state_0.body_q.numpy()[ids].reshape(self.env.world_count, -1, 7)
+            self._track3_samples.append(poses.copy())
+            self._track3_frames.append(action_frame)
+            if len(self._track3_samples) == int(self.args.config.viewer.num_frames):
+                target = Path(recording)
+                target.parent.mkdir(parents=True, exist_ok=True)
+                np.savez_compressed(target, achieved_pose_w=np.stack(self._track3_samples),
+                    frame_indices=self._track3_frames, voc_scale=float(self.env.voc_scale.numpy()[0]))
         reset_observation, explicit_reset = _reset_completed_worlds(self.env, self.evaluation)
         self.observation = (
             transition.observation if reset_observation is None else jnp.array(reset_observation, copy=True)
