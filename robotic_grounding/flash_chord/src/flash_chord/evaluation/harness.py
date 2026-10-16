@@ -230,6 +230,26 @@ def _evaluation_curriculum_stage(
     return replace(stage, voc_scale=0.0)
 
 
+def _checkpoint_curriculum_stage(training, metadata, algorithm):
+    """Recover the actual saved stage, including independently indexed VOC gates."""
+    if algorithm == "flash_sac":
+        if "curriculum_stage" not in metadata:
+            raise ValueError("FlashSAC checkpoint is missing its curriculum stage")
+        stage_index = int(metadata["curriculum_stage"])
+        if stage_index < 0:
+            raise ValueError("checkpoint curriculum stage must be nonnegative")
+        if "curriculum_stage_json" in metadata:
+            # An adaptive VOC index need not index the fixed training ladder.
+            return CurriculumStage(**json.loads(metadata["curriculum_stage_json"]))
+        if stage_index >= len(training.curriculum.stages):
+            raise ValueError("checkpoint stage is outside its curriculum and has no saved stage snapshot")
+    else:
+        if "iteration" not in metadata:
+            raise ValueError("PPO checkpoint is missing its completed iteration")
+        stage_index = training.curriculum.stage_index(max(int(metadata["iteration"]) - 1, 0))
+    return training.curriculum.stages[stage_index]
+
+
 def _termination_blocks(config: Mapping[str, Any]) -> list[dict[str, Any]]:
     blocks = [config["env"]["termination"]]
     top_level = config.get("termination")
@@ -387,15 +407,8 @@ def evaluate_checkpoint(
     env.capture_step()
     jax_env = WarpRLEnv(env, publish_diagnostics=True, publish_step_metrics=True)
     if training.curriculum is not None:
-        if algorithm == "flash_sac":
-            if "curriculum_stage" not in metadata:
-                raise ValueError("FlashSAC checkpoint is missing its curriculum stage")
-            stage_index = int(metadata["curriculum_stage"])
-        else:
-            if "iteration" not in metadata:
-                raise ValueError("PPO checkpoint is missing its completed iteration")
-            stage_index = training.curriculum.stage_index(max(int(metadata["iteration"]) - 1, 0))
-        jax_env.set_curriculum(_evaluation_curriculum_stage(training.curriculum.stages[stage_index], reset_mode))
+        stage = _checkpoint_curriculum_stage(training, metadata, algorithm)
+        jax_env.set_curriculum(_evaluation_curriculum_stage(stage, reset_mode))
 
     # PPO template creation resets the environment. Restore the checkpoint before the final,
     # explicit reset so evaluation never inherits ReconBody's sampled-reset settling hold.

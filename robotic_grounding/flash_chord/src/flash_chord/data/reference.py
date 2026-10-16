@@ -262,6 +262,22 @@ class HandPoseReference(Reference, Protocol):
         ...
 
 
+def hand_validity(reference, sides: tuple[str, ...]) -> np.ndarray:
+    """Observed hand-reference frames in requested order; legacy inputs are valid.
+
+    Finite held poses can provide continuous control targets without constituting
+    observed supervision. Keep this optional capability outside the base protocol.
+    """
+    values = []
+    for side in sides:
+        mask = (np.asarray(reference.hand_valid(side)) if hasattr(reference, "hand_valid")
+                else np.ones(reference.num_frames, dtype=bool))
+        if mask.shape != (reference.num_frames,) or not np.isin(mask, (0, 1)).all():
+            raise ValueError(f"{side} hand validity must be a binary vector of length {reference.num_frames}")
+        values.append(mask.astype(bool))
+    return np.ascontiguousarray(np.stack(values, axis=1))
+
+
 @runtime_checkable
 class NamedRobotReference(Reference, Protocol):
     """Whole-robot motion represented by named scalar joint coordinates."""

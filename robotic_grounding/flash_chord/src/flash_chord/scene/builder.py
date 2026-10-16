@@ -504,7 +504,12 @@ def build_scene(
         preserve_bottom_height=support is not None or collision.ground,
     )
     if collision.ground:
-        builder.add_ground_plane(cfg=replace(builder.default_shape_cfg, mu=float(contact_friction)))
+        ground_cfg = replace(builder.default_shape_cfg, mu=float(contact_friction))
+        if collision.ground_plane is None:
+            builder.add_ground_plane(cfg=ground_cfg)
+        else:
+            builder.add_shape_plane(plane=collision.ground_plane, width=0.0, length=0.0,
+                                    cfg=ground_cfg, label="ground_plane")
     model = builder.finalize()
     return Scene(
         model=model,

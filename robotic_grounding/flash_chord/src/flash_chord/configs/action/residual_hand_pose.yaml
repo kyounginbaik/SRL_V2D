@@ -8,6 +8,8 @@ wrist_pos_clip: 0.2
 wrist_ori_clip: 1.0
 finger_joint_pos_clip: 1.0
 ema: 0.3
+wrist_residual_linear_speed_limit_m_s: null
+wrist_residual_angular_speed_limit_rad_s: null
 wrist_kp: 25.0
 wrist_tau_max: 45.0
 delay:

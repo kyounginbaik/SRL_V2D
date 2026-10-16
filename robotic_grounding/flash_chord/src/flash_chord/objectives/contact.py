@@ -123,6 +123,9 @@ def contact_wrench_support_objective(
     n_hands: int,
     n_bodies: int,
     n_basis: int,
+    timestep: wp.array(dtype=wp.int32),
+    num_frames: int,
+    hand_valid: wp.array(dtype=wp.int32),
     tolerance: float,
     var: float,
     objective: wp.array(dtype=wp.float32),  # [W] out
@@ -130,9 +133,12 @@ def contact_wrench_support_objective(
     """Tolerance-band match of cur vs cmd supports, gated by both active; mean over basis dirs / bodies /
     active hands."""
     w = wp.tid()
+    frame = wp.clamp(timestep[w], 0, num_frames-1)
     hand_sum = float(0.0)
     n_active_hands = float(0.0)
     for h in range(n_hands):
+        if hand_valid[frame*n_hands+h] == 0:
+            continue
         body_sum = float(0.0)
         n_active_bodies = float(0.0)
         for b in range(n_bodies):
@@ -171,14 +177,20 @@ def missed_contact_penalty(
     n_hands: int,
     n_bodies: int,
     n_basis: int,
+    timestep: wp.array(dtype=wp.int32),
+    num_frames: int,
+    hand_valid: wp.array(dtype=wp.int32),
     penalty: wp.array(dtype=wp.float32),  # [W] out
 ) -> None:
     """Per active hand: fraction of commanded basis directions per body that the agent failed to cover,
     averaged over commanded-active bodies; summed over hands / active hands."""
     w = wp.tid()
+    frame = wp.clamp(timestep[w], 0, num_frames-1)
     hand_sum = float(0.0)
     n_active_hands = float(0.0)
     for h in range(n_hands):
+        if hand_valid[frame*n_hands+h] == 0:
+            continue
         body_sum = float(0.0)
         n_active_bodies = float(0.0)
         for b in range(n_bodies):
@@ -209,13 +221,19 @@ def unintended_contact_penalty(
     n_hands: int,
     n_bodies: int,
     n_basis: int,
+    timestep: wp.array(dtype=wp.int32),
+    num_frames: int,
+    hand_valid: wp.array(dtype=wp.int32),
     penalty: wp.array(dtype=wp.float32),  # [W] out
 ) -> None:
     """Per hand: fraction of bodies with contact the reference doesn't ask for (binary) + mean squared
     support on those bodies (continuous); summed over hands (no hand normalization)."""
     w = wp.tid()
+    frame = wp.clamp(timestep[w], 0, num_frames-1)
     total = float(0.0)
     for h in range(n_hands):
+        if hand_valid[frame*n_hands+h] == 0:
+            continue
         unintended_count = float(0.0)
         support_sum = float(0.0)
         n_inactive = float(0.0)
@@ -249,14 +267,20 @@ def force_closure_objective(
     n_hands: int,
     n_bodies: int,
     n_basis: int,
+    timestep: wp.array(dtype=wp.int32),
+    num_frames: int,
+    hand_valid: wp.array(dtype=wp.int32),
     min_support: float,
     objective: wp.array(dtype=wp.float32),
 ) -> None:
     """Reward per-body wrench-direction coverage on commanded-active hands."""
     w = wp.tid()
+    frame = wp.clamp(timestep[w], 0, num_frames-1)
     hand_sum = float(0.0)
     n_active_hands = float(0.0)
     for h in range(n_hands):
+        if hand_valid[frame*n_hands+h] == 0:
+            continue
         body_sum = float(0.0)
         n_active_bodies = float(0.0)
         for b in range(n_bodies):

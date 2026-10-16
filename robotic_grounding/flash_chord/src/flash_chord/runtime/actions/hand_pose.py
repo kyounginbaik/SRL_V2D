@@ -112,6 +112,11 @@ class ActionConfig:
     wrist_ori_clip: float = 1.0
     finger_joint_pos_clip: float = 1.0
     ema: float = 0.3
+    # Optional limits on changes in the reference-relative wrist target. The
+    # angular residual uses RPY coordinates, so this limits their vector norm,
+    # not the absolute physical angular velocity of the hand.
+    wrist_residual_linear_speed_limit_m_s: float | None = None
+    wrist_residual_angular_speed_limit_rad_s: float | None = None
     wrist_kp: float = 25.0
     wrist_tau_max: float = 45.0
     delay: TargetDelayConfig = field(default_factory=TargetDelayConfig)
@@ -205,6 +210,15 @@ class ActionLayout:
         )
 
 
+@wp.func
+def limit_residual_change(value: wp.vec3, previous: wp.vec3, maximum_delta: float) -> wp.vec3:
+    delta = value - previous
+    length = wp.length(delta)
+    if maximum_delta > 0.0 and length > maximum_delta:
+        return previous + delta * (maximum_delta / length)
+    return value
+
+
 @wp.kernel
 def process_residual_action(
     action: wp.array(dtype=wp.float32),
@@ -231,6 +245,8 @@ def process_residual_action(
     scale: wp.array(dtype=wp.float32),
     clip: wp.array(dtype=wp.float32),
     ema: float,
+    wrist_linear_step_limit: float,
+    wrist_angular_step_limit: float,
     raw_action: wp.array(dtype=wp.float32),
     filtered_action: wp.array(dtype=wp.float32),
     processed_target: wp.array(dtype=wp.float32),
@@ -243,21 +259,39 @@ def process_residual_action(
     action_base = world * action_dim
     l2 = float(0.0)
     rate_l2 = float(0.0)
-    for i in range(action_dim):
-        index = action_base + i
-        value = map_residual_input(action[index], input_mapping, input_scale[i])
-        previous_raw = raw_action[index]
-        l2 += value * value
-        delta = value - previous_raw
-        rate_l2 += delta * delta
-        raw_action[index] = value
-        filtered_action[index] = filter_residual(
-            value,
-            filtered_action[index],
-            scale[i],
-            clip[i],
-            ema,
-        )
+    for hand in range(num_hands):
+        start = hand_action_starts[hand]
+        base = action_base + start
+        previous_position = wp.vec3(filtered_action[base], filtered_action[base + 1], filtered_action[base + 2])
+        previous_orientation = wp.vec3(filtered_action[base + 3], filtered_action[base + 4], filtered_action[base + 5])
+        for local in range(6 + finger_counts[hand]):
+            i = start + local
+            index = action_base + i
+            value = map_residual_input(action[index], input_mapping, input_scale[i])
+            previous_raw = raw_action[index]
+            l2 += value * value
+            delta = value - previous_raw
+            rate_l2 += delta * delta
+            raw_action[index] = value
+            filtered_action[index] = filter_residual(
+                value, filtered_action[index], scale[i], clip[i], ema,
+            )
+        # Apply after rational mapping/EMA: normalized endpoint inputs can
+        # otherwise jump straight to the amplitude clip even with smoothing.
+        if wrist_linear_step_limit > 0.0:
+            position = limit_residual_change(
+                wp.vec3(filtered_action[base], filtered_action[base + 1], filtered_action[base + 2]),
+                previous_position, wrist_linear_step_limit,
+            )
+            for axis in range(3):
+                filtered_action[base + axis] = position[axis]
+        if wrist_angular_step_limit > 0.0:
+            orientation = limit_residual_change(
+                wp.vec3(filtered_action[base + 3], filtered_action[base + 4], filtered_action[base + 5]),
+                previous_orientation, wrist_angular_step_limit,
+            )
+            for axis in range(3):
+                filtered_action[base + 3 + axis] = orientation[axis]
     action_l2[world] = l2
     action_rate_l2[world] = rate_l2
 
@@ -368,6 +402,8 @@ class ActionBuffers:
     action_l2: wp.array
     action_rate_l2: wp.array
     ema: float
+    wrist_linear_step_limit: float
+    wrist_angular_step_limit: float
 
     @classmethod
     def build(
@@ -381,6 +417,12 @@ class ActionBuffers:
         device=None,
     ) -> "ActionBuffers":
         config = config or ActionConfig()
+        step_limits = []
+        for name in ("wrist_residual_linear_speed_limit_m_s", "wrist_residual_angular_speed_limit_rad_s"):
+            value = getattr(config, name)
+            if value is not None and (isinstance(value, bool) or not np.isfinite(value) or value <= 0.0):
+                raise ValueError(f"{name} must be None or positive and finite, got {value}")
+            step_limits.append(0.0 if value is None else float(value) / reference.fps)
         for name in (
             "wrist_pos_scale",
             "wrist_ori_scale",
@@ -445,6 +487,8 @@ class ActionBuffers:
             action_l2=wp.zeros(world_count, dtype=wp.float32, device=device),
             action_rate_l2=wp.zeros(world_count, dtype=wp.float32, device=device),
             ema=mapping.ema,
+            wrist_linear_step_limit=step_limits[0],
+            wrist_angular_step_limit=step_limits[1],
         )
 
     def process(self, action: wp.array, timestep: wp.array, state=None) -> None:
@@ -478,6 +522,8 @@ class ActionBuffers:
                 self.scale,
                 self.clip,
                 self.ema,
+                self.wrist_linear_step_limit,
+                self.wrist_angular_step_limit,
             ],
             outputs=[
                 self.raw_action,

@@ -16,6 +16,7 @@ from flash_chord.lifecycle.reset import ReferenceResetTable, reset_worlds
 from flash_chord.lifecycle.termination import (
     Termination,
     TerminationSpec,
+    TrackingTermination,
     TrackingTerminationConfig,
 )
 from flash_chord.objectives.composition import Objective, ObjectiveSpec
@@ -221,6 +222,8 @@ class BaseEnv:
             )
         if not isinstance(termination, Termination):
             raise TypeError("termination must implement the Termination protocol")
+        if isinstance(termination, TrackingTermination):
+            termination.bind_reference_validity(reference)
         self.termination = termination
         if objective is None and self.config.objective is not None:
             if not isinstance(self.config.objective, ObjectiveSpec):

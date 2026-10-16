@@ -110,7 +110,8 @@ def validate(run, config, manifest, rows):
 
     train = Path(run)/'training'
     assert config['engine'] == manifest['engine'] == 'wrench_hypergradient'
-    assert manifest['upper_action_dimension'] == 56
+    expected_upper_dim = 12 if config.get('upper_edit_scope') == 'wrists_only' else 56
+    assert manifest['upper_action_dimension'] == config['upper_action_dimension'] == expected_upper_dim
     assert manifest['nominal_candidates_per_window'] == 1
     assert manifest['adaptation_worlds'] == config['worlds']
     assert manifest['adaptation']['acceptance_mode'] == config['adaptation_acceptance_mode'] == 'finite_response'
@@ -150,7 +151,7 @@ def validate(run, config, manifest, rows):
         assert tested, 'All windows skipped: upper proposal was not exercised'
         for candidate in tested:
             validate_current_proposal(row, candidate)
-            assert np.asarray(candidate['theta']).shape == (56,)
+            assert np.asarray(candidate['theta']).shape == (expected_upper_dim,)
             assert _finite(candidate)
             for key in ('gradient_norm', 'direct_gradient_norm', 'response_gradient_norm'):
                 assert candidate[key] >= 0

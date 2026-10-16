@@ -22,7 +22,7 @@ from omegaconf import DictConfig
 from flash_chord.configuration import instantiate_typed, resolve_path
 from flash_chord.embodiments.base import Embodiment
 from flash_chord.envs.rl import RLEnv, RLEnvConfig
-from flash_chord.evaluation.harness import checkpoint_training_algorithm
+from flash_chord.evaluation.harness import _checkpoint_curriculum_stage, checkpoint_training_algorithm
 from flash_chord.evaluation.view import PolicyViewConfig
 from flash_chord.runtime.jax import to_jax
 from flash_chord.scene.collision import CollisionPolicy
@@ -274,14 +274,9 @@ class FlashSACPolicyViewer(ViewerApp):
 
         stage_index = None
         if training.curriculum is not None:
-            if "curriculum_stage" not in checkpoint_metadata:
-                raise ValueError("FlashSAC policy checkpoint is missing its curriculum stage")
+            saved_stage = _checkpoint_curriculum_stage(training, checkpoint_metadata, "flash_sac")
             stage_index = int(checkpoint_metadata["curriculum_stage"])
-            if not 0 <= stage_index < len(training.curriculum.stages):
-                raise ValueError(
-                    f"checkpoint curriculum stage {stage_index} is outside [0, {len(training.curriculum.stages)})"
-                )
-            stage = replace(training.curriculum.stages[stage_index], voc_scale=env_config.voc_scale)
+            stage = replace(saved_stage, voc_scale=env_config.voc_scale)
             jax_env.set_curriculum(stage)
 
         if evaluation.reset_mode == "explicit":

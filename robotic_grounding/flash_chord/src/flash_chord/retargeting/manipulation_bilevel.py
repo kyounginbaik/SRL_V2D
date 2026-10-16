@@ -319,6 +319,8 @@ class ManipulationBilevel:
                 action_transform=self.training.network.action_transform, action_scale=self.training.network.action_scale)
         positions, quats, indices, obj_errors, angles, wrench_errors = [], [], [], [], [], []
         upper_wrench = self.new_wrench_accumulator(env) if hasattr(self, 'new_wrench_accumulator') else None
+        from flash_chord.data.reference import hand_validity
+        support_hand_validity = hand_validity(self.setup.reference, tuple(env.objective.config.sides))
         if self.contact_proximity is not None:
             proximity_frame_sums, proximity_frame_counts = [], []
             proximity_sums = np.zeros((env.world_count, len(self.contact_proximity.sides),
@@ -394,8 +396,16 @@ class ManipulationBilevel:
                 orientation_frames.append(frame_angle.reshape(env.world_count,-1).mean(axis=1))
             current = env.objective.current_wrench_support.numpy().reshape(env.world_count,-1)
             target = env.objective.wrench_support_target.numpy().reshape(env.world_count,-1)
+            observed_hands = support_hand_validity[np.clip(frame, 0, self.setup.reference.num_frames-1)]
             if upper_wrench is not None:
-                upper_wrench.add(current, target)
+                upper_wrench.add(current, target, hand_valid=observed_hands)
+            # Legacy feedback summaries use the same observed labels, while
+            # keeping raw simulator supports and immutable targets untouched.
+            support_shape = (env.world_count, env.objective.num_hands,
+                             env.objective.num_bodies, env.objective.num_basis)
+            observed = observed_hands[..., None, None]
+            current = np.where(observed, current.reshape(support_shape), 0.).reshape(env.world_count, -1)
+            target = np.where(observed, target.reshape(support_shape), 0.).reshape(env.world_count, -1)
             active = np.mean(target**2, axis=1) > 1e-8
             if np.any(active):
                 wrench_errors.extend((np.mean((current[active]-target[active])**2,axis=1) /

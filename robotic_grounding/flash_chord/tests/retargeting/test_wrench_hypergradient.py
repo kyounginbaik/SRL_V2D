@@ -87,16 +87,20 @@ def make_network_case():
     return config, learner, batch
 
 
-def test_real_flashsac_actor_unroll_updates_upper_and_has_nonzero_response_gradient():
+@pytest.mark.parametrize('upper_action_dim', [12, 56])
+def test_real_flashsac_actor_unroll_updates_upper_and_has_nonzero_response_gradient(upper_action_dim):
     config, learner, batch = make_network_case()
     settings = HypergradientConfig(inner_steps=2, inner_rate=.01, upper_steps=1,
                                    critic_updates=2, batch_size=8)
-    engine = WrenchHypergradient(config, 12, 3, 7, settings, 12)
+    engine = WrenchHypergradient(config, 12, 3, 7, settings, 12, upper_action_dim=upper_action_dim)
     # Known differentiable observation contract; production uses native FK.
     relabel = lambda obs, frame, theta: obs.at[:, :3].add(theta[:3])
     batches = jax.tree.map(lambda x: jnp.stack([x, x]), batch)
     before = jax.tree.map(np.array, engine.upper_params)
     theta, params, control, metrics = engine.propose(jnp.ones(7), learner, batches, batch, relabel)
+    assert theta.shape == (upper_action_dim,)
+    assert engine.upper_model.apply({'params': engine.upper_params}, jnp.ones((1, 7))).shape == (1, upper_action_dim)
+    assert engine._action(params, learner.actor.batch_stats, batch['observation']).shape == (8, 56)
     assert metrics['gradient_norm'] > 1e-8
     assert metrics['response_gradient_norm'] > 1e-8
     assert metrics['inner_optimizer'] == 'adam'
@@ -326,9 +330,10 @@ def test_invalid_configuration_rejected(kwargs):
         HypergradientConfig(**kwargs)
 
 
-def test_online_critic_fit_uses_only_current_generation_training_and_requested_updates():
+@pytest.mark.parametrize('batch_size', [8, 16])
+def test_online_critic_fit_uses_only_current_generation_training_and_requested_updates(batch_size):
     config, learner, base = make_network_case()
-    engine = WrenchHypergradient(config, 12, 3, 7, HypergradientConfig(batch_size=8), 11)
+    engine = WrenchHypergradient(config, 12, 3, 7, HypergradientConfig(batch_size=batch_size), 11)
     replay = ReferenceReplay(64)
     rows = trial_rows(np.arange(32), np.ones(32), np.ones(32))
     rows['observation'] = np.tile(np.asarray(base['observation']), (4, 1))
@@ -338,6 +343,13 @@ def test_online_critic_fit_uses_only_current_generation_training_and_requested_u
     # Large stale/baseline/cutoff labels must not enter online TD fitting.
     rows['cost'][:8] = 1.e6; rows['cost'][24:] = 1.e6; rows['cost'][10] = 1.e6
     replay.add(0, **rows)
+    # The optimized path must use exactly the historical sampling sequence,
+    # including a fixed held-out split and replacement for undersized batches.
+    legacy_rng = np.random.default_rng(3)
+    filters = dict(source=0, generation=1, critic_valid=True)
+    _, held_ids = replay.sample(legacy_rng, 3, **filters)
+    expected_batches = [np.asarray(replay.sample(legacy_rng, batch_size,
+        exclude=held_ids, **filters)[0]['frame']) for _ in range(4)]
     optimized = []
     update = engine._critic_update
     def capture(*args):
@@ -355,6 +367,9 @@ def test_online_critic_fit_uses_only_current_generation_training_and_requested_u
     assert report['critic_valid_rows'] == 15 and report['critic_cutoff_rows'] == 1
     assert report['critic_heldout_td_mae'] < 10
     assert actor_policy_digest(learner) == before
+    for actual, expected in zip(optimized, expected_batches):
+        np.testing.assert_array_equal(actual, expected)
+        assert set(actual).isdisjoint(held_ids)
 
 
 def make_complete_trial(reference, policy, costs):

@@ -1,4 +1,4 @@
-"""One contact-focused 56D reference increment per search round."""
+"""One contact-focused full-hand or wrist reference increment per search round."""
 import json
 import numpy as np
 from flash_chord.retargeting.parallel_editor import ParallelReferenceEditor
@@ -41,14 +41,15 @@ def confirmation_contact_gate(editor, candidate, baseline):
 class LocalReferenceEditor(ParallelReferenceEditor):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        if self.joint_basis.shape[0] != 56:
-            raise ValueError('local editor requires floating bimanual full-hand 56D controls')
+        dimensions = 12 if self.options.get('edit_scope') == 'wrists_only' else 56
+        if self.joint_basis.shape[0] != dimensions:
+            raise ValueError('local editor requires floating bimanual controls matching its edit scope')
         self.visits = np.zeros(self.basis.shape[1], int)
         self.local_bin = 6
         self.basis = local_envelope(self.baseline.num_frames, self.baseline.fps, 6., 7.)[:, None]
         p = self.output.parent/'ttsa_manifest.json'
         manifest = json.loads(p.read_text())
-        manifest.update(upper_action_dimension=56, temporal_modes=1,
+        manifest.update(upper_action_dimension=dimensions, temporal_modes=1,
             proposal_projection='local_increment_cumulative_bounds', publication_blend=1.,
             local_shoulder_seconds=.5, upper_updates_per_batch=self.options.get('upper_updates', 2))
         p.write_text(json.dumps(manifest, indent=2)+'\n')

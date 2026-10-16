@@ -108,6 +108,7 @@ class ReplayRunner:
             num_objects=self.command.layout.num_bodies,
             device=self.device,
         )
+        self.termination.bind_reference_validity(reference)
         self.reset_table = ReferenceResetTable.build(scene, reference, device=self.device)
 
     def reset(self, frame_id: int = 0) -> None:

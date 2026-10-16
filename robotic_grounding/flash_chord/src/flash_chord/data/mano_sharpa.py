@@ -53,6 +53,7 @@ class ManoSharpaReference:
     _object_assets: tuple[ObjectAssetSpec, ...]
     _frame_pos_w: dict[str, np.ndarray]  # side -> (T, F, 3) robot task-frame positions
     _frame_names: dict[str, list[str]]  # side -> F robot task-frame names
+    _hand_valid: dict[str, np.ndarray] | None = None  # side -> (T,) observed, not held, poses
 
     @property
     def num_frames(self) -> int:
@@ -81,6 +82,10 @@ class ManoSharpaReference:
 
     def finger_joint_names(self, side: str) -> list[str]:
         return self._finger_joint_names[side]
+
+    def hand_valid(self, side: str) -> np.ndarray:
+        return (np.ones(self.num_frames, dtype=bool) if self._hand_valid is None
+                else self._hand_valid[side])
 
     def object_body_pos_w(self) -> np.ndarray:
         return self._object_body_pos_w
@@ -148,6 +153,8 @@ class ManoSharpaReference:
             _contact_normal_w={side: sliced(values) for side, values in self._contact_normal_w.items()},
             _contact_part_ids={side: sliced(values) for side, values in self._contact_part_ids.items()},
             _frame_pos_w={side: sliced(values) for side, values in self._frame_pos_w.items()},
+            _hand_valid=None if self._hand_valid is None else
+                {side: sliced(values) for side, values in self._hand_valid.items()},
         )
 
 
@@ -249,8 +256,15 @@ def load_mano_sharpa(
         return _nearest(a, t_src, t_tgt) if resample and a is not None else a
 
     wrist_pos, wrist_quat, finger, finger_names, c_pos, c_norm, c_pid = {}, {}, {}, {}, {}, {}, {}
-    frame_pos, frame_names = {}, {}
+    frame_pos, frame_names, validity = {}, {}, {}
     for side in _SIDES:
+        mask_name = f"mano_{side}_valid"
+        mask = np.asarray(cells[mask_name]) if cells.get(mask_name) is not None else np.ones(num_frames, bool)
+        if mask.shape != (num_frames,) or not np.isin(mask, (0, 1)).all():
+            raise ValueError(f"ManoSharpaData {mask_name} must be a binary vector of length {num_frames}")
+        # Interpolated hand supervision is valid only when every contributing
+        # source sample was observed. Pose arrays themselves remain untouched.
+        validity[side] = np.ascontiguousarray(lerp(mask.astype(np.float32)) >= 1.0 - 1.e-7)
         wp_ = _arr(cells, f"robot_{side}_wrist_position")
         wq_ = _arr(cells, f"robot_{side}_wrist_wxyz")
         fj = _arr(cells, f"robot_{side}_finger_joints")
@@ -348,6 +362,7 @@ def load_mano_sharpa(
         _object_mesh_radius=object_mesh_radius,
         _object_assets=object_assets,
         _frame_pos_w=frame_pos,
+        _hand_valid=validity,
         _frame_names=frame_names,
     )
 

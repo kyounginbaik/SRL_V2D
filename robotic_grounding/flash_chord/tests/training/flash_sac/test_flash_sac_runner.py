@@ -340,7 +340,7 @@ def test_runner_uses_environment_step_curriculum_logs_and_saves(tmp_path, monkey
     assert logger.checkpoints[-1][2]["immediate_first_frame_probability"] == 0.5
 
 
-def test_reference_capture_hooks_run_before_donation_and_publish_metrics():
+def test_reference_capture_hooks_run_before_donation_and_publish_metrics(tmp_path):
     _, jnp = _dependencies()
     from flash_chord.training.flash_sac.runner import run_training
 
@@ -348,6 +348,10 @@ def test_reference_capture_hooks_run_before_donation_and_publish_metrics():
         def __init__(self):
             self.before, self.after, self.updates = [], [], []
             self.metrics = {}
+            self.stage_at_update, self.stage_at_checkpoint = [], []
+
+        def set_curriculum_metadata(self, index, stage):
+            self.current_stage = (index, stage.voc_scale)
 
         def before_training_step(self, env, learner, action, step):
             self.before.append((step, np.array(learner.observation), np.array(action)))
@@ -357,7 +361,12 @@ def test_reference_capture_hooks_run_before_donation_and_publish_metrics():
 
         def __call__(self, env, learner, step, stage):
             self.updates.append(step)
+            self.stage_at_update.append((step, *self.current_stage))
+            assert self.current_stage[1] == stage.voc_scale
             self.metrics = {'hypergradient/replay_rows': len(self.after)*env.world_count}
+
+        def on_checkpoint(self, env, learner, step):
+            self.stage_at_checkpoint.append((step, *self.current_stage))
 
         def drain_metrics(self):
             result, self.metrics = self.metrics, {}
@@ -365,10 +374,13 @@ def test_reference_capture_hooks_run_before_donation_and_publish_metrics():
 
     observer, logger = Observer(), _Logger()
     learner = run_training(_Env(jnp), replace(_config(), device='cpu'), logger=logger,
-                           reference_update=observer, log_interval=2)
+                           reference_update=observer, log_interval=2, checkpoint_dir=tmp_path,
+                           checkpoint_metadata=_checkpoint_metadata())
     assert int(learner.environment_steps) == 8
     assert [row[0] for row in observer.before] == [0, 2, 4, 6]
     assert observer.updates == [2, 4, 6, 8]
+    assert observer.stage_at_update == [(2,0,1.), (4,0,1.), (6,1,.25), (8,1,.25)]
+    assert observer.stage_at_checkpoint == [(4,0,1.), (8,1,.25)]
     for index, (_, observation, action) in enumerate(observer.before):
         np.testing.assert_array_equal(observation, float(index))
         assert np.isfinite(action).all()

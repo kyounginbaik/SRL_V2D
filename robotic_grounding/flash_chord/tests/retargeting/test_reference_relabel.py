@@ -2,6 +2,7 @@ from types import SimpleNamespace as NS
 import jax
 import jax.numpy as jnp
 import numpy as np
+import pytest
 from scipy.spatial.transform import Rotation
 from flash_chord.retargeting.reference_relabel import ReferenceRelabel
 
@@ -45,7 +46,8 @@ def test_relabel_derivative_matches_independent_rotation_and_finger_change():
     assert np.isfinite(np.asarray(derivative)).all()
 
 
-def test_native_sharpa_fk_linearization_matches_a_fresh_bounded_edit():
+@pytest.mark.parametrize('wrists_only', [False, True])
+def test_native_sharpa_fk_linearization_matches_a_fresh_bounded_edit(wrists_only, monkeypatch, tmp_path):
     import newton
     import warp as wp
     from flash_chord.assets import SHARPAWAVE_URDF_DIR
@@ -73,13 +75,21 @@ def test_native_sharpa_fk_linearization_matches_a_fresh_bounded_edit():
                        lower=lower, upper=upper)
         rows = [np.eye(layout.num_joint_q)[i] for i in qids]
         rows += [np.eye(layout.num_joint_q)[i+a] for i, _ in balls for a in range(3)]
+        wrist_ids = {qid for name, qid in zip(layout.scalar_joints.names, qids)
+                     if name.endswith(('wrist_x', 'wrist_y', 'wrist_z'))}
+        wrist_ids.update(i+a for i, _ in balls for a in range(3))
+        if wrists_only:
+            rows = [row for row in rows if set(np.flatnonzero(row)).issubset(wrist_ids)]
+        dimensions = 12 if wrists_only else 56
+        assert len(rows) == dimensions
         editor = NS(projector=projector, baseline=binding, binding=binding, joint_basis=np.asarray(rows),
                     basis=np.array([[0.], [1.], [0.]]), options={})
         editor.candidate_joint_q = lambda a: local_candidate(editor, a)
         simple, _ = fixture()
         strategy = NS(layout=NS(**vars(simple.layout), sides=('right', 'left')), config=simple.config)
         linear = ReferenceRelabel.from_editor(editor, strategy)
-        theta = np.random.default_rng(3).normal(0, .003, 56).astype(np.float32)
+        assert linear.dimensions == dimensions
+        theta = np.random.default_rng(3).normal(0, .003, dimensions).astype(np.float32)
         actual = reference_values(binding_for_q(editor, editor.candidate_joint_q(theta)), strategy.layout.sides)
         predicted = np.asarray(linear.reference(jnp.arange(3), theta))
         for hand in range(2):
@@ -88,8 +98,49 @@ def test_native_sharpa_fk_linearization_matches_a_fresh_bounded_edit():
         np.testing.assert_allclose(predicted, actual, atol=7e-5, rtol=1e-4)
         np.testing.assert_array_equal(editor.candidate_joint_q(theta)[[0, 2]], q[[0, 2]])
         # Feasible actor output never depends on a subsequently clipped edit.
-        feasible = np.asarray(linear.parameterize(jnp.zeros(56), .25))
+        feasible = np.asarray(linear.parameterize(jnp.zeros(dimensions), .25))
         editor.candidate_joint_q(feasible)
         np.testing.assert_allclose(editor.last_projection_scales, 1., atol=1e-5)
         assert np.all(feasible >= np.asarray(linear.lower))
         assert np.all(feasible <= np.asarray(linear.upper))
+        if wrists_only:
+            finger_ids = [i for i in qids if i not in wrist_ids]
+            np.testing.assert_array_equal(editor.candidate_joint_q(theta)[:, finger_ids], q[:, finger_ids])
+            np.testing.assert_array_equal(actual[:, 14:], np.asarray(linear.values)[:, 14:])
+            np.testing.assert_array_equal(linear.jacobian[:, 14:], 0.)
+        # Exercise every inherited constructor after the expensive shared scene
+        # setup. The parallel base still has several temporal modes here; the
+        # local constructor must collapse those before accepting one 12/56D edit.
+        import json
+        from flash_chord.retargeting.ttsa_editor import TTSAReferenceEditor
+        from flash_chord.retargeting.wrench_hypergradient_editor import WrenchHypergradientEditor
+        from flash_chord.training.flash_sac.config import TrainingConfig, NetworkConfig
+        training = TrainingConfig(world_count=4, network=NetworkConfig(actor_head_mode='residual'))
+        setup = NS(scene=NS(world_count=4), reference=NS())
+        def scene_setup(instance, **kwargs):
+            instance.options = kwargs['options']
+            instance.projector = projector
+            instance.baseline = instance.binding = binding
+            instance.joint_basis = np.asarray(rows)
+            instance.basis = np.ones((3, 2))
+            instance.blend = .25
+            instance.setup = kwargs['setup']
+            instance.eval_config = {}
+            instance.training = training
+            instance.config = {'env': {'reset': {'fixed_initial_state': True, 'voc_decay_steps': 0}}}
+            instance.contact_proximity = None
+            instance.version = 0
+            instance.output = tmp_path/'references'
+            instance.output.mkdir()
+            (tmp_path/'ttsa_manifest.json').write_text('{}')
+        monkeypatch.setattr(TTSAReferenceEditor, '__init__', scene_setup)
+        constructed = WrenchHypergradientEditor(setup=setup, options=dict(
+            edit_scope='wrist' if wrists_only else 'full', study_variant='chunk',
+            eval_worlds=4, upper_trials=4, fixed_start=True, acceptance_mode='local_nominal'))
+        assert constructed.upper_action_dim == dimensions
+        assert constructed.options['edit_scope'] == ('wrists_only' if wrists_only else 'full')
+        assert constructed.basis.shape == (3, 1)
+        manifest = json.loads((tmp_path/'ttsa_manifest.json').read_text())
+        assert manifest['upper_action_dimension'] == dimensions
+        assert manifest['upper_edit_scope'] == constructed.options['edit_scope']
+        constructed.candidate_joint_q(np.zeros(dimensions))

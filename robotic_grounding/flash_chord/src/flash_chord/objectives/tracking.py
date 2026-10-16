@@ -12,7 +12,7 @@ import math
 import numpy as np
 import warp as wp
 
-from flash_chord.data.reference import Reference
+from flash_chord.data.reference import Reference, hand_validity
 from flash_chord.embodiments.base import EmbodimentLayout
 from flash_chord.embodiments.binding import HandKeypointFrame, RobotReferenceBinding
 from flash_chord.objectives.composition import ObjectiveBuffers
@@ -191,24 +191,33 @@ def normalize_tracking_objectives(
     normalize_hand_joints: int,
     hand_keypoint_sum: wp.array(dtype=wp.float32),
     hand_joint_value: wp.array(dtype=wp.float32),
+    timestep: wp.array(dtype=wp.int32),
+    num_frames: int,
+    hand_valid: wp.array(dtype=wp.int32),
     object_keypoints: wp.array(dtype=wp.float32),
     hand_keypoints: wp.array(dtype=wp.float32),
     hand_joint_pos: wp.array(dtype=wp.float32),
 ) -> None:
     """Reduce atomic/object and per-hand values to one scalar per world."""
     world = wp.tid()
+    frame = wp.clamp(timestep[world], 0, num_frames - 1)
+    valid_hands = int(0)
+    for hand in range(num_hands):
+        valid_hands += hand_valid[frame * num_hands + hand]
     if normalize_object != 0:
         object_keypoints[world] /= float(num_bodies)
     if normalize_hand_keypoints != 0:
         total = float(0.0)
         for hand in range(num_hands):
-            total += hand_keypoint_sum[world * num_hands + hand] / float(num_keypoints)
-        hand_keypoints[world] = total / float(num_hands)
+            if hand_valid[frame * num_hands + hand] != 0:
+                total += hand_keypoint_sum[world * num_hands + hand] / float(num_keypoints)
+        hand_keypoints[world] = total / float(wp.max(valid_hands, 1))
     if normalize_hand_joints != 0:
         total = float(0.0)
         for hand in range(num_hands):
-            total += hand_joint_value[world * num_hands + hand]
-        hand_joint_pos[world] = total / float(num_hands)
+            if hand_valid[frame * num_hands + hand] != 0:
+                total += hand_joint_value[world * num_hands + hand]
+        hand_joint_pos[world] = total / float(wp.max(valid_hands, 1))
 
 
 @dataclass
@@ -236,6 +245,7 @@ class TrackingObjective:
     keypoint_body_ids: wp.array
     keypoint_local_pos: wp.array
     finger_q_ids: wp.array
+    hand_valid: wp.array
     ref_hand_keypoints_w: wp.array
     ref_finger_joint_pos: wp.array
     ref_wrench_support: wp.array
@@ -392,6 +402,7 @@ class TrackingObjective:
             keypoint_body_ids=i32(keypoint_body_ids),
             keypoint_local_pos=wp.array(keypoint_local_pos, dtype=wp.vec3, device=device),
             finger_q_ids=i32(finger_q_ids),
+            hand_valid=i32(hand_validity(reference, sides).reshape(-1)),
             ref_hand_keypoints_w=wp.array(hand_keypoints.reshape(-1, 3), dtype=wp.vec3, device=device),
             ref_finger_joint_pos=wp.array(finger_targets.reshape(-1), dtype=wp.float32, device=device),
             ref_wrench_support=wp.array(reference_support.reshape(-1), dtype=wp.float32, device=device),
@@ -717,6 +728,7 @@ class TrackingObjective:
                     self.num_hands,
                     self.num_bodies,
                     self.num_basis,
+                    timestep, self.num_frames, self.hand_valid,
                     self.config.contact_wrench_support.tolerance,
                     self.config.contact_wrench_support.var,
                 ],
@@ -732,6 +744,7 @@ class TrackingObjective:
                     self.num_hands,
                     self.num_bodies,
                     self.num_basis,
+                    timestep, self.num_frames, self.hand_valid,
                 ],
                 outputs=[buffers.missed_contact],
             )
@@ -745,6 +758,7 @@ class TrackingObjective:
                     self.num_hands,
                     self.num_bodies,
                     self.num_basis,
+                    timestep, self.num_frames, self.hand_valid,
                 ],
                 outputs=[buffers.unintended_contact],
             )
@@ -758,6 +772,7 @@ class TrackingObjective:
                     self.num_hands,
                     self.num_bodies,
                     self.num_basis,
+                    timestep, self.num_frames, self.hand_valid,
                     self.config.force_closure.min_support,
                 ],
                 outputs=[buffers.force_closure],
@@ -775,6 +790,9 @@ class TrackingObjective:
                     int(enabled[_HAND_JOINT_POS]),
                     self.hand_keypoint_sum,
                     self.hand_joint_value,
+                    timestep,
+                    self.num_frames,
+                    self.hand_valid,
                 ],
                 outputs=[
                     buffers.object_keypoints,

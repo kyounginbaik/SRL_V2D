@@ -5,7 +5,7 @@ FlashSAC actor/critic. Its lower error is checked, and only evaluated reference
 AND policy pairs can be published. Global neural-RL convergence is not claimed.
 """
 from copy import deepcopy
-from dataclasses import replace
+from dataclasses import asdict, replace
 import json
 import time
 import numpy as np
@@ -168,6 +168,11 @@ class ResponseBilevelEditor(AdaptiveWindowEditor):
                       voc_scale=float(env.object_control_scale.numpy()[0]))
         with (self.output.parent/'initial_state_checks.jsonl').open('a') as stream:
             stream.write(json.dumps(result)+'\n')
+
+    def set_curriculum_metadata(self, stage_index, stage):
+        """Record the runner's actual stage for independently deployable pairs."""
+        self.metadata.update(curriculum_stage=int(stage_index), voc_scale=float(stage.voc_scale),
+            curriculum_stage_json=json.dumps(asdict(stage), sort_keys=True, allow_nan=False))
 
     def _archive_pair(self,binding,learner,p,a,metrics,step,origin,*,save_pair=False):
         if self.demo_archive is None:return None

@@ -2,6 +2,7 @@
 from pathlib import Path
 import sys,json,subprocess,shutil,csv
 import numpy as np
+import pyarrow.parquet as pq
 import newton,warp as wp
 # GL's CPU fallback asks for CUDA-pinned host buffers; use ordinary host buffers
 # on render-only CPU jobs with no CUDA driver. This does not affect FK values.
@@ -33,7 +34,9 @@ if mode=='combine':
  for label in ['initial','current','initial_hands']:
   subprocess.run([sys.executable,__file__,phase,ep,variant,seed,str(version),label],check=True)
 if mode=='combine':sys.exit(0)
-setup=setup_scene(parquet=B/'frozen'/ep/'reference.parquet',control_fps=20.,motion_speed=1.,embodiment=get_embodiment('sharpa_hands')(),collision=CollisionPolicy(),world_count=1,include_support=False,decompose_objects=False,
+reference_fps=float(pq.read_table(B/'frozen'/ep/'reference.parquet',columns=['fps']).to_pylist()[0]['fps'])
+collision=CollisionPolicy(ground_plane=run_config['episode'].get('ground_plane'))
+setup=setup_scene(parquet=B/'frozen'/ep/'reference.parquet',control_fps=reference_fps,motion_speed=1.,embodiment=get_embodiment('sharpa_hands')(),collision=collision,world_count=1,include_support=(B/'frozen'/ep/'assets/support.usda').is_file(),decompose_objects=False,
                   robot_reference_path=str(refit_path) if refit_path else None,
                   robot_reference_sha256=run_config.get('contact_refit_sha256') if refit_path else None)
 s=setup.scene;ref=setup.reference
@@ -50,11 +53,11 @@ state=s.model.state()
 def pose(q,i):
  state.joint_q.assign(q[i].astype(np.float32));newton.eval_fk(s.model,state.joint_q,state.joint_qd,state)
 if mode!='combine':
- cfg=ViewerConfig(backend='mp4',output_path=str(out/f'{mode}.mp4'),num_frames=ref.num_frames,video_fps=20,width=1920,height=1080,headless=True,realtime=False,camera_position=tuple(cam),camera_target=tuple(center))
+ cfg=ViewerConfig(backend='mp4',output_path=str(out/f'{mode}.mp4'),num_frames=ref.num_frames,video_fps=reference_fps,width=1920,height=1080,headless=True,realtime=False,camera_position=tuple(cam),camera_target=tuple(center))
  v=create_viewer(cfg);v.set_model(s.model);configure_camera(v,cfg)
  (out/'projection.json').write_text(json.dumps({'view':v.camera.get_view_matrix().reshape(4,4).transpose().tolist(),'projection':v.camera.get_projection_matrix().reshape(4,4).transpose().tolist(),'width':1920,'height':1080}))
  try:
   for i in range(ref.num_frames):
-   pose(qs[0 if mode in ('initial','initial_hands') else 1],i);v.begin_frame(i/20);v.log_state(state);v.end_frame()
+   pose(qs[0 if mode in ('initial','initial_hands') else 1],i);v.begin_frame(i/reference_fps);v.log_state(state);v.end_frame()
  finally:v.close()
  sys.exit(0)

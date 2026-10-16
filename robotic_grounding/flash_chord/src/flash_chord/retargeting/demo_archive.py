@@ -47,6 +47,9 @@ class DemoArchive:
         from flash_chord.training.checkpoint_metadata import CONFIG_METADATA_KEY
         from flash_chord.training.flash_sac.checkpoint import actor_inference_state,save_actor_checkpoint
         editor=self.editor
+        if editor.config.get('training', {}).get('curriculum') is not None:
+            if not {'curriculum_stage', 'curriculum_stage_json'} <= editor.metadata.keys():
+                raise RuntimeError('Archive requires the actual curriculum stage from the training runner')
         directory=self.directory/f'step_{step:012d}_{origin}'
         directory.mkdir(parents=True,exist_ok=False)
         reference=directory/'reference.npz'

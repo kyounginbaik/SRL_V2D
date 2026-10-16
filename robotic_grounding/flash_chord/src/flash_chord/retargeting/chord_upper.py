@@ -7,6 +7,16 @@ of the paper's exponential RL reward. Objects receive equal final weight.
 import numpy as np
 
 
+def observed_hand_mask(hand_valid, worlds, hands):
+    """Keep unknown hand labels distinct from observed absence of contact."""
+    if hand_valid is None:
+        return np.ones((worlds, hands), dtype=bool)
+    mask = np.asarray(hand_valid)
+    if mask.shape != (worlds, hands) or not np.isin(mask, (0, 1)).all():
+        raise ValueError('hand validity must be binary [world, hand]')
+    return mask.astype(bool)
+
+
 class WrenchSupportAccumulator:
     def __init__(self, worlds, hands, objects, basis, *, tolerance=.1, active_threshold=1e-3):
         if not 0 <= tolerance < 1 or active_threshold <= 0:
@@ -23,14 +33,16 @@ class WrenchSupportAccumulator:
         self.inactive_count = np.zeros(shape)
         self.frames = 0
 
-    def add(self, current, reference):
+    def add(self, current, reference, *, hand_valid=None):
         current = np.asarray(current, dtype=np.float64).reshape(self.shape)
         reference = np.asarray(reference, dtype=np.float64).reshape(self.shape)
         if (not np.isfinite(current).all() or not np.isfinite(reference).all()
                 or np.any(current < 0) or np.any(reference < 0)):
             raise FloatingPointError('invalid object-centric wrench support')
         ref_dirs, cur_dirs = reference > self.threshold, current > self.threshold
-        active = ref_dirs.any(axis=-1)
+        observed = observed_hand_mask(hand_valid, *self.shape[:2])[..., None]
+        active = ref_dirs.any(axis=-1) & observed
+        inactive = ~ref_dirs.any(axis=-1) & observed
         under = np.maximum((1-self.tolerance)*reference-current, 0.)
         over = np.maximum(current-(1+self.tolerance)*reference, 0.)
         normalized = np.mean(under*under+over*over, axis=-1) / np.maximum(
@@ -39,9 +51,9 @@ class WrenchSupportAccumulator:
         self.band += np.where(active, np.minimum(normalized, 10.), 0.).sum(axis=1)
         self.missed += np.where(active, missed, 0.).sum(axis=1)
         self.active_count += active.sum(axis=1)
-        self.unintended += (~active & cur_dirs.any(axis=-1)).sum(axis=1)
-        self.unintended_energy += np.where(~active, np.minimum(np.mean(current*current, axis=-1), 10.), 0.).sum(axis=1)
-        self.inactive_count += (~active).sum(axis=1)
+        self.unintended += (inactive & cur_dirs.any(axis=-1)).sum(axis=1)
+        self.unintended_energy += np.where(inactive, np.minimum(np.mean(current*current, axis=-1), 10.), 0.).sum(axis=1)
+        self.inactive_count += inactive.sum(axis=1)
         self.frames += 1
 
     def summaries(self):

@@ -75,6 +75,7 @@ class _EpisodeEnv:
 def _viewer(module, monkeypatch, algorithm, env, evaluation):
     viewer_type = module.PPOPolicyViewer if algorithm == "ppo" else module.FlashSACPolicyViewer
     viewer = viewer_type.__new__(viewer_type)
+    viewer.args = SimpleNamespace(config=SimpleNamespace(viewer=SimpleNamespace(zero_policy_action=False)))
     viewer.env = env
     viewer.jax_env = env
     viewer.evaluation = evaluation

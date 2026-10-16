@@ -43,7 +43,10 @@ class ParallelReferenceEditor(TTSAReferenceEditor):
         if options.get('edit_scope') == 'wrists_only':
             if self.joint_basis.shape[0] != 12:
                 raise ValueError('Wrist-only editor must have 12 spatial channels')
-            probe = self.candidate_joint_q(np.ones(self.basis.shape[1]*12, np.float32)*.5)
+            # At this point the shared constructor still has a multi-window
+            # basis. Local subclasses replace it after this constructor returns.
+            probe = TTSAReferenceEditor.candidate_joint_q(
+                self, np.ones(self.basis.shape[1]*12, np.float32)*.5)
             for hand in self.projector.layout.hands:
                 np.testing.assert_array_equal(probe[:,hand.finger_q_ids], self.baseline.joint_q[:,hand.finger_q_ids])
             print(f'[method] wrist-only upper action_dim={self.basis.shape[1]*12}; finger reference invariant', flush=True)

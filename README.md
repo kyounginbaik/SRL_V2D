@@ -9,18 +9,25 @@ each edit with actual candidate/control training in Newton physics.
 provides container builds, input transfer, verification, direct GPU launch, Slurm
 submission, and output inspection.
 
-The current recipe uses episode 1's pot-and-lid motion, two floating Sharpa hands,
-2,048 training worlds, and seeds 43–45. Each full job runs a 1,048,576-transition
-integration check, verifies online critic fitting between two upper rounds, then
-starts fresh training for **100,663,296 main transitions**. Candidate/control adaptation
-and evaluation add simulation work beyond that budget. Full bilevel resume is unsupported.
+The current comparison runs **episode 1 from `final_recon`, seed 43**, with two
+upper refinement scopes: all 56 wrist/finger channels, and only the 12 wrist channels
+(6D pose per hand). Both lower policies keep 56 actions and the same EigenDEXplore
+finger exploration. Each job passes a 1,048,576-transition integration run before a
+fresh 100,663,296-main-transition training run. Extra physical adaptation and evaluation
+are counted separately. Full bilevel resume remains unsupported.
+
+The lower controller limits policy wrist corrections while retaining intentional
+reference motion, including shaking. The actor observes object velocity; invalid
+reconstructed hand spans are excluded from hand supervision. Each run exports the
+archived best policy/reference pair. A complete challenge submission still requires
+all 20 public episodes; only episode 1 is being trained in this comparison.
 
 ## Current algorithm
 
 | Component | Current recipe |
 | --- | --- |
 | Upper actor input | Reference statistics, current correction summaries, temporal signed hand-tracking errors, execution quality, selected-window and failure/onset timing, and local per-object pose errors. |
-| Upper actor output | 56 bounded coefficients: wrist translation/rotation and 22 finger joints per hand, applied through a smooth local time window. |
+| Upper actor output | Full variant: 56 bounded wrist/finger coefficients. Wrist-only variant: 12 bounded wrist coefficients. Both apply edits through a smooth local time window. |
 | Upper critic input | Reference-conditioned lower observations, critic context, and lower robot actions. It estimates discounted wrench-support cost, not a Q-function over upper-edit coefficients. |
 | Proposal gradient | Three differentiable lower-actor Adam steps with incoming moments; lower critics and statistics stay fixed. Four upper optimizer steps produce one proposal per selected window. |
 | Critic fitting | Outer-round fitting and measured unassisted-return fitting, plus four TD updates every 16 main vector steps after the first upper round, using valid current-reference/current-generation training rows. |
@@ -42,8 +49,12 @@ and the separate checksummed episode input bundle. The launch requests one GPU,
 After building the image and obtaining the inputs:
 
 ```bash
-python3 robotic_grounding/flash_chord/experiments/online_critic/prepare.py \
-  --data-root /absolute/path/to/episode-inputs \
+python3 robotic_grounding/flash_chord/experiments/online_critic/prepare_batch.py \
+  --inventory /absolute/path/to/episode1-inventory.json \
+  --priors-root /absolute/path/to/priors \
+  --kit /absolute/path/to/v2d_submission_kit \
+  --support-root /absolute/path/to/measured-support \
+  --upper-edit-scope wrists_only --seed 43 \
   --run-root /absolute/path/to/new-run
 bash /absolute/path/to/new-run/run.sh preflight
 GPU_DEVICE=0 bash /absolute/path/to/new-run/run.sh full 43
@@ -51,7 +62,7 @@ GPU_DEVICE=0 bash /absolute/path/to/new-run/run.sh full 43
 
 W&B is optional and disabled by default. The launcher accepts arbitrary absolute run
 paths, without requiring the original server's directories, username or hostname.
-The same prepared run supports seeds 43, 44 and 45 on separate GPUs.
+Prepare a second root with `--upper-edit-scope full` for the matching comparison.
 
 ## Code and evidence
 

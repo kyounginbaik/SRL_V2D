@@ -15,7 +15,8 @@ def _launch(kernel, cmd, cur, n_hands, n_bodies, n_basis, extra=()):
         c = wp.array(np.asarray(cmd, dtype=np.float32), dtype=wp.float32)
         u = wp.array(np.asarray(cur, dtype=np.float32), dtype=wp.float32)
         out = wp.zeros(1, dtype=wp.float32)
-        wp.launch(kernel, dim=1, inputs=[c, u, n_hands, n_bodies, n_basis, *extra], outputs=[out])
+        wp.launch(kernel, dim=1, inputs=[c, u, n_hands, n_bodies, n_basis,
+            wp.zeros(1, dtype=wp.int32), 1, wp.ones(n_hands, dtype=wp.int32), *extra], outputs=[out])
         return float(out.numpy()[0])
 
 

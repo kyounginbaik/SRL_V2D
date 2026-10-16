@@ -95,12 +95,13 @@ def main():
         state['video_paths'] = {}
         state['videos'] = {}
         state['media_schema_version'] = 2
-    run_id = f'{os.environ.get("UNIRETARGET_RUN_TAG", "chord100m")}-{args.phase}-{args.episode}-{args.variant}-s{args.seed}'
     config = json.loads(config_path.read_text())
+    scope = config.get('upper_edit_scope', 'full')
+    run_id = f'{os.environ.get("UNIRETARGET_RUN_TAG", "chord100m")}-{scope}-{args.phase}-{args.episode}-{args.variant}-s{args.seed}'
     hypergradient = config.get('engine') == 'wrench_hypergradient'
     experiment = config.get('experiment_name', 'wrench-hypergradient' if hypergradient else 'chord-fixed-start')
     experiment_date = config.get('experiment_date', '20261015')
-    name = (f'{experiment}-full-d56-w{config["worlds"]}-{args.phase}-{args.episode}-s{args.seed}'
+    name = (f'{experiment}-{scope}-d{config.get("upper_action_dimension",56)}-w{config["worlds"]}-{args.phase}-{args.episode}-s{args.seed}'
             if hypergradient else
             f'chord-fixed-start-{config.get("upper_optimizer", "gaussian")}-d56-c{config["upper_trials"]}-{args.phase}-{args.episode}-s{args.seed}')
     run = wandb.init(entity=os.environ.get('WANDB_ENTITY', 'DexDreamer'), project=os.environ.get('WANDB_PROJECT', 'v2d-track3-uniretarget'),

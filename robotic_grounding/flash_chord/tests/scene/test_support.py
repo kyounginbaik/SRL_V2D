@@ -34,8 +34,8 @@ def test_support_surfaces_added():
         binding = add_support_surfaces(builder, support)
         builder.finalize()
     assert binding.body_id == 0
-    assert binding.free_q_ids == tuple(range(7))
-    assert binding.free_dof_ids == tuple(range(6))
+    assert binding.free_q_ids == ()
+    assert binding.free_dof_ids == ()
     assert tuple(binding.shapes.ids()) == (0, 1)  # hot3d support = two cylinder pads
 
 

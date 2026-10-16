@@ -1,8 +1,88 @@
-# Episode-1 online-critic training
+# UniRetarget online critic and stable-control training
 
-This is the 2026-10-16 pot-and-lid experiment with two floating Sharpa hands.
+This recipe supports one episode or an explicit batch with two floating Sharpa hands.
+The current comparison uses episode 1 from `challenge_reconstruction/final_recon`,
+with one seed per upper-refinement variant. Other episodes are not scheduled.
 Preparation snapshots source, launchers, reference data and the exploration prior
 into a fresh directory. Each launch checks SHA-256 manifests before starting.
+
+## Current episode-1 comparison
+
+| Variant | Upper refinement | Lower control and exploration |
+| --- | --- | --- |
+| `full_edit` | 56 wrist/finger coefficients | All 56 actions; EigenDEXplore finger noise |
+| `wrist_only` | 12 wrist coefficients: 6D pose per hand | All 56 actions; EigenDEXplore finger noise |
+
+Both use seed 43, identical `final_recon/episode_000001` targets, the same measured
+support surface, controller limits, replay and training budget. The wrist-only upper
+network truly outputs 12 coefficients; it cannot edit finger references. Lower finger
+commands remain full dimensional, including independent correction outside the PCA span.
+
+Episode 1 includes a tabletop and floor fitted from its calibrated stereo depth.
+The scene uses those measured planes without shifting hand or object targets. The table
+has a fixed root: representing it as a free body with very large artificial inertia caused
+unstable initial contacts. A two-second unassisted CPU check with the fixed table keeps
+the pot within 1.1 cm of its initial position. The lid moves about 8 cm while resolving
+existing pot/lid collision-proxy overlap; this check establishes support stability, not
+successful reference tracking. Fit provenance, diagnostic scripts and trajectories are
+copied into `frozen/episode_000001/assets/support_validation/`. GPU integration is still
+checked at job start.
+
+The existing exploration implementation follows [EigenDEXplore](https://eigendexplore.github.io/)
+with the published Sharpa basis (nine directions per hand), independent joint noise,
+and learned eigen-noise scales. This repository adapts the covariance to a tanh-Gaussian
+SAC residual policy, with covariance-aware action density and entropy. It is not a
+reproduction of the paper's PPO benchmark. Initial finger variance is split equally
+between independent and eigen noise; wrists receive no eigen perturbation. Basis hashes,
+joint ordering and source revision are stored with the prepared prior.
+
+The current portable input bundle on the original server is
+`/data1/SRL_V2D/challenge_reconstruction/uniretarget_ep01_stable_20261016/episode1_final_recon_inputs.tar.gz`
+(6 MB), with an adjacent `.sha256` file. It contains the exact reference and asset
+closure, prior, measured support evidence and public participant packer subset.
+Archive SHA-256: `19e43f13d701ff8f3908b439f374e841f69ec54c5d152322b3821870d1c587f8`.
+Copy both files, verify with `sha256sum -c episode1_final_recon_inputs.tar.gz.sha256`,
+then extract with `tar -xzf episode1_final_recon_inputs.tar.gz`.
+After extraction, resolve the inventory paths for that server without changing the inputs:
+
+```bash
+python3 - /absolute/path/to/episode1_inputs <<'PY'
+import hashlib, json, sys
+from pathlib import Path
+root = Path(sys.argv[1]).resolve()
+for name, checksum in json.loads((root/'sha256.json').read_text()).items():
+    assert hashlib.sha256((root/name).read_bytes()).hexdigest() == checksum, name
+inventory = json.loads((root/'episode1-inventory.json').read_text())
+for item in inventory['episodes']:
+    for key in ('source_reference', 'source_bundle'):
+        item[key] = str(root/item[key])
+(root/'local-inventory.json').write_text(json.dumps(inventory, indent=2)+'\n')
+PY
+```
+
+Use `episode1_inputs/local-inventory.json`, `episode1_inputs/priors`,
+`episode1_inputs/submission_kit`, and `episode1_inputs/measured-support` below.
+
+Prepare two fresh directories from an inventory containing only episode 1:
+
+```bash
+for scope in full wrists_only; do
+  python3 robotic_grounding/flash_chord/experiments/online_critic/prepare_batch.py \
+    --inventory /absolute/path/to/episode1-inventory.json \
+    --priors-root /absolute/path/to/priors --kit /absolute/path/to/v2d_submission_kit \
+    --support-root /absolute/path/to/measured-support \
+    --upper-edit-scope "$scope" --seed 43 --run-root "/absolute/path/to/$scope-run"
+  bash "/absolute/path/to/$scope-run/run.sh" preflight
+  sbatch --output="/absolute/path/to/$scope-run/slurm/%j.out" \
+    --error="/absolute/path/to/$scope-run/slurm/%j.err" \
+    "/absolute/path/to/$scope-run/cluster/train_full.sbatch" "/absolute/path/to/$scope-run" 43
+done
+```
+
+This submits exactly two GPU jobs. Each validates integration, starts its separate full
+training phase, exports actual unassisted episode-1 trajectories and writes readiness
+reports. The other 19 public episodes remain explicitly missing from a combined submission.
+The general batch utility below remains available for later expansion.
 
 ## Clone and build
 
@@ -28,7 +108,11 @@ The second image adds pinned OpenCV for checkpoint overlays without replacing nu
 On the original server, set `UNIRETARGET_IMAGE=flash_chord:mixed-ep01-media` to use
 the tested existing image. Runtime code comes from the prepared snapshot.
 
-## Transfer inputs
+## Legacy single-episode input bundle
+
+The bundle in this section belongs to the earlier prepared-reference experiment.
+For the current comparison, use the exact `final_recon` episode-1 inventory, assets,
+measured support and prior described above; do not substitute this older bundle.
 
 Inputs are separate from Git. Copy these files from the original server:
 
@@ -115,8 +199,8 @@ If those pass, it automatically starts a separate fresh **100,663,296-main-trans
 run. For compatibility, this full output phase is named `pilot`.
 
 Rejected edits are normal outcomes; acceptance is not required to pass integration.
-`smoke` runs only integration. `pilot` starts the full budget directly and bypasses
-the integration gate; use `full` on a new server. Do not restart a trained seed/phase:
+`smoke` runs only integration. `pilot` starts the full budget directly for standalone runs; prepared batches require
+a passed integration report for that episode and seed. Use `full` for standalone runs on a new server. Do not restart a trained seed/phase:
 complete joint upper/lower resume is unsupported. Adaptation and evaluation add
 simulation work beyond the main-transition budget.
 
@@ -159,7 +243,7 @@ Under `episode_000001/runs/{smoke,pilot}/episode_000001/chunk/seed_N/`:
 | `training/search_batches/step_*/` | Upper states, trial trajectories and pre-proposal critic snapshots. |
 | `training/references/`, `training/policy_*.safetensors` | References and corresponding lower policies. |
 | `checkpoint_videos/`, `voc_checkpoint_videos/`, `reference_overlays/` | Unassisted/current-assistance videos and reference overlays. |
-| `evaluation/metrics.json` | Final unassisted evaluation. |
+| `evaluation/metrics.json` | Unassisted evaluation of the archived best policy/reference pair. |
 
 The run root saves `reports/smoke_validation_episode_000001_sN.json` with actual
 integration results. Logs go to the terminal or Slurm paths. Share reference snapshots
@@ -168,3 +252,93 @@ and metadata with policy checkpoints.
 More critic fitting is not yet proven to improve task success. Paired diagnostics
 compare predictions/returns on realized trajectories, not the fixed-state hypergradient.
 Fixed-start evaluation does not establish generalization to other resets or episodes.
+
+## Controller changes and limits
+
+The recipe uses wrist residual bounds of ±5 cm per position coordinate and ±0.5 rad
+per RPY coordinate. Post-mapping, post-EMA correction changes are limited separately
+per hand to 0.15 m/s and 1.5 rad/s in RPY coordinates. The reference is added afterward:
+intentional motion, including episode 1's shaking at 6–10 seconds, is not smoothed by
+this limiter. Finger correction range stays unchanged. These settings are opt-in;
+the base action configuration keeps the limiter disabled.
+
+Batch preparation sets physical wrist speed caps to at least 1 m/s and 12 rad/s,
+using 1.2 times each episode's peak reference speed, up to ceilings of 2 m/s and
+20 rad/s. The ceilings prevent reconstruction jumps from permitting extreme speeds.
+Reference peaks, resolved caps and any uncovered reference transitions are recorded
+in each frozen manifest. Episode 1's 6–10 second shaking segment is fully covered;
+its numerical targets remain unchanged. Its late right-hand reconstruction gap has
+two linear and one angular transitions above the physical ceilings. The lower actor observes
+object body velocity, allowing it to detect motion associated with slip. This is a
+fresh-policy input change; do not load an older policy with the new observation shape.
+
+A historical lower-policy run grew more aggressive while assistance remained at 1
+and no upper edits were accepted. This supports testing tighter residual control;
+it does not prove these settings improve grasp success. GPU integration and actual
+unassisted rollouts remain required. No automatic assistance decay is forced.
+
+## One seed across the selected episodes
+
+`prepare_batch.py` consumes an inventory with source reference and bundle paths,
+the Sharpa prior directory, and the official participant submission kit. Inputs are
+external to Git. The 13-episode inventory is saved on the original server at
+`/tmp/uniretarget-final-recon-inventory.json` (the current two jobs use its episode-1 subset); preparation copies it into the run root.
+For another server, transfer the reference bundles and update the inventory paths,
+or transfer a prepared root while preserving its absolute path (its manifests and
+runtime references bind that path).
+
+```bash
+python3 robotic_grounding/flash_chord/experiments/online_critic/prepare_batch.py \
+  --inventory /absolute/path/to/episode-inventory.json \
+  --priors-root /absolute/path/to/priors \
+  --kit /absolute/path/to/v2d_submission_kit \
+  --run-root "$RUN_ROOT"
+bash "$RUN_ROOT/run.sh" preflight
+python3 robotic_grounding/flash_chord/experiments/online_critic/submit_batch.py \
+  --run-root "$RUN_ROOT" --partition YOUR_GPU_PARTITION --concurrency 3
+```
+
+CPU preflight checks the selected episodes against the public object/frame roster, asset closure,
+resolved smoke/full configurations and controller settings, and runs regression tests.
+It binds the passed test report to the frozen source, launcher and data manifests.
+The submitted arrays use seed 43 once per episode, with at most three simultaneous
+GPU jobs. All episodes first receive 1,048,576 main transitions and a real unassisted
+full-horizon export. After that array finishes, separate fresh 100,663,296-transition
+runs start for episodes that passed their integration gate. These are independent
+policies per episode; this is not a shared multi-episode policy.
+
+The first collection prioritizes validated coverage of the selected inputs, not converged
+policies. Available `final_recon` episodes: 1, 3, 5, 6, 8, 10, 19, 32, 33, 35, 36, 37, 38. Every reference
+comes from `final_recon`; older prepared inputs are excluded. Runnable reconstruction
+inputs do not establish physical success. The exact selected inventory and missing
+public episodes are recorded in `batch_manifest.json`.
+
+Each exporter loads the archived best deployable checkpoint and its matching reference,
+selected by measured unassisted successful-prefix length and then physical cost.
+It writes actual one-world trajectories and verifies frame count, object names, finite
+poses, unit quaternions and provenance. No predicted or synthetic result fills a missing
+episode. The official packer produces `submissions/track3_smoke.csv` only when all 20
+validate. Later, `submissions/track3_pilot.csv` uses full-run exports with valid first-pass
+fallbacks for missing full results. The adjacent `.readiness.json` identifies any missing,
+invalid or fallback episode. For a 13-episode batch, packaging verifies every selected output and writes
+a not-ready combined-submission report listing the seven missing episodes (14, 15,
+16, 20, 25, 28, 30); it does not fabricate a complete CSV. These jobs prepare files;
+they do not upload a submission.
+
+See [submission contract](submission/README.md). Job IDs are saved to
+`reports/submitted_jobs.json`. Each episode's `stage.json` and Slurm logs show progress.
+
+## Efficiency and stability review
+
+Critic sampling now builds its eligible/train/held-out pools once per fit and transfers
+loss summaries to the host once per burst. Regression tests preserve the old sampling
+sequence. Checkpoint media run every 5,017,600 main transitions in full training;
+validated encodes release raw intermediates, and completed overlays are reused.
+
+Finite-response validation remains expensive: a round can add up to 4,587,520 lower
+transitions (one reused control plus four candidate branches), versus 501,760 main
+transitions between rounds. Count adaptation transitions and wall time separately when
+reporting efficiency. A historical run spent about 2.21 adaptation transitions per main
+transition with no accepted edits; additional critic fitting is not yet evidence of better
+end-to-end efficiency. Per-fit held-out TD rows are correlated calibration evidence,
+not an independent generalization test. Full joint training resume remains unsupported.

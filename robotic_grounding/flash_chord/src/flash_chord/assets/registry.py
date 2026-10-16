@@ -164,6 +164,11 @@ def support_usda_for_parquet(parquet_path: str, *, robot_name: str | None = None
 def support_usda_for_reference(reference: Reference) -> Path | None:
     """Resolve colocated support, with source-dataset metadata as a fallback."""
     metadata = reference.metadata
+    # Standalone reconstruction bundles can carry a measured support surface.
+    # Loading it remains explicit through scene.support; no pose is shifted.
+    colocated = Path(metadata.source_path).expanduser().resolve().parent / 'assets' / 'support.usda'
+    if colocated.is_file():
+        return colocated
     path = support_usda_for_parquet(metadata.source_path, robot_name=metadata.robot_name)
     if path is not None:
         return path

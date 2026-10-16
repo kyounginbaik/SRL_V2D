@@ -88,7 +88,7 @@ def main():
     for seed in (43, 44, 45):
         _, config, cfg, composed = compose('pilot', seed)
         assert_current_hypergradient(cfg)
-        assert config['experiment_name'] == smoke['experiment_name'] == 'wrench-online-critic'
+        assert config['experiment_name'] == smoke['experiment_name'] == 'wrench-stable-control'
         assert config['episode'] == smoke['episode']
         for key in ('wrist_control', 'eigen_basis_sha256', 'fixed_initial_state',
                     'hand_keypoint_reward_weight', 'finger_joint_tracking_reward_weight',
@@ -102,7 +102,7 @@ def main():
         assert cfg['training']['replay']['capacity'] == 1048576
         assert cfg['training']['replay']['minimum_size'] == 102400
         assert cfg['training']['replay']['batch_size'] == 1024
-        assert cfg['training']['checkpoint']['save_interval_environment_steps'] == 1003520
+        assert cfg['training']['checkpoint']['save_interval_environment_steps'] == 5017600
         assert cfg['bilevel']['eval_worlds'] == cfg['bilevel']['upper_trials'] == 2048
         assert cfg['bilevel']['interval'] == cfg['bilevel']['warmup'] == 501760
         adaptation = cfg['bilevel']['adaptation']

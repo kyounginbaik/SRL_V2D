@@ -6,6 +6,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from itertools import combinations
+import math
 from typing import Literal
 
 import newton
@@ -102,8 +103,17 @@ class CollisionPolicy:
     robot_object_collision: bool = True
     robot_support_collision: bool = True
     ground: bool = True
+    ground_plane: tuple[float, float, float, float] | None = None
 
     def __post_init__(self) -> None:
+        if self.ground_plane is not None:
+            plane = tuple(float(value) for value in self.ground_plane)
+            if len(plane) != 4 or not all(math.isfinite(value) for value in plane):
+                raise ValueError("ground_plane must contain four finite plane coefficients")
+            norm = math.sqrt(sum(value * value for value in plane[:3]))
+            if norm <= 1e-12:
+                raise ValueError("ground_plane normal must be nonzero")
+            object.__setattr__(self, "ground_plane", tuple(value / norm for value in plane))
         if self.robot_scope not in ("all", "contact_only", "none"):
             raise ValueError(
                 "robot_scope must be 'all', 'contact_only', or 'none', "

@@ -261,13 +261,17 @@ class TrialRollout:
 
 
 class WrenchHypergradient:
-    def __init__(self, training, observation_dim, context_dim, upper_context_dim, config, seed):
+    def __init__(self, training, observation_dim, context_dim, upper_context_dim, config, seed,
+                 *, upper_action_dim=56):
+        if upper_action_dim not in (12, 56):
+            raise ValueError('upper action must contain 12 wrist or 56 full edit channels')
+        self.upper_action_dim = upper_action_dim
         self.config, self.training = config, training
         self.lower_actor = Actor(action_dim=56, config=training.network, dtype=jnp.float32)
         lo, hi = training.reward_normalization.value_support
         self.lower_critic = Critic(lo, hi, training.network, dtype=jnp.float32)
         self.cost_model = WrenchCostCritic()
-        self.upper_model = UpperActor(radius=config.radius)
+        self.upper_model = UpperActor(dimensions=upper_action_dim, radius=config.radius)
         a, b = jax.random.split(jax.random.PRNGKey(seed))
         self.cost_params = self.cost_model.init(a, jnp.zeros((1, observation_dim)),
             jnp.zeros((1, context_dim)), jnp.zeros((1, 56)))['params']
@@ -319,22 +323,34 @@ class WrenchHypergradient:
         if valid_count < 2:
             return dict(critic_skipped=1, replay_rows=replay.size,
                         critic_updates=0, critic_valid_rows=valid_count, critic_cutoff_rows=cutoff_count)
-        filters = dict(critic_valid=True, source=source, generation=generation)
-        validation, held_ids = replay.sample(rng,
-            min(self.config.batch_size, max(1, valid_count//5)), **filters)
+        # Replay is unchanged throughout this fit. Build its eligible split once,
+        # preserving the ascending row order and RNG draws used by sample().
+        # Refiltering/sorting the whole replay for each small batch needlessly
+        # makes a critic burst scale with replay capacity times update count.
+        valid_ids = np.flatnonzero(valid)
+        held_ids = rng.choice(valid_ids,
+            size=min(self.config.batch_size, max(1, valid_count//5)), replace=False)
+        train_ids = np.setdiff1d(valid_ids, held_ids, assume_unique=True)
+        def batch(ids):
+            return {key: jnp.asarray(value[ids]) for key, value in replay.storage.items()}
+        validation = batch(held_ids)
         losses = []
         for _ in range(count):
-            batch, _ = replay.sample(rng, self.config.batch_size, exclude=held_ids, **filters)
+            ids = rng.choice(train_ids, size=self.config.batch_size,
+                             replace=len(train_ids) < self.config.batch_size)
             self.cost_params, self.target_params, self.cost_state, value = self._critic_update(
                 self.cost_params, self.target_params, self.cost_state,
-                learner.actor.params, learner.actor.batch_stats, batch)
-            losses.append(float(value))
+                learner.actor.params, learner.actor.batch_stats, batch(ids))
+            # Keep scalar losses on device until the burst finishes instead of
+            # synchronizing the GPU after every optimizer update.
+            losses.append(value)
         prediction = self.cost_model.apply({'params': self.cost_params}, validation['observation'],
                                           validation['context'], validation['action']).max(axis=0)
         next_action = self._action(learner.actor.params, learner.actor.batch_stats, validation['next_observation'])
         future = self.cost_model.apply({'params': self.target_params}, validation['next_observation'],
                                       validation['next_context'], next_action).max(axis=0)
         target = self.config.cost_scale*validation['cost'] + self.config.discount*(1-validation['done'])*future
+        losses = np.asarray(jax.device_get(jnp.stack(losses)), dtype=np.float64)
         metrics = dict(critic_train_loss=float(np.mean(losses)),
                        critic_heldout_td_mae=float(jnp.mean(abs(prediction-target))),
                        critic_cost_scale=self.config.cost_scale, replay_rows=replay.size,

@@ -81,6 +81,7 @@ def test_capture_preserves_cost_and_marks_early_cutoffs_unfit_for_td(
     editor = WrenchHypergradientEditor.__new__(WrenchHypergradientEditor)
     editor.replay = ReferenceReplay(10); editor.version = 4; editor.wrench_tolerance = .1
     editor.binding = NS(num_frames=10)
+    editor.setup = NS(reference=NS(num_frames=10))
     editor.hg_config = HypergradientConfig()
     obs = np.ones((2, 3), np.float32)
     context = np.ones((2, 2), np.float32)
@@ -88,7 +89,8 @@ def test_capture_preserves_cost_and_marks_early_cutoffs_unfit_for_td(
     editor._before(None, obs, context, action, np.array(frames), np.array([0, 1]), 0)
     obs[:] = 77; action[:] = 77; context[:] = 77
     objective = NS(num_hands=2, num_bodies=2, num_basis=3,
-                   current_wrench_support=np.ones(24), wrench_support_target=np.ones(24))
+                   current_wrench_support=np.ones(24), wrench_support_target=np.ones(24),
+                   config=NS(sides=('left', 'right')))
     adapter = NS(env=NS(world_count=2, objective=objective))
     transition = NS(terminated=jnp.array([0, 1]), truncated=jnp.array([1, 0]),
                     terminal_observation=jnp.full((2, 3), 9.), terminal_critic_context=jnp.full((2, 2), 8.))
@@ -235,12 +237,14 @@ def test_trial_evaluation_teaches_rejected_pair_without_polluting_main_replay(mo
     editor.output=tmp_path/'references'; editor.output.mkdir()
     editor.hyper_rng=np.random.default_rng(0)
     editor.binding=NS(num_frames=4, joint_q=np.zeros((4,58), np.float32))
+    editor.setup=NS(reference=NS(num_frames=4))
     candidate=NS(num_frames=4, joint_q=np.ones((4,58), np.float32))
     learner=object()
     monkeypatch.setattr(module, 'actor_policy_digest', lambda current: 'matching-policy' if current is learner else 'wrong')
     monkeypatch.setattr(module, 'to_jax', lambda value, shape: jnp.asarray(value).reshape(shape))
     objective=NS(num_hands=2,num_bodies=2,num_basis=3,
-        current_wrench_support=np.zeros(12),wrench_support_target=np.ones(12))
+        current_wrench_support=np.zeros(12),wrench_support_target=np.ones(12),
+        config=NS(sides=('left','right')))
     env=NS(world_count=1,initial_critic_context=jnp.zeros((1,2)),
         env=NS(world_count=1,objective=objective))
     calls=[]

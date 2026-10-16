@@ -656,6 +656,8 @@ def _run_training(
             steps_since_log = 0
 
         if reference_update is not None:
+            if hasattr(reference_update, 'set_curriculum_metadata'):
+                reference_update.set_curriculum_metadata(current_stage_index, current_stage)
             replacement = reference_update(env, learner, environment_steps, current_stage)
             if logger is not None and hasattr(reference_update, 'drain_metrics'):
                 upper_metrics = reference_update.drain_metrics()
@@ -720,10 +722,13 @@ def _run_training(
             jax.block_until_ready(learner.global_update_step)
             checkpoint_start = time.perf_counter()
             if hasattr(reference_update, 'on_checkpoint'):
+                if hasattr(reference_update, 'set_curriculum_metadata'):
+                    reference_update.set_curriculum_metadata(current_stage_index, current_stage)
                 reference_update.on_checkpoint(env, learner, environment_steps)
             curriculum_metadata = {
                 "curriculum_stage": current_stage_index,
                 "voc_scale": current_stage.voc_scale,
+                "curriculum_stage_json": json.dumps(asdict(current_stage), sort_keys=True, allow_nan=False),
             }
             if env.reset_to_first_frame_probability is not None:
                 curriculum_metadata["reset_to_first_frame_probability"] = env.reset_to_first_frame_probability

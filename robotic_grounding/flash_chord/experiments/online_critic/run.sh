@@ -4,12 +4,14 @@ set -euo pipefail
 RUN_ROOT=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)
 PHASE=${1:-full}
 SEED=${2:-43}
-case "$PHASE" in preflight|smoke|pilot|full) ;; *) echo 'Expected preflight, smoke, pilot, or full' >&2; exit 2;; esac
+EPISODE=${3:-episode_000001}
+[[ "$EPISODE" =~ ^episode_[0-9]{6}$ ]] || exit 2
+case "$PHASE" in preflight|smoke|pilot|full|pack-smoke|pack-pilot) ;; *) echo 'Invalid phase' >&2; exit 2;; esac
 [[ "$SEED" =~ ^[0-9]+$ ]] || exit 2
 python3 "$RUN_ROOT/cluster/check_source.py"
-mkdir -p "$RUN_ROOT/flash_chord/src/flash_chord/assets/.cache" "$RUN_ROOT/warp_cache/seed_$SEED"
+mkdir -p "$RUN_ROOT/flash_chord/src/flash_chord/assets/.cache" "$RUN_ROOT/warp_cache/${EPISODE}_seed_$SEED"
 gpu_args=()
-if [[ "$PHASE" != preflight ]]; then
+if [[ "$PHASE" != preflight && "$PHASE" != pack-* ]]; then
     if [[ -n "${SLURM_JOB_ID:-}" ]]; then
         GPU_DEVICE=$(python3 "$RUN_ROOT/cluster/allocated_gpu.py")
     else
@@ -39,20 +41,28 @@ cmd=(run --rm --name "$CONTAINER" "${gpu_args[@]}"
     -e HOME=/tmp -e PYTHONUNBUFFERED=1 -e PYTHONDONTWRITEBYTECODE=1 -e PYTHONPATH=/workspace/src
     -e XLA_PYTHON_CLIENT_PREALLOCATE=false -e OMP_NUM_THREADS=4
     -e NVIDIA_DRIVER_CAPABILITIES=all -e MUJOCO_GL=egl -e PYOPENGL_PLATFORM=egl -e PYGLET_HEADLESS=true
-    -e "UNIRETARGET_RUN_TAG=${UNIRETARGET_RUN_TAG:-wrench-online-critic-20261016}"
+    -e "UNIRETARGET_EPISODE=$EPISODE"
+    -e "V2D_SUBMISSION_KIT=$RUN_ROOT/submission_kit"
+    -e "UNIRETARGET_RUN_TAG=${UNIRETARGET_RUN_TAG:-wrench-stable-control-20261016}"
     -e "WANDB_MODE=${WANDB_MODE:-disabled}" -e "WANDB_ENTITY=${WANDB_ENTITY:-DexDreamer}"
     -e "WANDB_PROJECT=${WANDB_PROJECT:-v2d-track3-uniretarget}"
     -e WANDB_API_KEY -e "WANDB_BASE_URL=${WANDB_BASE_URL:-https://api.wandb.ai}"
     -v "$RUN_ROOT:$RUN_ROOT" -v "$RUN_ROOT/flash_chord:/workspace"
-    -v "$RUN_ROOT/warp_cache/seed_$SEED:/tmp/.cache/warp" -w /workspace)
+    -v "$RUN_ROOT/warp_cache/${EPISODE}_seed_$SEED:/tmp/.cache/warp" -w /workspace)
 if [[ "${WANDB_MODE:-disabled}" == online && -f "${WANDB_NETRC:-$HOME/.netrc}" ]]; then
     cmd+=(-v "${WANDB_NETRC:-$HOME/.netrc}:/tmp/.netrc:ro")
 fi
 cmd+=("${UNIRETARGET_IMAGE:-flash_chord:uniretarget-online}")
-if [[ "$PHASE" == preflight ]]; then
-    cmd+=(python "$RUN_ROOT/cluster/preflight_full.py")
+if [[ "$PHASE" == pack-* ]]; then
+    cmd+=(python "$RUN_ROOT/cluster/pack_phase.py" "${PHASE#pack-}")
+elif [[ "$PHASE" == preflight ]]; then
+    if [[ -f "$RUN_ROOT/batch_manifest.json" ]]; then
+        cmd+=(python "$RUN_ROOT/cluster/preflight_batch.py")
+    else
+        cmd+=(python "$RUN_ROOT/cluster/preflight_full.py")
+    fi
 else
-    cmd+=(python "$RUN_ROOT/episode_000001/code/gpu_entry.py" --seed "$SEED" --phase "$PHASE")
+    cmd+=(python "$RUN_ROOT/$EPISODE/code/gpu_entry.py" --seed "$SEED" --phase "$PHASE")
 fi
 docker_command "${cmd[@]}" &
 wait "$!"

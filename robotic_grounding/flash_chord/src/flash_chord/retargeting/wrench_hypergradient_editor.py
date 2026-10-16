@@ -15,6 +15,7 @@ import numpy as np
 from flax import serialization
 
 from flash_chord.retargeting.response_editor import ResponseBilevelEditor
+from flash_chord.retargeting.chord_upper import observed_hand_mask
 from flash_chord.retargeting.reference_relabel import ReferenceRelabel, binding_for_q
 from flash_chord.retargeting.reference_snapshot import command_digest, save_snapshot
 from flash_chord.retargeting.wrench_hypergradient import (
@@ -28,30 +29,40 @@ from flash_chord.retargeting.lower_adaptation import (
 )
 
 
-def support_cost(current, reference, *, tolerance=.1):
+def support_cost(current, reference, *, tolerance=.1, hand_valid=None):
     """Per-world fixed-target support loss; equal object weighting, all hands."""
     if current.shape != reference.shape or current.ndim != 4:
         raise ValueError('support arrays must be matching [world, hand, object, basis]')
     active = reference > 1e-3
-    cell = active.any(axis=-1)
+    observed = observed_hand_mask(hand_valid, *current.shape[:2])[..., None]
+    cell = active.any(axis=-1) & observed
+    inactive = ~active.any(axis=-1) & observed
     under = np.maximum((1-tolerance)*reference-current, 0)
     over = np.maximum(current-(1+tolerance)*reference, 0)
     band = np.minimum(np.mean(under**2+over**2, axis=-1) /
                       np.maximum(np.mean(reference**2, axis=-1), 1e-6), 10.)
     missed = np.sum(active & (current <= 1e-3), axis=-1)/np.maximum(active.sum(axis=-1), 1)
     wanted = np.sum(np.where(cell, 5*band+missed, 0.), axis=1)/np.maximum(cell.sum(axis=1), 1)
-    unwanted = np.sum(np.where(~cell, np.minimum(np.mean(current**2, axis=-1), 10.), 0.), axis=1) / \
-        np.maximum((~cell).sum(axis=1), 1)
+    unwanted = np.sum(np.where(inactive, np.minimum(np.mean(current**2, axis=-1), 10.), 0.), axis=1) / \
+        np.maximum(inactive.sum(axis=1), 1)
     return np.mean(wanted+unwanted, axis=-1).astype(np.float32)
 
 
 class WrenchHypergradientEditor(ResponseBilevelEditor):
     def __init__(self, **kwargs):
         options = dict(kwargs['options'])
+        scope = options.get('edit_scope', 'full')
+        scope = 'wrists_only' if scope == 'wrist' else scope
+        if scope not in ('full', 'wrists_only'):
+            raise ValueError('upper edit_scope must be full or wrists_only (alias wrist)')
+        options['edit_scope'] = scope
         if options.get('upper_proposal', 'gaussian') not in ('gaussian', 'hypergradient'):
             raise ValueError('this engine uses its own hypergradient actor, not the bandit FlashSAC actor')
         kwargs['options'] = {**options, 'upper_proposal': 'gaussian'}
         super().__init__(**kwargs)
+        self.upper_action_dim = int(self.joint_basis.shape[0])
+        if self.upper_action_dim != (12 if scope == 'wrists_only' else 56):
+            raise ValueError('upper edit basis does not match the configured edit scope')
         if not self.fixed_start or not self.local_acceptance:
             raise ValueError('wrench hypergradient requires fixed_start and local_nominal acceptance')
         self.hg_config = HypergradientConfig(**dict(options.get('hypergradient', {})))
@@ -87,7 +98,8 @@ class WrenchHypergradientEditor(ResponseBilevelEditor):
         path = self.output.parent/'ttsa_manifest.json'
         manifest = json.loads(path.read_text())
         manifest.update(engine='wrench_hypergradient', upper_learning='actor_with_unrolled_SAC_actor_response',
-            hypergradient=asdict(self.hg_config), upper_action_dimension=56,
+            hypergradient=asdict(self.hg_config), upper_action_dimension=self.upper_action_dim,
+            upper_edit_scope=scope,
             adaptation=asdict(self.adaptation_config),
             upper_trials='one learned proposal per detected window, paired with adapted no-edit',
             guarantee_scope='autodiff of finite projected actor-optimizer response and learned cost surrogate; '
@@ -139,8 +151,12 @@ class WrenchHypergradientEditor(ResponseBilevelEditor):
         reference = np.array(to_jax(objective.wrench_support_target, shape)[ids])
         terminated = np.array(transition.terminated[ids]).astype(bool)
         truncated = np.array(transition.truncated[ids]).astype(bool)
-        cost = support_cost(current, reference, tolerance=self.wrench_tolerance)
         row = self.pending
+        if not hasattr(self, '_support_hand_validity'):
+            from flash_chord.data.reference import hand_validity
+            self._support_hand_validity = hand_validity(self.setup.reference, tuple(objective.config.sides))
+        valid = self._support_hand_validity[np.clip(row['frame'], 0, self.binding.num_frames-1)]
+        cost = support_cost(current, reference, tolerance=self.wrench_tolerance, hand_valid=valid)
         horizon_end = row['frame'] >= self.binding.num_frames-2
         # A training tracking reset cuts sampling short, not the upper objective.
         # Its terminal observation retains the old reference frame, so it cannot
@@ -480,7 +496,8 @@ class WrenchHypergradientEditor(ResponseBilevelEditor):
         baseline_cost = self._cost(baseline, self.binding.joint_q)
         if self.hyper is None:
             self.hyper = WrenchHypergradient(self.training, env.observation_dim,
-                learner.critic_context.shape[-1], context_rows.shape[-1], self.hg_config, seed)
+                learner.critic_context.shape[-1], context_rows.shape[-1], self.hg_config, seed,
+                upper_action_dim=self.upper_action_dim)
         fit = self.hyper.fit_critic(self.replay, learner, self.hyper_rng)
         # Calibrate on this exact unassisted incoming controller before asking
         # for any proposal; old reference-version rollouts are not its rollout.

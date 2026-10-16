@@ -145,6 +145,7 @@ def termination_kernel(
     wrist_body_to_frame_quat: wp.array(dtype=wp.quat),  # [num_hands] semantic wrist rotation
     ref_wrist_pos: wp.array(dtype=wp.vec3),  # [T*num_hands] frame-major
     ref_wrist_quat: wp.array(dtype=wp.quat),  # [T*num_hands] frame-major, xyzw
+    wrist_reference_valid: wp.array(dtype=wp.int32),  # [T*num_hands] frame-major
     num_objects: int,
     object_body_id: wp.array(dtype=wp.int32),  # [W*num_objects] absolute body id, w-major
     ref_object_pos: wp.array(dtype=wp.vec3),  # [W*num_objects]
@@ -181,12 +182,15 @@ def termination_kernel(
     for h in range(num_hands):
         i = w * num_hands + h
         reference_i = frame * num_hands + h
-        body_xf = body_q[base + wrist_frame_body_id[h]]
-        body_quat = wp.transform_get_rotation(body_xf)
-        frame_pos = wp.transform_point(body_xf, wrist_body_to_frame_pos[h])
-        frame_quat = wp.normalize(quat_mul_xyzw(body_quat, wrist_body_to_frame_quat[h]))
-        dp = wp.length(frame_pos - ref_wrist_pos[reference_i])
-        do = quat_geodesic_angle(frame_quat, ref_wrist_quat[reference_i])
+        dp = float(0.0)
+        do = float(0.0)
+        if wrist_reference_valid[reference_i] != 0:
+            body_xf = body_q[base + wrist_frame_body_id[h]]
+            body_quat = wp.transform_get_rotation(body_xf)
+            frame_pos = wp.transform_point(body_xf, wrist_body_to_frame_pos[h])
+            frame_quat = wp.normalize(quat_mul_xyzw(body_quat, wrist_body_to_frame_quat[h]))
+            dp = wp.length(frame_pos - ref_wrist_pos[reference_i])
+            do = quat_geodesic_angle(frame_quat, ref_wrist_quat[reference_i])
         wrist_pos_err[i] = dp
         wrist_ori_err[i] = do
         max_wrist_pos_err = wp.max(max_wrist_pos_err, dp)
@@ -282,9 +286,13 @@ def evaluate_termination(
     ref_object_pos: wp.array,
     ref_object_quat: wp.array,
     config: TrackingTerminationConfig | None = None,
+    wrist_reference_valid: wp.array | None = None,
 ) -> None:
     """Launch the termination kernel into ``buf`` (per-world errors + ``done`` masks on device)."""
     config = config or TrackingTerminationConfig()
+    if wrist_reference_valid is None:
+        wrist_reference_valid = wp.ones(reference.num_frames*buf.num_hands,
+            dtype=wp.int32, device=buf.wrist_done.device)
     wp.launch(
         termination_kernel,
         dim=buf.world_count,
@@ -299,6 +307,7 @@ def evaluate_termination(
             buf.wrist_frames.body_to_frame_quat,
             reference.wrist_pos_w,
             reference.wrist_quat_w,
+            wrist_reference_valid,
             buf.num_objects,
             object_body_ids,
             ref_object_pos,
@@ -356,6 +365,22 @@ class TrackingTermination:
     object_ref_quat_w: wp.array
     terminated: wp.array
     truncated: wp.array
+    wrist_reference_valid: wp.array
+    sides: tuple[str, ...]
+
+    def bind_reference_validity(self, reference) -> None:
+        """Exclude unknown held hand poses from failure supervision only.
+
+        Pose/action references and object termination remain unchanged. Bind
+        before graph capture so the device buffer is reused by every step.
+        """
+        import numpy as np
+        from flash_chord.data.reference import hand_validity
+        valid = hand_validity(reference, self.sides)
+        expected = (self.reference.num_frames, self.buffers.num_hands)
+        if valid.shape != expected:
+            raise ValueError(f'Hand validity shape {valid.shape} does not match termination {expected}')
+        self.wrist_reference_valid.assign(np.asarray(valid, dtype=np.int32).reshape(-1))
 
     @property
     def cause_names(self) -> tuple[str, ...]:
@@ -414,6 +439,9 @@ class TrackingTermination:
             object_ref_quat_w=object_ref_quat_w,
             terminated=wp.zeros(scene.world_count, dtype=wp.int32, device=device),
             truncated=wp.zeros(scene.world_count, dtype=wp.int32, device=device),
+            wrist_reference_valid=wp.ones(scene.robot_reference.num_frames*len(scene.layout.sides),
+                dtype=wp.int32, device=device),
+            sides=tuple(scene.layout.sides),
         )
 
     def evaluate(self, body_q: wp.array, timestep: wp.array) -> None:
@@ -426,6 +454,7 @@ class TrackingTermination:
             self.object_ref_pos_w,
             self.object_ref_quat_w,
             self.config,
+            self.wrist_reference_valid,
         )
         wp.launch(
             publish_tracking_completion,

@@ -38,7 +38,7 @@ class AdaptiveWindowEditor(LocalReferenceEditor):
         manifest_path = self.output.parent/'ttsa_manifest.json'
         manifest = json.loads(manifest_path.read_text())
         manifest.update(engine='adaptive_window_flashsac', window_selection='failure_onset_and_sampled_history',
-                        max_windows=4, upper_action_dimension=56, window_context_in_upper_observation=True,
+                        max_windows=4, upper_action_dimension=int(self.joint_basis.shape[0]), window_context_in_upper_observation=True,
                         nominal_candidates_per_window=self.upper_worlds//4,
                         confirmation='three paired perturbed resets, both objects and successful prefix',
                         contact_target='no preassigned hand or object', search_voc_scale=0.)

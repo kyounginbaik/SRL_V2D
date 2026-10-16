@@ -8,17 +8,32 @@ def configure_hypergradient(command, config, phase, worlds, base):
     # production, but stops after two real upper rounds and checkpoint media.
     total = 1048576 if smoke else 100663296
     interval = 501760
-    checkpoint = 1048576 if smoke else 1003520
+    checkpoint = 1048576 if smoke else 5017600
     replace_keys = {
         'training.total_environment_steps', 'training.replay.capacity',
         'training.replay.minimum_size', 'training.checkpoint.save_interval_environment_steps',
         '+adaptive_voc.interval',
+        'scene.support',
     }
     command[:] = [arg for arg in command
                   if not arg.startswith(('+bilevel.', 'bilevel.', '+bilevel='))
                   and arg.split('=', 1)[0] not in replace_keys]
+    limits = config['episode'].get('controller_limits', {})
+    scope = config.get('upper_edit_scope', 'full')
+    if scope not in ('full', 'wrists_only'):
+        raise ValueError(f'Unsupported upper edit scope: {scope}')
+    upper_dimension = 12 if scope == 'wrists_only' else 56
     command.extend([
         '+bilevel=wrench_hypergradient',
+        f'bilevel.edit_scope={scope}',
+        f'scene.support={str(bool(config["episode"].get("support_asset"))).lower()}',
+        'action.wrist_pos_clip=0.05',
+        'action.wrist_ori_clip=0.5',
+        'observation.object_body_velocity.enabled=true',
+        'action.wrist_residual_linear_speed_limit_m_s=0.15',
+        'action.wrist_residual_angular_speed_limit_rad_s=1.5',
+        f"+env.wrist_linear_speed_limit_m_s={limits.get('linear_speed_limit_m_s', 1.0)}",
+        f"+env.wrist_angular_speed_limit_rad_s={limits.get('angular_speed_limit_rad_s', 12.0)}",
         'bilevel.hypergradient.inner_optimizer=adam',
         'bilevel.hypergradient.cost_scale=0.01',
         'bilevel.hypergradient.trial_mc_weight=1.0',
@@ -38,6 +53,12 @@ def configure_hypergradient(command, config, phase, worlds, base):
         'bilevel.adaptation.maximum_vector_steps=448',
         'bilevel.adaptation.window_tail_vector_steps=16',
     ])
+    ground_plane = config['episode'].get('ground_plane')
+    if ground_plane is not None:
+        command.append('+collision.ground_plane=[' + ','.join(map(str, ground_plane)) + ']')
+    config['wrist_control'].update(
+        linear_speed_limit_m_s=limits.get('linear_speed_limit_m_s', 1.0),
+        angular_speed_limit_rad_s=limits.get('angular_speed_limit_rad_s', 12.0))
     # Do not inherit convex-response guarantees or population-search labels.
     for obsolete in ('upper_trials', 'replicas_per_candidate', 'lower_surrogate',
                      'lower_response_error_tolerance', 'guarantee_document'):
@@ -45,14 +66,15 @@ def configure_hypergradient(command, config, phase, worlds, base):
     config.update(
         engine='wrench_hypergradient', upper_optimizer='wrench_hypergradient',
         ablation_variant='wrench_hypergradient_online_critic_finite_response',
-        experiment_name='wrench-online-critic', experiment_date='20261016',
+        experiment_name='wrench-stable-control', experiment_date='20261016',
+        upper_edit_scope=scope,
         total_environment_steps=total, upper_search_interval=interval,
         voc_probe_interval=interval,
         upper_search_warmup=interval, checkpoint_interval=checkpoint,
         planned_upper_search_rounds=(total-1)//interval,
         training_command=command, worlds=worlds, eval_worlds=1,
         adaptation_worlds=worlds, nominal_candidates_per_window=1,
-        maximum_proposals_per_round=4, upper_action_dimension=56,
+        maximum_proposals_per_round=4, upper_action_dimension=upper_dimension,
         upper_updates_per_batch=4,
         upper_proposal_method='one bounded actor proposal per detected window; finite-step response hypergradient',
         upper_feedback='discounted CHORD-style wrench-support cost; not net six-axis wrench',
@@ -60,6 +82,11 @@ def configure_hypergradient(command, config, phase, worlds, base):
         proposal_inner_optimizer='adam', upper_cost_scale=0.01,
         critic_online_interval_vector_steps=16, critic_online_updates=4,
         diagnostic_save_trials=True,
+        actor_observes_object_velocity=True,
+        lower_control=dict(wrist_position_residual_clip_m=.05, wrist_orientation_residual_clip_rad=.5,
+            wrist_residual_linear_speed_limit_m_s=.15, wrist_residual_angular_speed_limit_rad_s=1.5,
+            angular_residual_coordinates='RPY; coordinate-rate bound, not physical angular speed',
+            reference_motion_slew_limited=False, physical_speed_limits=config['wrist_control']),
         trial_mc_weight=1.0, outer_validation='current-round unassisted baseline only',
         lower_response='matched full FlashSAC training on fresh data for candidate and unchanged control',
         adaptation_budget_mode='bounded_window',

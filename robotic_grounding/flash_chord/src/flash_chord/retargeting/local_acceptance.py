@@ -50,11 +50,11 @@ class LocalWrenchAccumulator:
         self.local = WrenchSupportAccumulator(worlds, hands, objects, basis, tolerance=tolerance)
         self.region = dict(region)
 
-    def add(self, current, reference):
+    def add(self, current, reference, *, hand_valid=None):
         frame = self.full.frames
-        self.full.add(current, reference)
+        self.full.add(current, reference, hand_valid=hand_valid)
         if self.region['start_frame'] <= frame < self.region['stop_frame_exclusive']:
-            self.local.add(current, reference)
+            self.local.add(current, reference, hand_valid=hand_valid)
 
     def summaries(self):
         if self.local.frames != self.region['stop_frame_exclusive']-self.region['start_frame']:

@@ -42,10 +42,14 @@ def reference_values(binding, sides):
 class ReferenceRelabel:
     def __init__(self, values, jacobian, layout, config, bounds=None):
         self.values, self.jacobian = jnp.asarray(values), jnp.asarray(jacobian)
+        if (self.values.ndim != 2 or self.jacobian.ndim != 3 or
+                self.jacobian.shape[:2] != self.values.shape or self.jacobian.shape[-1] < 1):
+            raise ValueError('reference Jacobian must be [frame, reference coordinate, edit channel]')
+        self.dimensions = self.jacobian.shape[-1]
         if bounds is None:
-            bounds = (-np.ones(56), np.ones(56))
+            bounds = (-np.ones(self.dimensions), np.ones(self.dimensions))
         self.lower, self.upper = map(jnp.asarray, bounds)
-        if (self.lower.shape != (56,) or self.upper.shape != (56,) or
+        if (self.lower.shape != (self.dimensions,) or self.upper.shape != (self.dimensions,) or
                 not np.isfinite(np.asarray(bounds)).all() or
                 np.any(np.asarray(self.lower) > 0) or np.any(np.asarray(self.upper) < 0)):
             raise ValueError('finite feasible coefficient bounds containing zero required')
@@ -58,8 +62,6 @@ class ReferenceRelabel:
         for name in ('wrist_position', 'wrist_orientation', 'command_wrist', 'command_finger'):
             if getattr(config, name).scale == 0:
                 raise ValueError(f'required observation scale is zero: {name}')
-        if self.jacobian.shape != (*self.values.shape, 56):
-            raise ValueError('reference Jacobian must be [frame, reference coordinate, 56]')
 
     def parameterize(self, raw, radius):
         """Smooth actor output inside the feasible box, avoiding blocked directions.
@@ -103,7 +105,8 @@ class ReferenceRelabel:
             raise ValueError('positive finite difference radius required')
         from flash_chord.embodiments.binding import build_robot_reference_binding
         values = reference_values(editor.binding, strategy.layout.sides)
-        derivative = np.zeros((*values.shape, 56), np.float32)
+        dimensions = editor.joint_basis.shape[0]
+        derivative = np.zeros((*values.shape, dimensions), np.float32)
         frames = np.flatnonzero(editor.basis[:, 0] > 0)
         # local_candidate limits each scalar/tangent coefficient independently.
         # The +/- unit probes give its exact feasible interval, including
@@ -111,20 +114,32 @@ class ReferenceRelabel:
         coordinates = list(editor.projector.qids) + [
             start+axis for start, _ in editor.projector.ball_joints for axis in range(3)]
         expected = np.eye(editor.binding.joint_q.shape[1])[coordinates]
-        if expected.shape != (56, editor.binding.joint_q.shape[1]) or not np.array_equal(editor.joint_basis, expected):
-            raise ValueError('feasible relabeling requires the full canonical 56D joint basis')
+        basis = np.asarray(editor.joint_basis)
+        if expected.shape != (56, editor.binding.joint_q.shape[1]) or basis.ndim != 2 or basis.shape[1] != expected.shape[1] or not dimensions:
+            raise ValueError('feasible relabeling requires a nonempty canonical joint basis')
+        matches = np.all(basis[:, None, :] == expected[None, :, :], axis=-1)
+        if not np.all(matches.sum(axis=1) == 1):
+            raise ValueError('feasible relabeling requires canonical scalar/tangent edit channels')
+        channels = np.argmax(matches, axis=1)
+        if len(np.unique(channels)) != dimensions:
+            raise ValueError('feasible relabeling requires unique edit channels')
         limits = []
         for sign in (1., -1.):
-            editor.candidate_joint_q(np.full(56, sign))
-            limits.append(np.asarray(editor.last_projection_scales, np.float32).copy())
+            editor.candidate_joint_q(np.full(dimensions, sign))
+            # The projector reports every scalar/tangent channel, even when
+            # this actor edits only the wrists. Keep the selected channel order.
+            scales = np.asarray(editor.last_projection_scales, np.float32)
+            if scales.shape != (len(coordinates),):
+                raise ValueError('projector bounds do not match canonical edit channels')
+            limits.append(scales[channels].copy())
         hi, lo = limits[0], -limits[1]
-        for column in range(56):
+        for column in range(dimensions):
             stencil = []
             for sign, available in ((1., hi[column]), (-1., -lo[column])):
                 radius = min(epsilon, available)
                 if radius < 1e-6:
                     continue
-                theta = np.zeros(56); theta[column] = sign*radius
+                theta = np.zeros(dimensions); theta[column] = sign*radius
                 q = editor.candidate_joint_q(theta)[frames]
                 target = editor.baseline.joint_target[frames].copy()
                 target[:, editor.projector.dids] = q[:, editor.projector.qids]
@@ -143,7 +158,7 @@ class ReferenceRelabel:
         return cls(values, derivative, strategy.layout, strategy.config, bounds=(lo, hi))
 
     def validate_zero(self, observation, frame, tolerance=3e-4):
-        reconstructed = self(observation, frame, jnp.zeros(56))
+        reconstructed = self(observation, frame, jnp.zeros(self.dimensions))
         error = float(jnp.max(abs(reconstructed-observation)))
         if not np.isfinite(error) or error > tolerance:
             raise ValueError(f'reference replay does not match current binding: {error}')

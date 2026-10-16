@@ -36,16 +36,25 @@ a=np.array(bounds);lo=a[:,:2].min(0);hi=a[:,2:].max(0);center=(lo+hi)/2;main_hei
 from scipy.spatial.transform import Rotation
 rot=Rotation.from_quat(np.array(ref['object_body_wxyz']).reshape(-1,4),scalar_first=True).as_matrix().reshape(frames,len(ref['object_body_names']),3,3)
 pos=np.asarray(ref['object_body_position'])
-centers={};close_heights={};object_indices={}
+centers={};close_heights={};object_indices={};closeup_anchors={}
 for j,side in enumerate(['left','right']):
- cp=np.asarray(ref[f'mano_{side}_object_contact_positions']);ids=np.asarray(ref[f'mano_{side}_object_contact_part_ids'])
- j=int(np.argmax([np.count_nonzero(ids==o+1) for o in range(len(ref['object_body_names']))]));object_indices[side]=j
+ ids=np.asarray(ref.get(f'mano_{side}_object_contact_part_ids',[]))
+ counts=[np.count_nonzero(ids==o+1) for o in range(len(ref['object_body_names']))]
+ if not counts or max(counts)==0:
+  # Camera-only fallback: follow the actual refined wrist instead of
+  # inventing a contact point or assuming this hand holds an object.
+  centers[side]=wrists[side][1];close_heights[side]=180.;object_indices[side]=None
+  closeup_anchors[side]={'mode':'refined_wrist','reason':'no_object_contact_labels'}
+  print(f'[reference-overlay] {side} closeup follows refined wrist: no object contact labels',flush=True)
+  continue
+ cp=np.asarray(ref[f'mano_{side}_object_contact_positions'])
+ j=int(np.argmax(counts));object_indices[side]=j
  local=np.einsum('tki,tij->tkj',cp-pos[:,j,None,:],rot[:,j])
  valid=ids==j+1
- assert valid.any(),f'Missing handle-region contact labels for {side}'
  anchor=np.median(local[valid],axis=0)
  world=np.einsum('tij,j->ti',rot[:,j],anchor)+pos[:,j]
  centers[side]=project(world);close_heights[side]=180.
+ closeup_anchors[side]={'mode':'object_local_contact_median','object_name':ref['object_body_names'][j]}
 def crop(image,center,height,size):
  ow,oh=size;hh=float(height);ww=hh*ow/oh
  transform=np.array([[ww/ow,0,center[0]-ww/2],[0,hh/oh,center[1]-hh/2]],np.float32)
@@ -70,7 +79,10 @@ for i in range(frames):
  canvas[100:900,:1000]=crop(blend,center,main_height,(1000,800))
  for j,side in enumerate(['left','right']):
   y=100+j*400;canvas[y+40:y+390,1010:1590]=crop(blend,centers[side][i],close_heights[side],(580,350))
-  text(canvas,(ref['object_body_names'][object_indices[side]].replace('_',' ')+' / '+side+' hand'),(1025,y+27),.7)
+  object_index=object_indices[side]
+  label=(ref['object_body_names'][object_index].replace('_',' ')+' / '+side+' hand'
+         if object_index is not None else side+' hand / wrist crop')
+  text(canvas,label,(1025,y+27),.7)
   cv2.rectangle(canvas,(1010,y+40),(1590,y+390),(210,185,45),1)
  delta=[np.linalg.norm(data[1][s+'/wrist_pos_w'][i]-data[0][s+'/wrist_pos_w'][i])*100 for s in ['left','right']]
  text(canvas,f't={i/fps:.2f}s  |  Wrist change: left {delta[0]:.2f} cm, right {delta[1]:.2f} cm  |  Kinematic reference, not physics',(24,938),.62)
@@ -82,6 +94,6 @@ c=cv2.VideoCapture(str(temp));n=0
 while c.read()[0]:n+=1
 c.release();assert n==frames
 temp.replace(out/'overlay.mp4')
-manifest={'style':'transparent_closeups_v2','version':version,'frames':frames,'fps':fps,'opacity':.45,'original_snapshot':str(paths[0]),'refined_snapshot':str(paths[1]),'objects_tinted':False,'main_crop_fixed':True,'closeups':'same-camera crops tracking object-local median reconstructed contact region, fixed 180-pixel height','image_size':[1600,960]}
+manifest={'style':'transparent_closeups_v2','version':version,'frames':frames,'fps':fps,'opacity':.45,'original_snapshot':str(paths[0]),'refined_snapshot':str(paths[1]),'objects_tinted':False,'main_crop_fixed':True,'closeups':'same-camera crops tracking object-local median contact region or refined wrist when contact labels are absent, fixed 180-pixel height','closeup_anchors':closeup_anchors,'image_size':[1600,960]}
 (out/'complete.json').write_text(json.dumps(manifest,indent=2)+'\n')
 print('OVERLAY_COMPLETE',out,flush=True)
