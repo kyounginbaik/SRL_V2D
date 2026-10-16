@@ -52,6 +52,7 @@ class LaunchRecipesTest(unittest.TestCase):
             self.assertIn('bilevel.hypergradient.inner_optimizer=adam', command)
             self.assertIn('bilevel.hypergradient.cost_scale=0.01', command)
             self.assertIn('bilevel.hypergradient.trial_mc_weight=1.0', command)
+            self.assertIn('bilevel.adaptation.acceptance_mode=finite_response', command)
             self.assertIn('bilevel.interval=501760', command)
             self.assertIn('+adaptive_voc.interval=501760', command)
             self.assertIn('training.total_environment_steps=524288', command)
@@ -71,9 +72,11 @@ class LaunchRecipesTest(unittest.TestCase):
         self.assertIn('training.replay.capacity=1048576', command)
         self.assertIn('bilevel.interval=501760', command)
         self.assertIn('bilevel.adaptation.budget_mode=bounded_window', command)
+        self.assertIn('bilevel.adaptation.acceptance_mode=finite_response', command)
         self.assertIn('bilevel.adaptation.maximum_vector_steps=448', command)
         self.assertEqual(config['adaptation_maximum_transitions_per_branch'], 917504)
-        self.assertEqual(config['experiment_name'], 'wrench-adam-feedback')
+        self.assertEqual(config['experiment_name'], 'wrench-finite-response')
+        self.assertEqual(config['adaptation_acceptance_mode'], 'finite_response')
         self.assertEqual(config['proposal_inner_optimizer'], 'adam')
         self.assertEqual(config['upper_cost_scale'], .01)
         self.assertEqual(config['trial_mc_weight'], 1.)
@@ -129,6 +132,69 @@ class LaunchRecipesTest(unittest.TestCase):
             validate(row, {**candidate, 'inner_optimizer_state_preserved': False})
         with self.assertRaisesRegex(AssertionError, 'cost scale'):
             validate(row, {**candidate, 'critic_cost_scale': 1.})
+
+    @staticmethod
+    def finite_acceptance_row():
+        budgets = [131072, 196608, 262144]
+        confirmation = dict(attempted=True, passed=True, environment_steps=budgets[0], window_id=0)
+        candidate = dict(gradient_norm=1., accepted=True, window=dict(window_id=0),
+            physical_passed_at_selected_checkpoint=True, rejection_reasons=[],
+            confirmation=copy.deepcopy(confirmation),
+            adaptation=dict(acceptance_mode='finite_response', stable=False,
+                selected_environment_steps=budgets[0],
+                checkpoints=[dict(environment_steps=budget,
+                    candidate=dict(training=dict(environment_steps=budget)),
+                    control=dict(training=dict(environment_steps=budget))) for budget in budgets]))
+        return dict(accepted=True, adaptation_checkpoints=budgets, candidates=[candidate],
+                    confirmation=dict(attempted=True, passed=True, attempts=[confirmation]))
+
+    def test_finite_acceptance_allows_confirmed_early_checkpoint_without_plateau(self):
+        validate = module('hypergradient_smoke').validate_finite_acceptance
+        row = self.finite_acceptance_row()
+        validate(row)
+        # Another physically useful proposal is not published if the selected
+        # pair already confirmed. Acceptance counts actual reference changes.
+        not_selected = copy.deepcopy(row['candidates'][0])
+        not_selected.update(accepted=False, window=dict(window_id=1))
+        not_selected.pop('confirmation')
+        row['candidates'].append(not_selected)
+        validate(row)
+        rejected = self.finite_acceptance_row()
+        rejected.update(accepted=False, confirmation=dict(attempted=False, passed=False, attempts=[]))
+        rejected['candidates'][0].update(accepted=False, physical_passed_at_selected_checkpoint=False,
+                                        rejection_reasons=['no_local_improvement'])
+        rejected['candidates'][0].pop('confirmation')
+        validate(rejected)
+
+    def test_finite_acceptance_rejects_unconfirmed_or_unmatched_publication(self):
+        validate = module('hypergradient_smoke').validate_finite_acceptance
+        unconfirmed = self.finite_acceptance_row()
+        unconfirmed['candidates'][0]['confirmation']['passed'] = False
+        with self.assertRaisesRegex(AssertionError, 'lacks frozen confirmation'):
+            validate(unconfirmed)
+        mismatched = self.finite_acceptance_row()
+        mismatched['candidates'][0]['confirmation']['environment_steps'] = 262144
+        with self.assertRaisesRegex(AssertionError, 'different adaptation checkpoint'):
+            validate(mismatched)
+        unmatched_training = self.finite_acceptance_row()
+        unmatched_training['candidates'][0]['adaptation']['checkpoints'][0]['control']['training']['environment_steps'] = 262144
+        with self.assertRaisesRegex(AssertionError, 'Unmatched selected training budgets'):
+            validate(unmatched_training)
+        unchecked = self.finite_acceptance_row()
+        unchecked['candidates'][0]['physical_passed_at_selected_checkpoint'] = False
+        with self.assertRaisesRegex(AssertionError, 'failed physical checks'):
+            validate(unchecked)
+
+    def test_finite_acceptance_rejects_partial_budget_or_multiple_publications(self):
+        validate = module('hypergradient_smoke').validate_finite_acceptance
+        incomplete = self.finite_acceptance_row()
+        incomplete['candidates'][0]['adaptation']['checkpoints'].pop()
+        with self.assertRaisesRegex(AssertionError, 'all matched budgets'):
+            validate(incomplete)
+        duplicate = self.finite_acceptance_row()
+        duplicate['candidates'].append(copy.deepcopy(duplicate['candidates'][0]))
+        with self.assertRaisesRegex(AssertionError, 'Published candidate count'):
+            validate(duplicate)
 
     def test_feedback_panels_include_rejected_trial_learning(self):
         summary = module('wandb_sync').feedback_summary

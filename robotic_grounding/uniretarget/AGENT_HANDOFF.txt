@@ -1,5 +1,5 @@
 AGENT HANDOFF: current UniRetarget wrench-hypergradient experiment
-Updated 2026-10-16: wrench-adam-feedback, normalized returns and fresh baselines
+Updated 2026-10-16: finite-response selection and frozen-pair confirmation
 
 Set up the current UniRetarget implementation on this GPU server and run FULL
 EPISODE-1 TRAINING for seeds 43, 44 and 45. Use --upper wrench_hypergradient
@@ -12,8 +12,9 @@ its logs before retrying with a fresh output root.
 
 Repository: https://github.com/kyounginbaik/SRL_V2D
 Checkout: current main in a new isolated directory; record git rev-parse HEAD.
-Use current main containing the Adam-response, cost-normalization and fresh
-baseline-calibration fixes below. Earlier wrench-feedback-fast revisions are
+Use current main containing finite-response checkpoint selection, frozen-pair
+confirmation, Adam-response and critic-calibration fixes below. Earlier
+wrench-adam-feedback and wrench-feedback-fast revisions are
 superseded; record the actual new commit rather than reusing their frozen source.
 Full setup/commands: robotic_grounding/uniretarget/RUNNING.txt
 Method/math: robotic_grounding/flash_chord/docs/wrench_hypergradient.txt
@@ -107,9 +108,18 @@ Smoke contract:
   retain them for inner actor replay. Full-horizon baseline/trial MC supplies
   actual continued-failure evidence. Upper done marks only reference-horizon
   completion; lower FlashSAC termination behavior remains unchanged.
-- Adjacent-checkpoint success stability uses max(.02, 1/N) for N scored frames,
-  allowing the actual resolution of success fractions. Physical improvement,
-  per-object regression and archived-prefix guards still apply.
+- Evaluate all three adaptation checkpoints and keep the best eligible pair
+  per window. Require learning/coverage, all per-object and archived-prefix
+  guards, and gain over both incoming and same-budget no-edit greater than
+  max(.001, .005*abs(min(incoming_cost, control_cost))). Plateau/stability is
+  diagnostic only; its success resolution remains max(.02,1/N).
+- Rank eligible pairs by measured cost; confirm at most two until one passes.
+  Freeze candidate, matched no-edit and incoming policies and repeat all three
+  VOC=0 full-horizon rollouts from the same initial state. No further training
+  or reset randomization. Worse original/repeat candidate must beat the better
+  original/repeat score of BOTH comparisons, with the same margin and guards.
+  At most six extra single-world rollouts; no added vector-training budget.
+  Only the published proposal is marked accepted.
 - Publish the accepted reference and complete adapted lower learning state
   together. A rejected proposal preserves the incoming learner and replay.
 - Fixed initial physical state, immutable object targets, pot 0.2kg, lid 0.1kg,
@@ -156,9 +166,15 @@ For this task, prefer --phase full on untouched episode/seed paths so smoke and
 fresh full training run automatically in one allocation. Full training retains the same bounded validation
 profile as the smoke. At most five branches run per round (one reused unchanged
 control plus four candidate windows); do not quote only main-step runtime.
-Expected W&B names start with wrench-adam-feedback-full-d56-w2048-.
+Expected W&B names start with wrench-finite-response-full-d56-w2048-.
 
 Mathematical description: finite-step bilevel gradient proposals with a learned
 cost surrogate and longer physical validation. Long adaptation is outside the
-autodiff graph; neither empirical stability nor CPU tests prove global neural-RL
-convergence. Wrench support is not a measured six-axis net object wrench.
+autodiff graph. Select from finite policy/reference responses, without requiring
+an adjacent-checkpoint plateau. Frozen confirmation and CPU tests do not prove
+global neural-RL convergence. Wrench support is not a measured six-axis net object wrench.
+
+Prior-run evidence: 402/405 proposals failed the plateau check; 56 had a useful
+checkpoint and 32 were useful only before their final checkpoint. This motivates
+the new selection rule. Do not claim successful refinement until the current
+GPU run actually accepts a pair and reports nonzero reference changes.

@@ -36,13 +36,17 @@ class AdaptationConfig:
     checkpoint_stride_vector_steps: int = 32
     maximum_vector_steps: int = 256
     window_tail_vector_steps: int = 16
+    acceptance_mode: str = 'finite_response'
+    maximum_confirmations: int = 2
+    minimum_absolute_improvement: float = .001
+    minimum_relative_improvement: float = .005
 
     def __post_init__(self):
         counts = (*self.checkpoints, *self.minimum_reference_passes, self.replay_capacity,
                   self.replay_minimum_size, self.minimum_actor_updates,
                   self.minimum_critic_updates, self.minimum_window_samples, self.stable_comparisons,
                   self.minimum_vector_steps, self.checkpoint_stride_vector_steps,
-                  self.maximum_vector_steps, self.window_tail_vector_steps)
+                  self.maximum_vector_steps, self.window_tail_vector_steps, self.maximum_confirmations)
         if any(isinstance(v, bool) or int(v) != v or v <= 0 for v in counts):
             raise ValueError('positive integer adaptation counts required')
         if (len(self.checkpoints) < 2 or len(self.checkpoints) != len(self.minimum_reference_passes)
@@ -52,11 +56,14 @@ class AdaptationConfig:
                 or self.stable_comparisons >= len(self.checkpoints)):
             raise ValueError('ordered paired adaptation checkpoints and valid replay limits required')
         tolerances = (self.cost_relative_tolerance, self.position_tolerance_m,
-                      self.orientation_tolerance_rad, self.success_tolerance)
+                      self.orientation_tolerance_rad, self.success_tolerance,
+                      self.minimum_absolute_improvement, self.minimum_relative_improvement)
         if any(not np.isfinite(v) or v <= 0 for v in tolerances):
             raise ValueError('finite positive adaptation stability tolerances required')
         if self.budget_mode not in ('reference_passes', 'bounded_window'):
             raise ValueError('adaptation budget_mode must be reference_passes or bounded_window')
+        if self.acceptance_mode not in ('finite_response', 'plateau'):
+            raise ValueError('adaptation acceptance_mode must be finite_response or plateau')
         if (self.budget_mode == 'bounded_window' and self.maximum_vector_steps <
                 self.minimum_vector_steps+(len(self.checkpoints)-1)*self.checkpoint_stride_vector_steps):
             raise ValueError('bounded adaptation must fit all distinct checkpoints inside its hard cap')

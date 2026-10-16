@@ -247,7 +247,7 @@ def test_full_sac_adaptation_is_fresh_reproducible_and_does_not_mutate_incoming(
 def test_matched_comparison_extends_training_until_stable_or_rejects(costs, expected_budget, stable):
     from flash_chord.retargeting.wrench_hypergradient_editor import WrenchHypergradientEditor
     editor=WrenchHypergradientEditor.__new__(WrenchHypergradientEditor)
-    editor.adaptation_config=AdaptationConfig()
+    editor.adaptation_config=AdaptationConfig(acceptance_mode='plateau')
     editor.scoring_region=dict(start_frame=1, stop_frame_exclusive=3)
     report=dict(actor_updates=50, critic_updates=100, actor_parameter_delta_l2=.01,
         critic_parameter_delta_l2=.1, frame_samples=[2048]*4, max_reference_frame=3)
@@ -269,7 +269,7 @@ def test_matched_comparison_extends_training_until_stable_or_rejects(costs, expe
 def test_early_failing_control_does_not_veto_a_stable_improving_candidate():
     from flash_chord.retargeting.wrench_hypergradient_editor import WrenchHypergradientEditor
     editor=WrenchHypergradientEditor.__new__(WrenchHypergradientEditor)
-    editor.adaptation_config=AdaptationConfig()
+    editor.adaptation_config=AdaptationConfig(acceptance_mode='plateau')
     editor.scoring_region=dict(start_frame=10, stop_frame_exclusive=13)
     trained=dict(actor_updates=50, critic_updates=100, actor_parameter_delta_l2=.01,
         critic_parameter_delta_l2=.1, frame_samples=[2048]*20, max_reference_frame=19)

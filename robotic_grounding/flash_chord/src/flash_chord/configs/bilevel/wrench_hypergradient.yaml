@@ -43,6 +43,10 @@ hypergradient:
   trial_mc_weight: 1.0
   cost_scale: 0.01
 adaptation:
+  acceptance_mode: finite_response
+  maximum_confirmations: 2
+  minimum_absolute_improvement: 0.001
+  minimum_relative_improvement: 0.005
   # Bounded failure-window adaptation; all windows still receive matched tests.
   # 448 vector steps covers this 335-frame episode including the checkpoint tail.
   budget_mode: bounded_window

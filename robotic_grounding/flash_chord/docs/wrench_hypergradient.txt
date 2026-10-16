@@ -1,10 +1,10 @@
-WRENCH HYPERGRADIENT ENGINE: ADAM RESPONSE AND MEASURED FEEDBACK
+WRENCH HYPERGRADIENT ENGINE: FINITE RESPONSE AND FROZEN-PAIR CONFIRMATION
 Updated 2026-10-16
 
-This is the current wrench-adam-feedback implementation. It is separate from
-response_bilevel and supersedes both the 2026-10-15 validation recipe and the
-first wrench-feedback-fast revision. Older frozen runs do not acquire these
-changes. Use current main, record its exact commit, and prepare a new source
+This is the current wrench-finite-response implementation. It is separate from
+response_bilevel and supersedes the plateau-gated wrench-adam-feedback recipe,
+the 2026-10-15 validation recipe and the first wrench-feedback-fast revision.
+Older frozen runs do not acquire these changes. Use current main, record its exact commit, and prepare a new source
 snapshot/output root. New GPU performance has not yet been measured.
 
 ACTUAL ALGORITHM
@@ -131,28 +131,34 @@ ACTUAL ALGORITHM
     with its own physics, replay and optimizer state. At most one extra vector
     training scene is alive at once. Main training pauses during validation;
     additional transitions are reported separately from main steps.
-14. Require two consecutive ready checkpoints with stable cost, per-object
-    local pose errors, success, support error and advantage sign. Both branches
-    need at least 32 actor/critic updates and nonzero parameter movement. The
-    candidate also needs 128 observed failure-region samples and coverage of
-    the interval's final frame. A control that still fails earlier remains a
-    valid negative comparison; its actual coverage is recorded.
-    Tolerances: cost 5% with unit floor, position 3 mm, orientation .03 rad,
-    success max(.02, 1/N) for N locally scored frames, and support error .05.
-    Success fractions are discrete: a one-frame change must not fail a tolerance
-    narrower than their actual resolution. This adjustment affects the adjacent
-    stability test; physical improvement and regression guards still apply.
-    Extend only to the next scheduled
-    checkpoint. Reject unresolved comparisons at the cap. These are empirical
-    stability checks, not convergence certificates. A shorter budget may reject
-    an edit that would help after substantially more lower training.
-15. Among stable candidates, require local physical improvement over BOTH
-    matched control and incoming pair, plus per-object regression and archived
-    prefix guards. Publish the best passing reference with ALL its tested
-    lower learning state, retaining Adam moments. Reset episode return
-    accumulation at frame zero and clear main/auxiliary replay. Rejection
-    retains the incoming learner/reference/replay; upper critic learning from
-    measured trials persists regardless of this decision.
+14. Train and evaluate ALL THREE predeclared checkpoints. Plateau/stability
+    diagnostics are still logged, but cannot veto finite_response acceptance.
+    Both branches need at least 32 actor/critic updates and nonzero parameter
+    movement. The candidate also needs 128 observed failure-region samples
+    and coverage of the interval's final frame. A control that still fails
+    earlier remains a valid negative comparison; its coverage is recorded.
+    At each checkpoint require improvement over BOTH the incoming pair and
+    the unchanged control at the SAME training budget, plus existing per-object
+    and archived-prefix guards. With B=min(control_cost,incoming_cost), require
+    B-candidate_cost > max(.001, .005*abs(B)). Keep the best eligible checkpoint
+    per window, with its exact complete lower learning state. A later worse
+    checkpoint must not overwrite an earlier useful one. The legacy plateau
+    mode remains explicit; it is not the current portable recipe.
+15. Rank eligible pairs by measured local cost and attempt at most two frozen
+    confirmations, stopping at the first pass. For each, freeze its candidate,
+    same-budget unchanged control and incoming learner; run one full-horizon
+    VOC=0 evaluation of EACH from the SAME audited initial physical state.
+    There are no additional learning updates or randomized initial joints.
+    Use the worse original/repeat candidate score and the better original/
+    repeat control and incoming scores, retaining the same improvement margin
+    and object/prefix guards. A one-off favorable rollout cannot alone justify
+    publication. At most six extra single-world rollouts are added per round;
+    vector-world training budgets remain unchanged.
+16. Publish only the passing reference and ALL its exact tested lower learning
+    state, retaining Adam moments. Reset episode return accumulation at frame
+    zero and clear main/auxiliary replay. Mark only the published proposal
+    accepted. Rejection retains the incoming learner/reference/replay; upper
+    critic learning from measured trials persists regardless of this decision.
 
 WHAT THE WRENCH LABEL MEANS
 
@@ -180,6 +186,13 @@ z_{k+1}(theta) = projected, differentiable Adam actor update on SAC_loss,
 phi_K(theta) = actor parameters extracted from z_K(theta).
 F_K(theta) = mean(Q_wrench(obs(theta), pi_phi_K(theta)(obs(theta))))
              + .01 * regularization * mean(theta^2).
+
+Physical selection uses a separate finite-response problem. Let L_B(theta)
+be complete FlashSAC adaptation for a predeclared budget B from the incoming
+learner. Select among the three finite pairs (theta, L_B(theta)), subject to
+measured improvement, physical guards and frozen-pair confirmation. This does
+not require L_B to converge. The K=3 actor gradient proposes theta; it is not
+claimed to be the exact gradient through this longer physical response.
 
 Q_wrench predicts the .01-scaled return. Scaling the edit regularizer by the
 same amount preserves the intended return-versus-edit tradeoff. Use *_raw
@@ -216,6 +229,8 @@ The current smoke uses the SAME full geometry/replay as production:
   training.checkpoint.save_interval_environment_steps=524288
   bilevel.warmup=501760
   bilevel.interval=501760
+  bilevel.adaptation.acceptance_mode=finite_response
+  bilevel.adaptation.maximum_confirmations=2
   bilevel.adaptation.budget_mode=bounded_window
   bilevel.adaptation.minimum_vector_steps=64
   bilevel.adaptation.checkpoint_stride_vector_steps=32
@@ -231,13 +246,13 @@ Require the smoke validation report to pass: actual lower learning, finite
 state, exact fixed-start audits, media, measured feedback from EVERY tested
 branch checkpoint, upper-critic parameter movement, and adaptation within its
 cap. Zero accepted refinements can pass integration and must be reported as such.
-Faster round times are a hypothesis until measured on the new GPU run. Budget
-reduction alone does not give a wall-clock speedup factor: compilation, full
-rollouts, critic fitting and rendering also take time.
+The preceding bounded recipe measured about 5.4-5.5 minutes per upper round;
+that is historical timing, not a measurement of the new confirmation path.
+Compilation, full rollouts, critic fitting and rendering also take time.
 
 OBSERVABILITY
 
-W&B run names begin wrench-adam-feedback-full-d56-w2048-.
+W&B run names begin wrench-finite-response-full-d56-w2048-.
 Existing gradient, predicted gain, measured gain, acceptance, committed wrist
 and finger changes, physics videos and historical reference overlays remain.
 upper_feedback/* reports measured rows, critic updates, parameter movement,
@@ -264,11 +279,18 @@ regularized zero-moment derivatives, feasible reference relabeling, terminal han
 copy/donation safety, matched branch identity, complete-segment MC returns,
 rejected-candidate feedback, non-cancelling calibration, consistent return
 scaling, current-generation baseline sampling, invalid reset-transition filtering,
-one-frame success stability, held-out rows, bounded budgets, fixed starts and
-accepted/rejected publication. Launcher tests reject a disconnected feedback
-loop or exceeded cap. CPU checks do not establish GPU task improvement.
+one-frame success stability diagnostics, held-out rows, bounded budgets, fixed
+starts, earlier-checkpoint retention, frozen-pair confirmation and publication.
+Launcher tests reject a disconnected feedback loop or exceeded cap. CPU checks do not establish GPU task improvement.
 The fresh full-shape smoke and subsequent runs provide integration and measured
-performance evidence; old 2026-10-15 runs did not use this trial feedback loop.
+performance evidence. The prior plateau-gated experiment had 402/405 proposals
+rejected for instability; 56 had a useful checkpoint and 32 were useful only
+at an earlier checkpoint. The same nominal pair also sometimes changed its
+failure time across repeated deterministic evaluations despite identical
+initial state. Frozen confirmation addresses single-rollout selection bias;
+it is not a proof of simulator determinism or robust task success. New accepted
+reference changes must still be measured. Old 2026-10-15 runs did not use the
+current trial feedback loop.
 
 Conceptual background: finite inner-optimization differentiation,
 https://proceedings.mlr.press/v80/franceschi18a.html . Its convergence conditions

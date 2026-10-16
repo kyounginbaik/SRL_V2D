@@ -96,8 +96,8 @@ class WrenchHypergradientEditor(ResponseBilevelEditor):
             upper_feedback='discounted CHORD-style wrench-support cost, not measured six-axis net wrench',
             upper_cost_scale=self.hg_config.cost_scale,
             early_termination='omit early tracking cutoffs from upper TD; full-horizon MC supplies continuation evidence',
-            acceptance='after matched full lower training: empirical stability, actual frame coverage, '
-                       'unassisted fixed-start physics, local improvement and archived-prefix guards',
+            acceptance='best admissible finite-response checkpoint, actual frame coverage, '
+                       'frozen same-start confirmation, local improvement and archived-prefix guards',
             adaptation_clock='separate from main environment steps; actual optimizer schedule state is published',
             adaptation_worlds=self.training.world_count,
             adaptation_voc='incoming lower curriculum stage, held fixed across both branches',
@@ -244,8 +244,26 @@ class WrenchHypergradientEditor(ResponseBilevelEditor):
             adapter = physical = None
             gc.collect()
 
-    def _matched_adaptation(self, candidate, learner, env, stage, seed, budgets, controls, label, step):
+    def _physical_pair_rejections(self, result, control, baseline, baseline_cost):
+        """Measured improvement and guards, independent of learning-curve shape."""
+        reasons = self._local_rejections(result['metrics'], control['metrics'])
+        reasons += self._local_rejections(result['metrics'], baseline)
+        if not np.isfinite([result['cost'], control['cost'], baseline_cost]).all():
+            return sorted(set(reasons + ['nonfinite_physical_comparison']))
+        comparator = min(control['cost'], baseline_cost)
+        margin = max(self.adaptation_config.minimum_absolute_improvement,
+                     self.adaptation_config.minimum_relative_improvement*abs(comparator))
+        if not np.isfinite(result['cost']) or result['cost'] >= comparator-margin:
+            reasons.append('no_improvement_over_adapted_noedit_and_incoming_pair')
+        return sorted(set(reasons))
+
+    def _matched_adaptation(self, candidate, learner, env, stage, seed, budgets, controls, label, step,
+                            *, baseline=None, baseline_cost=None):
+        finite = self.adaptation_config.acceptance_mode == 'finite_response'
+        if finite and (baseline is None or baseline_cost is None):
+            raise ValueError('finite response requires the measured incoming baseline')
         comparisons, previous, previous_readiness, stable_count, last = [], None, None, 0, None
+        best = None
         branch = self._adaptation_branch(candidate, learner, env, stage, seed, budgets, label, step)
         try:
             for result in branch:
@@ -263,23 +281,82 @@ class WrenchHypergradientEditor(ResponseBilevelEditor):
                     comparison_instability_reasons(previous, pair, self.adaptation_config))
                 stable = previous is not None and not readiness and not previous_readiness and not instability
                 stable_count = stable_count+1 if stable else 0
+                physical = (self._physical_pair_rejections(result, control, baseline, baseline_cost)
+                            if finite else [])
+                eligible = finite and not readiness and not physical
                 comparisons.append(dict(environment_steps=result['environment_steps'],
                     stable=stable, stable_comparisons=stable_count, readiness_reasons=readiness,
-                    instability_reasons=instability, **pair))
+                    instability_reasons=instability, physical_rejection_reasons=physical,
+                    finite_response_eligible=eligible, **pair))
+                # Every snapshot owns copied parameters/optimizer arrays. Keep
+                # an earlier useful pair even if later training deteriorates.
+                if eligible and (best is None or result['cost'] < best['cost']):
+                    best = result
                 previous, previous_readiness, last = pair, readiness, result
-                if stable_count >= self.adaptation_config.stable_comparisons:
+                if not finite and stable_count >= self.adaptation_config.stable_comparisons:
                     break
         finally:
             branch.close()
         if last is None:
             raise RuntimeError('adaptation produced no checkpoints')
         stable = stable_count >= self.adaptation_config.stable_comparisons
-        reasons = list(comparisons[-1]['readiness_reasons'])
-        if not stable:
+        selected = best if finite and best is not None else last
+        selected_comparison = next(row for row in comparisons
+                                   if row['environment_steps'] == selected['environment_steps'])
+        reasons = list(selected_comparison['readiness_reasons'])
+        if finite:
+            reasons += selected_comparison['physical_rejection_reasons']
+        elif not stable:
             reasons.append('adaptation_comparison_not_stable_within_budget')
-        return last, controls[last['environment_steps']], dict(checkpoints=comparisons,
-            stable=stable, stop_reason='empirical_stability' if stable else 'maximum_budget',
-            selected_environment_steps=last['environment_steps'], rejection_reasons=reasons)
+        return selected, controls[selected['environment_steps']], dict(checkpoints=comparisons,
+            acceptance_mode=self.adaptation_config.acceptance_mode, stable=stable,
+            stop_reason=('finite_budget_complete' if finite else
+                         'empirical_stability' if stable else 'maximum_budget'),
+            selected_environment_steps=selected['environment_steps'],
+            selected_checkpoint_index=comparisons.index(selected_comparison),
+            physical_passed_at_selected_checkpoint=finite and not reasons,
+            rejection_reasons=sorted(set(reasons)))
+
+    def _confirm_frozen_pair(self, candidate, result, control, learner, seed, baseline, baseline_cost):
+        """Repeat the exact selected policies from the same initial state.
+
+        No adaptation, random start perturbation, or plateau requirement here.
+        Require improvement even for the worst candidate and best comparator
+        measured in discovery and confirmation; do not average away regression.
+        """
+        candidate_learner = install_learning(learner, result['snapshot'])
+        control_learner = install_learning(learner, control['snapshot'])
+        identities = [actor_policy_digest(state) for state in (candidate_learner, control_learner, learner)]
+        after, _, _, feedback = self.rollout(candidate, candidate_learner, seed, return_feedback=True)
+        unchanged, _, _, _ = self.rollout(self.binding, control_learner, seed, return_feedback=True)
+        incoming, _, _, _ = self.rollout(self.binding, learner, seed, return_feedback=True)
+        if identities != [actor_policy_digest(state) for state in (candidate_learner, control_learner, learner)]:
+            raise RuntimeError('frozen confirmation changed an inference policy')
+        candidate_cost = self._cost(after, candidate.joint_q)
+        control_cost = self._cost(unchanged, self.binding.joint_q)
+        incoming_cost = self._cost(incoming, self.binding.joint_q)
+        confirmed = dict(cost=max(result['cost'], candidate_cost), metrics=after)
+        strongest_control = dict(cost=min(control['cost'], control_cost), metrics=unchanged)
+        reasons = self._physical_pair_rejections(confirmed, strongest_control, incoming,
+                                                min(baseline_cost, incoming_cost))
+        if not np.isfinite([result['cost'], control['cost'], baseline_cost,
+                            candidate_cost, control_cost, incoming_cost]).all():
+            reasons.append('nonfinite_physical_comparison')
+        reasons += self._local_rejections(after, control['metrics']) + self._local_rejections(after, baseline)
+        # Preserve the same per-object conditions for the discovery sample too.
+        reasons += self._local_rejections(result['metrics'], unchanged)
+        reasons += self._local_rejections(result['metrics'], incoming)
+        report = dict(attempted=True, passed=not reasons, environment_steps=result['environment_steps'],
+            initial_state_sha256=getattr(self, 'initial_state_sha256', None),
+            reset_policy='same_fixed_initial_state', additional_training_steps=0,
+            candidate_policy_sha256=identities[0], control_policy_sha256=identities[1],
+            incoming_policy_sha256=identities[2], candidate_cost=candidate_cost,
+            control_cost=control_cost, incoming_cost=incoming_cost,
+            worst_candidate_cost=confirmed['cost'], best_control_cost=strongest_control['cost'],
+            best_incoming_cost=min(baseline_cost, incoming_cost),
+            candidate_metrics=after, control_metrics=unchanged, incoming_metrics=incoming,
+            rejection_reasons=sorted(set(reasons)))
+        return report, after, feedback
 
     def __call__(self, env, learner, step, stage):
         if step < self.next_update or step >= self.training.total_environment_steps:
@@ -324,7 +401,7 @@ class WrenchHypergradientEditor(ResponseBilevelEditor):
             baseline_trial, learner, branch='baseline', budget=0, step=step)
         for window in self.window_contexts:
             window['candidate_count'] = 1
-        windows, trials, best = list(self.window_contexts), [], None
+        windows, trials, eligible_pairs = list(self.window_contexts), [], []
         before_q = self.binding.joint_q.copy()
         budget_report = self.adaptation_config.budget_report(
             env.world_count, self.binding.num_frames, region=self.scoring_region)
@@ -364,25 +441,49 @@ class WrenchHypergradientEditor(ResponseBilevelEditor):
                 controls = {}
                 for result in self._adaptation_branch(self.binding, learner, env, stage,
                                                       seed, budgets, 'noedit', step):
-                    controls[result['environment_steps']] = {k: result[k] for k in ('cost', 'metrics', 'training')}
+                    controls[result['environment_steps']] = {k: result[k] for k in
+                                                            ('cost', 'metrics', 'training', 'snapshot')}
             result, control, adaptation = self._matched_adaptation(candidate, learner, env, stage,
-                seed, budgets, controls, f'window_{window["window_id"]}', step)
+                seed, budgets, controls, f'window_{window["window_id"]}', step,
+                baseline=baseline, baseline_cost=baseline_cost)
             after, after_feedback = result['metrics'], result['feedback']
             cost, control_cost = result['cost'], control['cost']
             control_rejections = self._local_rejections(after, control['metrics'])
             baseline_rejections = self._local_rejections(after, baseline)
             reasons = adaptation['rejection_reasons'] + control_rejections + baseline_rejections
-            if cost >= min(control_cost, baseline_cost)-1e-4:
-                reasons.append('no_improvement_over_adapted_noedit_and_incoming_pair')
-            row = dict(window=window, accepted=not reasons, rejection_reasons=sorted(set(reasons)),
+            reasons += self._physical_pair_rejections(result, control, baseline, baseline_cost)
+            row = dict(window=window, accepted=False, rejection_reasons=sorted(set(reasons)),
                        cost=cost, control_cost=control_cost, baseline_cost=baseline_cost,
                        actual_local_cost_gain=control_cost-cost, relabel_zero_error=relabel_error,
                        validation_generation=self.upper_round,
+                       physical_passed_at_selected_checkpoint=not reasons,
+                       confirmation=dict(attempted=False, passed=False,
+                                         environment_steps=result['environment_steps']),
                        control_guard_reasons=control_rejections, baseline_guard_reasons=baseline_rejections,
                        theta=theta.tolist(), metrics=after, adaptation=adaptation, **diagnostics)
             trials.append(row)
-            if not reasons and (best is None or cost < best[0]):
-                best = (cost, candidate, result['snapshot'], after, after_feedback, row)
+            if not reasons:
+                eligible_pairs.append((cost, candidate, result, control, row))
+        best = None
+        confirmation = dict(attempted=False, passed=False, attempts=[])
+        for _, candidate, result, control, row in sorted(eligible_pairs, key=lambda item: item[0])[
+                :self.adaptation_config.maximum_confirmations]:
+            print(f'[finite-response] confirming frozen window={row["window"]["window_id"]} '
+                  f'budget={result["environment_steps"]}', flush=True)
+            check, confirmed_metrics, confirmed_feedback = self._confirm_frozen_pair(
+                candidate, result, control, learner, seed, baseline, baseline_cost)
+            check['window_id'] = row['window']['window_id']
+            row['confirmation'] = check
+            confirmation['attempted'] = True
+            confirmation['attempts'].append(check)
+            if check['passed']:
+                row['accepted'] = True
+                confirmation['passed'] = True
+                best = (check['candidate_cost'], candidate, result['snapshot'],
+                        confirmed_metrics, confirmed_feedback, row)
+                break
+            row['rejection_reasons'] = sorted(set(row['rejection_reasons'] +
+                ['frozen_confirmation_'+reason for reason in check['rejection_reasons']]))
         accepted, replacement, updated = best is not None, None, learner
         selected, published, published_feedback = None, baseline, baseline_feedback
         old_version = self.version
@@ -418,6 +519,7 @@ class WrenchHypergradientEditor(ResponseBilevelEditor):
             accepted=accepted, version_before=old_version, version_after=self.version,
             failure_context=self.failure_context, windows=windows, selected_window=selected['window'] if selected else None,
             candidates=trials, baseline_cost=baseline_cost, progress=progress, baseline_progress=baseline_progress,
+            confirmation=confirmation,
             baseline_metrics=baseline, baseline_critic=baseline_fit,
             outer_validation_generation=self.upper_round,
             reference_change=change, critic=fit, seconds=time.perf_counter()-started,
@@ -447,7 +549,10 @@ class WrenchHypergradientEditor(ResponseBilevelEditor):
                               'adaptation/environment_transitions': float(record['adaptation_transitions']),
                               'adaptation/max_budget_per_branch': float(budgets[-1]),
                               'adaptation/selected_budget': float(selected['adaptation']['selected_environment_steps']) if selected else 0.,
-                              'adaptation/stable_candidates': sum(t.get('adaptation', {}).get('stable', False) for t in trials)})
+                              'adaptation/stable_candidates': sum(t.get('adaptation', {}).get('stable', False) for t in trials),
+                              'adaptation/physically_eligible_candidates': len(eligible_pairs),
+                              'adaptation/frozen_confirmation_attempts': len(confirmation['attempts']),
+                              'adaptation/frozen_confirmation_passed': float(confirmation['passed'])})
         feedback_rows = self._round_critic_feedback
         feedback_fits = [row for row in feedback_rows if not row.get('trial_critic_skipped', 1)]
         self._metrics.update({

@@ -59,6 +59,50 @@ def validate_current_proposal(row, candidate):
     assert np.isclose(candidate['critic_cost_scale'], .01), 'Unexpected upper cost scale'
 
 
+def validate_finite_acceptance(row):
+    """Publish only a physically admissible, confirmed reference/controller pair.
+
+    Checkpoint stability is diagnostic: a finite training response may improve
+    the task while its learning curve is still moving.
+    """
+    confirmation = row['confirmation']
+    assert isinstance(confirmation['attempted'], bool)
+    assert isinstance(confirmation['passed'], bool)
+    assert confirmation['attempted'] == bool(confirmation['attempts']), 'Missing frozen confirmation attempts'
+    assert len(confirmation['attempts']) <= 2, 'Frozen confirmation exceeded its two-candidate cap'
+    attempts = {(check['window_id'], check['environment_steps']): check
+                for check in confirmation['attempts']}
+    assert len(attempts) == len(confirmation['attempts']), 'Duplicate frozen confirmation attempt'
+    accepted = []
+    for candidate in row['candidates']:
+        if 'gradient_norm' not in candidate:
+            assert not candidate['accepted'], 'Skipped candidate was published'
+            continue
+        adaptation = candidate['adaptation']
+        assert adaptation['acceptance_mode'] == 'finite_response', 'Unexpected adaptation acceptance mode'
+        assert [checkpoint['environment_steps'] for checkpoint in adaptation['checkpoints']] == \
+            row['adaptation_checkpoints'], 'Finite response did not test all matched budgets'
+        budget = adaptation['selected_environment_steps']
+        selected = [checkpoint for checkpoint in adaptation['checkpoints']
+                    if checkpoint['environment_steps'] == budget]
+        assert len(selected) == 1, 'Selected checkpoint was not measured exactly once'
+        for branch in ('candidate', 'control'):
+            assert selected[0][branch]['training']['environment_steps'] == budget, 'Unmatched selected training budgets'
+        if candidate['accepted']:
+            accepted.append(candidate)
+            assert candidate['physical_passed_at_selected_checkpoint'], 'Published candidate failed physical checks'
+            assert not candidate['rejection_reasons'], 'Rejected candidate was published'
+            check = candidate['confirmation']
+            assert check['attempted'] and check['passed'], 'Published candidate lacks frozen confirmation'
+            assert check['environment_steps'] == budget, 'Confirmation used a different adaptation checkpoint'
+            attempt = attempts.get((candidate['window']['window_id'], budget), {})
+            assert attempt.get('attempted') and attempt.get('passed'), 'Published candidate missing from round confirmation'
+    assert len(accepted) == int(row['accepted']), 'Published candidate count does not match round acceptance'
+    assert confirmation['passed'] == bool(accepted), 'Round confirmation disagrees with publication'
+    if accepted:
+        assert confirmation['attempted'], 'Accepted round did not attempt confirmation'
+
+
 def validate(run, config, manifest, rows):
     """Acceptance is not required; real training and complete finite evidence are."""
     from flax.serialization import msgpack_restore
@@ -69,6 +113,7 @@ def validate(run, config, manifest, rows):
     assert manifest['upper_action_dimension'] == 56
     assert manifest['nominal_candidates_per_window'] == 1
     assert manifest['adaptation_worlds'] == config['worlds']
+    assert manifest['adaptation']['acceptance_mode'] == config['adaptation_acceptance_mode'] == 'finite_response'
     assert manifest['hypergradient']['inner_optimizer'] == config['proposal_inner_optimizer'] == 'adam'
     assert np.isclose(manifest['hypergradient']['cost_scale'], config['upper_cost_scale'])
     assert np.isclose(config['upper_cost_scale'], .01)
@@ -80,6 +125,7 @@ def validate(run, config, manifest, rows):
         assert _finite(row)
         assert row['adaptation_transitions'] > 0, 'No full lower adaptation was exercised'
         feedback_checks.append(validate_feedback_and_budget(row, config))
+        validate_finite_acceptance(row)
         assert len(row['windows']) <= 4
         assert all(window['candidate_count'] == 1 for window in row['windows'])
         assert row['gradient_estimator'] == 'short_actor_adam_unrolling_proposal_then_bounded_adaptation_validation'
@@ -105,9 +151,6 @@ def validate(run, config, manifest, rows):
                     assert report['actor_updates'] > 0 and report['critic_updates'] > 0
                     assert report['actor_parameter_delta_l2'] > 0
                     assert report['critic_parameter_delta_l2'] > 0
-            if candidate['accepted']:
-                assert candidate['adaptation']['stable']
-                assert not candidate['rejection_reasons']
         measured.extend(tested)
         search = train/'search_batches'/f'step_{row["step"]}'
         assert (search/'selected_reference.npz').is_file()

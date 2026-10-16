@@ -77,8 +77,9 @@ def test_capture_preserves_cost_and_marks_early_cutoffs_unfit_for_td(
     assert editor.pending is None
 
 
-@pytest.mark.parametrize('improves', [False, True])
-def test_publication_uses_measured_physics_and_commits_the_tested_pair(monkeypatch, tmp_path, improves):
+@pytest.mark.parametrize('improves, confirmation_good', [(False, False), (True, False), (True, True)])
+def test_publication_uses_frozen_confirmation_and_commits_the_tested_pair(
+        monkeypatch, tmp_path, improves, confirmation_good):
     import flash_chord.retargeting.wrench_hypergradient_editor as module
     import flash_chord.retargeting.manipulation_bilevel as base
     import flash_chord.envs.rl as rl
@@ -130,7 +131,8 @@ def test_publication_uses_measured_physics_and_commits_the_tested_pair(monkeypat
     editor.candidate_joint_q=lambda theta: np.ones((3, 58))*.001
     policy=NS(critic_context=jnp.zeros((1, 3)))
     candidate_policy=object(); control_policy=object()
-    monkeypatch.setattr(module, 'install_learning', lambda learner, snapshot: candidate_policy)
+    monkeypatch.setattr(module, 'install_learning', lambda learner, snapshot:
+                        candidate_policy if snapshot == 'full_trained_state' else control_policy)
     trace={'frame_per_object_position_m':np.zeros((2, 1, 2)),
            'frame_per_object_orientation_rad':np.zeros((2, 1, 2))}
     calls=[]
@@ -141,7 +143,7 @@ def test_publication_uses_measured_physics_and_commits_the_tested_pair(monkeypat
                 context=np.zeros((4,3),np.float32),action=np.zeros((4,56),np.float32),
                 frame=np.ones(4,np.int32),source=np.ones(4,np.int32),
                 generation=np.full(4,editor.upper_round,np.int32))
-        cost=(.5 if improves else 2.) if learner is candidate_policy else 1.
+        cost=(.5 if confirmation_good else 2.) if learner is candidate_policy else 1.
         result=({'cost':cost}, None, None)
         return (*result, trace) if kw.get('return_feedback') else result
     editor.rollout=rollout
@@ -157,7 +159,7 @@ def test_publication_uses_measured_physics_and_commits_the_tested_pair(monkeypat
             report=dict(actor_updates=10, critic_updates=20, actor_parameter_delta_l2=.01,
                 critic_parameter_delta_l2=.1, frame_samples=[20]*3, max_reference_frame=2)
             yield dict(cost=cost, metrics=metrics, training=report, environment_steps=budget,
-                       snapshot='full_trained_state', feedback=trace)
+                       snapshot='full_trained_state' if label != 'noedit' else 'control_state', feedback=trace)
     editor._adaptation_branch=branch
     editor.publish=lambda step: None
     # Always predict improvement: rejection must depend on actual simulation.
@@ -173,16 +175,22 @@ def test_publication_uses_measured_physics_and_commits_the_tested_pair(monkeypat
         upper_params={}, upper_state={}, cost_params={}, target_params={}, cost_state={})
     env=NS(world_count=4, env=NS(observation_strategy=object(), config={}))
     result=editor(env, policy, 10, NS(voc_scale=0.))
-    assert editor.version == int(improves)
-    assert result.learner is (candidate_policy if improves else policy)
-    assert (result.environment is not None) == improves
-    assert (editor.replay.size == 0) == improves
-    assert (editor.binding is original_binding) != improves
+    accepted=improves and confirmation_good
+    assert editor.version == int(accepted)
+    assert result.learner is (candidate_policy if accepted else policy)
+    assert (result.environment is not None) == accepted
+    assert (editor.replay.size == 0) == accepted
+    assert (editor.binding is original_binding) != accepted
     assert branch_calls == ['noedit', 'window_0']
     report=json.loads((tmp_path/'upper_updates.jsonl').read_text())
-    assert report['accepted'] == improves
+    assert report['accepted'] == accepted
     assert report['candidates'][0]['predicted_wrench_return_gain'] > 0
-    assert report['candidates'][0]['adaptation']['selected_environment_steps'] == 16
+    assert report['candidates'][0]['adaptation']['selected_environment_steps'] == (8 if improves else 32)
+    assert len(report['candidates'][0]['adaptation']['checkpoints']) == 3
+    assert report['confirmation']['attempted'] == improves
+    assert report['confirmation']['passed'] == accepted
+    if improves:
+        assert report['confirmation']['attempts'][0]['additional_training_steps'] == 0
     assert report['windows'][0]['candidate_count'] == 1
     assert report['baseline_metrics']['cost'] == 1.
     assert report['critic_feedback'][0]['branch'] == 'baseline'

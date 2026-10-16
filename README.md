@@ -4,8 +4,9 @@ UniRetarget refines a reconstructed robot reference using feedback from a physic
 controller. The current implementation uses **lower FlashSAC training**, an **upper actor
 with a TD wrench-cost critic**, and local corrections to both wrists and all finger joints.
 The critic also learns from measured candidate/control rollouts, including rejected edits.
-The current `wrench-adam-feedback` recipe bounds validation work while retaining every
-selected window, rather than ranking windows and discarding proposals before testing.
+The current `wrench-finite-response` recipe tests every selected window at three bounded
+lower-training checkpoints. It retains the best eligible reference/controller pair and
+rechecks that frozen pair in physics before publishing it.
 Five prepared Track 3 episodes, object meshes, collision assets and robot assets are included
 through Git LFS.
 
@@ -14,7 +15,8 @@ through Git LFS.
 - **[Method, equations and limitations](robotic_grounding/flash_chord/docs/wrench_hypergradient.txt)**.
 
 The current experiment is **episode 1, seeds 43/44/45**, using the current `main`
-implementation with Adam response updates and measured-return calibration. Each job runs a full-size GPU integration check, then automatically
+implementation with Adam response updates, measured-return calibration and finite-response
+acceptance. Each job runs a full-size GPU integration check, then automatically
 starts fresh **100,663,296-step training** if validation passes. The commands below
 run the same method on another server without the original `/data1` directories.
 
@@ -41,7 +43,7 @@ docker build -f robotic_grounding/uniretarget/Dockerfile.media \
 2. Choose a fresh output directory and configure logging:
 
 ```bash
-export UNIRETARGET_RUN_ROOT="$PWD/.uniretarget/wrench-adam-feedback-full-run1"
+export UNIRETARGET_RUN_ROOT="$PWD/.uniretarget/wrench-finite-response-full-run1"
 export UNIRETARGET_IMAGE=uniretarget:chord100m
 export WANDB_MODE=online
 export WANDB_ENTITY=DexDreamer
@@ -124,6 +126,19 @@ The cap permits reaching episode 1's final frames; readiness still checks actual
 Runtime also includes physics evaluations and media. The 2,048 worlds are training worlds,
 not 2,048 upper candidates. This profile replaces the older full-horizon 1 / 2 / 4-pass budget.
 
+All three checkpoints are tested. Eligibility requires actual lower learning and interval
+coverage, improvement over both the incoming pair and equally trained unchanged reference,
+and the existing object/prefix guards. The required cost gain is the larger of 0.001 or
+0.5% of the better comparison cost. Changing performance between checkpoints is recorded
+as a diagnostic; a plateau is no longer required.
+
+At most two eligible pairs receive a repeat check, in order of measured score. Each check
+freezes the candidate, its matched unchanged control and the incoming policy, then runs
+three full-horizon VOC=0 evaluations from the same fixed initial state. No further training
+or randomized reset is involved. The worse candidate score must beat the better original/
+repeat score of each comparison, and all physical guards must pass. This adds at most six
+single-world rollouts per upper round, without increasing the lower-training cap.
+
 `--phase smoke` stops after integration validation. Once its report says `passed: true`,
 use `--phase pilot` with the same episode, seed and run root to start fresh full training.
 `--phase full` runs smoke then fresh full training automatically, and should only be used
@@ -145,7 +160,7 @@ $UNIRETARGET_RUN_ROOT/episode_000001/runs/pilot/episode_000001/chunk/seed_43/
   wandb_sync/run.json                 actual W&B URL
 ```
 
-Full-run W&B names begin `wrench-adam-feedback-full-d56-w2048-pilot-episode_000001-s`.
+Full-run W&B names begin `wrench-finite-response-full-d56-w2048-pilot-episode_000001-s`.
 Validation has a separate `smoke` run. Queued jobs do not appear in W&B until started.
 View `videos/physics_checkpoint`, `videos/reference_overlay`, `reference_change/*`
 and `upper_feedback/*` to inspect motion changes and critic learning.
@@ -180,9 +195,16 @@ Validate the new smoke report on your server. It now requires measured feedback 
 every tested branch, actual upper-critic parameter changes, and adaptation within the
 configured cap, in addition to finite learning, fixed starts and checkpoint videos.
 Early training cutoffs with stale next-reference times are excluded from upper TD fitting;
-complete evaluations supply the actual continuation costs. Success stability accounts for one frame of the scored interval;
-object-pose and prefix guards still apply. Passing integration does not establish improved
-task performance or require accepting an edit.
+complete evaluations supply the actual continuation costs. Adjacent-checkpoint stability
+remains logged, including the one-frame resolution of success fractions, but no longer
+vetoes finite-response acceptance. Passing integration does not establish improved task
+performance or require accepting an edit.
+
+The preceding plateau-gated experiment rejected 402 of 405 proposals on stability.
+Of 56 proposals with a useful checkpoint, 32 were useful only before their final checkpoint.
+That evidence motivates checkpoint selection; it does not prove the new frozen-pair checks
+will pass or produce successful manipulation. Accepted edits and actual wrist/finger changes
+remain the measurements to inspect.
 
 | Code | Purpose |
 | --- | --- |

@@ -1,12 +1,13 @@
 RUN UNIRETARGET ON ANOTHER GPU SERVER
-Current method: wrench_hypergradient / wrench-adam-feedback (2026-10-16)
+Current method: wrench_hypergradient / wrench-finite-response (2026-10-16)
 
 Repository: https://github.com/kyounginbaik/SRL_V2D
 Agent handoff: AGENT_HANDOFF.txt in this directory
 Method/math: ../flash_chord/docs/wrench_hypergradient.txt
-Use current main containing the Adam-response, normalized-return and fresh-baseline
-calibration fixes described below. Record the actual checkout commit. Earlier
-wrench-feedback-fast revisions do not include all of these changes; do not use
+Use current main containing finite-response checkpoint selection and frozen-pair
+confirmation, together with Adam-response and critic-calibration fixes. Record
+the actual checkout commit. Earlier wrench-adam-feedback and wrench-feedback-fast
+revisions do not include all of these changes; do not use
 their frozen checkout or an existing prepared output root for this recipe.
 
 Always pass --upper wrench_hypergradient. The CLI's default is still the older
@@ -74,7 +75,7 @@ The original cluster's flash_chord:mixed-ep01-media tag is not required elsewher
 
 Choose a NEW root on persistent storage. This example stays inside the checkout:
 
-  export UNIRETARGET_RUN_ROOT="${UNIRETARGET_RUN_ROOT:-$PWD/.uniretarget/wrench-adam-feedback-full-run1}"
+  export UNIRETARGET_RUN_ROOT="${UNIRETARGET_RUN_ROOT:-$PWD/.uniretarget/wrench-finite-response-full-run1}"
   export UNIRETARGET_IMAGE="${UNIRETARGET_IMAGE:-uniretarget:chord100m}"
 
 Seeds and episodes may share this root; each has a separate run directory and
@@ -169,7 +170,20 @@ For an early scoring interval this can be 64 / 96 / 128 vector steps, or
 time but never exceed 917,504 transitions per branch at 2,048 worlds. Actual
 coverage and lower actor/critic learning are checked, not assumed from a budget.
 One unchanged control curve is reused across up to four candidate windows.
-All selected proposals are still tested. Main training pauses for this work.
+All selected proposals are still tested at all three checkpoints. Main training
+pauses for this work. Keep the best physically eligible checkpoint per window;
+a later worse checkpoint does not erase it. Eligibility requires actual lower
+learning/coverage, all object and archived-prefix guards, and gain over BOTH
+the incoming pair and same-budget unchanged control greater than
+max(.001, .005*abs(min(incoming_cost, control_cost))).
+
+Confirm at most two eligible pairs, ordered by measured cost. Freeze candidate,
+matched control and incoming policies and repeat each full-horizon VOC=0 rollout
+from the same fixed initial state. No more training or changed initial joints.
+The worse candidate score must beat the better original/repeat score of each
+comparison by the same margin; all guards remain active. At most six additional
+single-world rollouts are required per upper round. Only the published proposal
+is marked accepted. Plateau stability remains diagnostic, not a publication veto.
 
 Before any proposal, calibrate the upper critic for 32 updates on the fresh
 unassisted baseline's complete discounted returns. Proposal validation samples
@@ -230,13 +244,12 @@ smoke for that same episode/seed/root; rerunning smoke rejects existing outputs.
 Full training uses the SAME bounded adaptation settings as the smoke. These
 extra transitions are separate from the 100.7M main budget. At most one control
 plus four candidates are trained per upper round. Later failure windows take
-more work than early windows. Comparisons extend only to the three scheduled
-checkpoints and reject inconclusive edits at the cap; the empirical stability
-and physical guards still apply. Faster validation may reject an edit whose
-benefit requires more lower training. Success-fraction stability allows
-max(.02, 1/N), where N is the number of locally scored frames, so one changed
-frame does not violate an impossible sub-frame tolerance. Per-object physical
-regression and improvement guards still apply. No lower-convergence claim is made.
+more work than early windows. All three scheduled checkpoints are tested;
+selecting a finite lower response does not require an adjacent-checkpoint
+plateau. Empirical stability remains logged with success resolution max(.02,1/N).
+Physical regression/improvement guards and frozen-pair confirmation still apply.
+A bounded budget may miss benefits requiring more lower training. No lower-
+convergence claim is made and the lower-training cap is unchanged.
 There are no 2,048 upper candidates: there is one learned proposal per window.
 
 7. RECOMMENDED SLURM ROUTE: THREE FULL JOBS
@@ -299,9 +312,9 @@ Evidence inside that directory:
   wandb_sync/run.json                      actual W&B URL
 
 Expected W&B full-training names:
-  wrench-adam-feedback-full-d56-w2048-pilot-episode_000001-s43
-  wrench-adam-feedback-full-d56-w2048-pilot-episode_000001-s44
-  wrench-adam-feedback-full-d56-w2048-pilot-episode_000001-s45
+  wrench-finite-response-full-d56-w2048-pilot-episode_000001-s43
+  wrench-finite-response-full-d56-w2048-pilot-episode_000001-s44
+  wrench-finite-response-full-d56-w2048-pilot-episode_000001-s45
 The preceding integration runs use smoke instead of pilot in their names.
 Here "full-d56" means full-hand edits; pilot runs the full 100.7M budget.
 
@@ -343,7 +356,8 @@ This is not three simulator timesteps or three complete SAC updates. Full FlashS
 adaptation on fresh experience compares the edited and unchanged references
 from the same incoming learner. Accepted pairs publish all tested learning
 state; rejected edits preserve the incoming pair/replay. Long adaptation is
-outside the gradient graph, and empirical stability is not proven convergence.
+outside the gradient graph. Selection is among finite adapted policy/reference
+pairs; frozen confirmation is an empirical check, not proven convergence.
 The cost describes object-centric wrench support, not measured net force/torque.
 
 Keep the bundled objects/references, fixed frame-zero physical starts, pot
@@ -356,8 +370,12 @@ Run the focused CPU checks and full-shape GPU smoke on the destination server.
 The smoke validates the measured feedback connection and bounded adaptation;
 it does not prove critic accuracy, convergence, or successful reference edits.
 Record the measured round duration rather than extrapolating from main steps.
-The new Adam-feedback GPU recipe has no established speed or improvement result
-yet. Do not attribute older frozen runs' outcomes to these current changes.
+The preceding plateau-gated recipe measured about 5.4-5.5 minutes per upper round
+but rejected 402/405 proposals on stability. Of 56 proposals with a useful
+checkpoint, 32 were useful only at an earlier checkpoint. These observations
+motivate the change; they do not establish that new frozen confirmations will
+pass. Measure accepted edits and actual reference motion in the new run. Do not
+attribute older frozen runs' outcomes to the current finite-response changes.
 
 Legacy --upper gaussian / --upper flashsac remain available for the earlier
 candidate-search/convex-head-response ablation. They use different algorithms

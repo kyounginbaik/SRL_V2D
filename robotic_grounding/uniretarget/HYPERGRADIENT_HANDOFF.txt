@@ -1,5 +1,5 @@
 CURRENT HYPERGRADIENT SERVER HANDOFF
-Updated 2026-10-16: wrench-adam-feedback, normalized returns and fresh baselines
+Updated 2026-10-16: finite-response selection and frozen-pair confirmation
 
 Give the other server's agent:
   robotic_grounding/uniretarget/AGENT_HANDOFF.txt
@@ -12,7 +12,8 @@ commands, phase selection and evidence paths are in:
 
 Repository: https://github.com/kyounginbaik/SRL_V2D
 Use current main containing all the fixes below, in a clean checkout, and record
-its exact commit. Earlier wrench-feedback-fast snapshots are superseded.
+its exact commit. Earlier wrench-adam-feedback and wrench-feedback-fast snapshots
+are superseded.
 Always pass --upper wrench_hypergradient; the CLI default is the
 older Gaussian engine. Use allocated GPUs, a fresh persistent output root and
 explicit online W&B configuration. Keep the source checkout unchanged while
@@ -49,8 +50,18 @@ Current contract:
   replay warmup+16), followed by two 32-step increments, subject to a strict
   448-vector-step cap. At 2,048 worlds this is at most 917,504 transitions per
   branch. Actual frame coverage, learning and physical acceptance remain checked.
-  Success-fraction stability uses max(.02, 1/N) for N locally scored frames;
-  improvement and per-object regression guards remain in force.
+  Train/evaluate all three checkpoints and retain the best eligible pair per
+  window. Require learning, interval coverage, object/prefix guards and gain
+  over BOTH incoming and same-budget no-edit greater than
+  max(.001, .005*abs(min(incoming_cost, control_cost))). Plateau/stability remains
+  diagnostic only, with one-frame success resolution.
+- Rank eligible pairs by measured local cost; confirm at most two until one
+  passes. Freeze candidate, matched no-edit and incoming policies and repeat
+  their three full-horizon VOC=0 rollouts from the SAME initial state, with no
+  new training or randomized joints. Worse candidate score must beat the better
+  original/repeat score of each comparison; margin and all guards remain active.
+  At most six additional single-world rollouts; adaptation budgets unchanged.
+  Publish the exact tested reference/learning-state pair and mark only it accepted.
 - Smoke: 2,048 worlds, 524,288 main transitions, one upper round at 501,760,
   batch 1,024 and full replay settings. Require the smoke report passed=true.
 - Full: fresh 100,663,296 main transitions, same bounded validation settings.
@@ -59,16 +70,20 @@ Current contract:
 - Optional staged commands remain available: --phase smoke stops at validation;
   --phase pilot starts fresh full training after manually checking its report.
   Do not rerun full over existing smoke outputs; there is no complete resume.
-- W&B names start wrench-adam-feedback-full-d56-w2048-. Keep historical videos,
+- W&B names start wrench-finite-response-full-d56-w2048-. Keep historical videos,
   reference overlays, Track 3 estimates and upper_feedback/* measurements.
 
 Report measured round duration and additional adaptation transitions separately
-from main steps. Timing improvement is not established until measured on the
-new Adam-feedback GPU run. Inspect baseline_metrics, baseline_critic and separate
+from main steps. The preceding bounded recipe measured about 5.4-5.5 minutes
+per upper round; timing for the new confirmation path remains to be measured.
+Inspect baseline_metrics, baseline_critic and separate
 candidate control_guard_reasons/baseline_guard_reasons in saved round records.
 Zero accepted edits can pass integration; report acceptance and
 actual wrist/finger changes without implying task success. Finite adaptation,
-empirical stability and critic fitting do not prove neural-RL convergence.
+frozen confirmation and critic fitting do not prove neural-RL convergence.
+The prior plateau gate rejected 402/405 proposals; 56 had a useful checkpoint,
+32 only before their final checkpoint. Keeping earlier finite responses fixes
+that discarded-result issue; current physical improvement is still unproven.
 
 Detailed method and mathematical scope:
   robotic_grounding/flash_chord/docs/wrench_hypergradient.txt
