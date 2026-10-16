@@ -6,6 +6,17 @@ from flash_chord.assets import ASSETS_DIR
 from flash_chord.assets.registry import resolve_asset_path, resolve_object_asset_specs, support_usda_for_parquet
 
 
+def test_relocated_standalone_bundle_resolves_original_absolute_asset_paths(tmp_path):
+    episode = tmp_path / 'episode_000001'
+    assets = episode / 'assets'
+    assets.mkdir(parents=True)
+    for name in ('pot.urdf', 'pot.obj'):
+        target = assets / name
+        target.write_text('test asset')
+        original = '/missing/producer/frozen/episode_000001/assets/' + name
+        assert resolve_asset_path(original, reference_path=episode/'reference.parquet') == str(target)
+
+
 def test_resolve_reroots_on_assets_boundary():
     out = resolve_asset_path("/any/source/prefix/assets/meshes/arctic/box/bottom.obj")
     assert out == str(ASSETS_DIR / "meshes/arctic/box/bottom.obj")

@@ -55,7 +55,9 @@ tar -xzf episode_000001_inputs.tar.gz
 ```
 
 Preparation independently checks every file against the committed `data_manifest.json`
-and rejects unresolved Git LFS assets. No original-server filesystem mount is needed.
+and rejects unresolved Git LFS assets. The loader and video metrics resolve obsolete
+producer asset paths against the bundled sibling `assets/` directory. Reference
+bytes and physical targets stay identical. No original-server mount is needed.
 
 ## Prepare and check
 
@@ -71,7 +73,8 @@ bash "$RUN_ROOT/run.sh" preflight
 
 CPU preflight composes the actual Hydra commands for smoke and full training, all
 three seeds, identical physics, 2,048 worlds, bounded adaptation, and the new critic
-schedule. It saves `reports/full_launch_preflight.json` and `launch_resolved.yaml`
+schedule, and assembles a complete one-world CPU scene to check asset loading.
+It saves `reports/full_launch_preflight.json` and `launch_resolved.yaml`
 in the per-seed run directories. GPU integration remains a separate check.
 
 ## Launch

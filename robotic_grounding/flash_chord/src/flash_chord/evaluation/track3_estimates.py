@@ -117,6 +117,7 @@ def score_recording(recording, parquet, output):
     """Score a saved checkpoint rollout, using frozen poses and visual meshes."""
     import pyarrow.parquet as pq
     import trimesh
+    from flash_chord.assets.registry import resolve_asset_path
     row = pq.read_table(parquet).to_pylist()[0]
     data = np.load(recording)
     frames = data['frame_indices'].astype(int)
@@ -126,7 +127,7 @@ def score_recording(recording, parquet, output):
     reference = np.concatenate((row['object_body_position'], np.asarray(row['object_body_wxyz'])[..., [1,2,3,0]]), axis=-1)
     points, axes, orders = [], [], []
     for body, (name, filename) in enumerate(zip(row['object_body_names'], row['object_mesh_paths'], strict=True)):
-        path = Path(filename)
+        path = Path(resolve_asset_path(filename, reference_path=parquet))
         if not path.is_absolute():
             path = Path(parquet).parent / path
         mesh = trimesh.load(path, force='mesh', process=False)

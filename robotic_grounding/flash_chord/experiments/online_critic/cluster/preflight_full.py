@@ -136,7 +136,8 @@ def main():
             physical_settings_equal_to_seed43_smoke=True,
             resolved_config_sha256=hashlib.sha256(composed.encode()).hexdigest()))
         print(f'seed {seed}: full configuration verified; physics matches seed43 smoke config', flush=True)
-    report = dict(passed=True, scope='CPU configuration composition only; GPU smoke has not been certified',
+    subprocess.run([sys.executable, str(root/'cluster/check_scene.py')], check=True, cwd=workspace)
+    report = dict(passed=True, scope='CPU configuration composition and scene assembly; GPU smoke has not been certified',
                   smoke_reference_seed=43, checks=checks)
     (root/'reports').mkdir(parents=True, exist_ok=True)
     (root/'reports/full_launch_preflight.json').write_text(json.dumps(report, indent=2)+'\n')

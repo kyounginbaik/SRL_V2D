@@ -54,17 +54,19 @@ def test_invalid_trajectory_is_not_reported_as_success(bad):
     with pytest.raises(ValueError): estimate_track3(a, r, v)
 
 
-def test_recording_pipeline_and_full_horizon_guard(tmp_path):
+@pytest.mark.parametrize('relocated', [False, True])
+def test_recording_pipeline_and_full_horizon_guard(tmp_path, relocated):
     import pyarrow as pa
     import pyarrow.parquet as pq
     import trimesh
-    mesh_path = tmp_path/'box.ply'
+    (tmp_path/'assets').mkdir()
+    mesh_path = tmp_path/'assets/box.ply'
     trimesh.creation.box(extents=[.1,.2,.3]).export(mesh_path)
     a, r, _ = fixture(); a, r = a[:, :, :1], r[:, :1]
     parquet = tmp_path/'reference.parquet'
     pq.write_table(pa.Table.from_pylist([dict(object_body_position=r[..., :3].tolist(),
         object_body_wxyz=r[..., [6,3,4,5]].tolist(), object_body_names=['wooden_spoon'],
-        object_mesh_paths=[str(mesh_path)])]), parquet)
+        object_mesh_paths=['/missing/producer/assets/box.ply' if relocated else str(mesh_path)])]), parquet)
     recording = tmp_path/'poses.npz'
     np.savez(recording, achieved_pose_w=a, frame_indices=np.arange(10), voc_scale=0.)
     report = score_recording(recording, parquet, tmp_path/'scores.json')

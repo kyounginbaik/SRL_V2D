@@ -81,6 +81,11 @@ def _reference_assets_root(reference_path: str | Path | None) -> Path | None:
     if reference_path is None:
         return None
     resolved = Path(reference_path).expanduser().resolve()
+    # Standalone experiment bundles place object URDFs/meshes alongside the
+    # parquet in assets/, without an ancestor directory named assets.
+    sibling = resolved.parent / 'assets'
+    if sibling.is_dir():
+        return sibling
     parts = resolved.parts
     indices = [index for index, part in enumerate(parts) if part == "assets"]
     return None if not indices else Path(*parts[: indices[-1] + 1])
