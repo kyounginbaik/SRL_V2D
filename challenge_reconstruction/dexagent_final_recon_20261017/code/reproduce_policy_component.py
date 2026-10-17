@@ -105,7 +105,7 @@ def build(args):
         inventory.append(copy(obj['mesh_path'],dest/'source'/episode/'assets'/Path(obj['mesh_path']).name))
     for name in ['learned_feedback_policy.py','component_policy.py','evaluate_policy_component.py',
                  'posture_feedback_policy.py','posture_feedback_policy_v3.py','posture_feedback_policy_v4.py',
-                 'joint_margin_policy.py','pinky_margin_policy_v2.py',
+                 'joint_margin_policy.py','pinky_margin_policy_v2.py','release_feedback_policy.py','wrist_reference.py',
                  'floating_runtime.py','evaluate_mp_sr.py','grasp_stability.py','reproduce_policy_component.py']:
         inventory.append(copy(b/'code'/name,dest/'code'/name))
     dex = b.parents[1]/'third_party/DexAgent'

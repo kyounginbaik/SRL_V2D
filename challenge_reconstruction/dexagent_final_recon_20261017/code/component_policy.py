@@ -14,6 +14,7 @@ ACTORS = {
     'posture_feedback_policy_v4': 'PosturePolicy',
     'joint_margin_policy': 'JointMarginPolicy',
     'pinky_margin_policy_v2': 'PinkyMarginPolicy',
+    'release_feedback_policy': 'ReleasePolicy',
 }
 
 
@@ -21,7 +22,12 @@ class ComponentPolicy:
     def __init__(self, checkpoint):
         with np.load(checkpoint, allow_pickle=False) as z:
             keys = set(z.files)
-            if 'margin_actuator_ids' in keys:
+            if 'release_base_module' in keys:
+                if (str(z['release_base_module']) != 'pinky_margin_policy_v2' or
+                        str(z['release_base_class']) != 'PinkyMarginPolicy'):
+                    raise ValueError('Unsupported trained release base architecture')
+                module = 'release_feedback_policy'
+            elif 'margin_actuator_ids' in keys:
                 base = str(z['margin_base_module'])
                 if base not in ACTORS or str(z['margin_base_class']) != ACTORS[base]:
                     raise ValueError('Unsupported trained margin base architecture')

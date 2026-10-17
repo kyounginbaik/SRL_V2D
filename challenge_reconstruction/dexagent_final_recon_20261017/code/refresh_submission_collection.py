@@ -29,7 +29,7 @@ def main():
         # Keep original frozen components selected until a replacement is
         # actually staged, independently replayed and has real code provenance.
         shared=B/'refinement_20261018/shared_policy_handoff'/name
-        if ep in (5,10,38) and (shared/'readiness.json').exists():
+        if ep in (3,5,10,38) and (shared/'readiness.json').exists():
             sr=read(shared/'readiness.json');sp=shared/'portable_validation/portable_validation.json'
             if sr.get('episode_ready_for_packaging_review') and sp.exists():
                 portable_report=read(sp)

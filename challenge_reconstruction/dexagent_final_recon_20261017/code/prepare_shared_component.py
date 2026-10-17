@@ -19,6 +19,7 @@ COMMON_CODE = [
     'posture_feedback_policy.py', 'posture_feedback_policy_v3.py',
     'posture_feedback_policy_v4.py', 'joint_margin_policy.py',
     'pinky_margin_policy_v2.py', 'floating_runtime.py', 'evaluate_mp_sr.py',
+    'release_feedback_policy.py', 'wrist_reference.py',
     'grasp_stability.py', 'stage_policy_component.py', 'submission_readiness.py',
     'reproduce_policy_component.py', 'prepare_shared_component.py',
 ]

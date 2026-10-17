@@ -11,6 +11,29 @@ Its `status.json` distinguishes metric/format/replay passes from unresolved hand
 quality checks. All 13 available episodes are in scope; no complete submission
 archive or upload has been made.
 
+## Episode 3
+
+The selected actor is
+`refinement_20261018/episode_000003/quant6_release_gentle_v5/policy.npz`.
+It improves the earlier unused-finger posture and replaces the spoon's unstable
+release with a physically fitted placement/opening primitive. Full-motion mean
+errors are **2.683 cm / 16.918 degrees** for the pot and **2.569 cm / 21.149
+degrees** for the spoon. Maximum measured finger soft-limit excursion is
+**1.074 degrees**. The final spoon release has a brief **3.75 mm** settling rise,
+then sustained tabletop support and no hand contact.
+
+The controller includes the learned phase/proprioception actor and posture head,
+with finite physically fitted grip and release parameters. It observes no
+object target or future state at runtime. The posture-only teacher's task
+rejection is preserved as lineage; final success is measured independently.
+Six-decimal command rounding removes the cross-host rotation roundoff issue.
+
+The component is `refinement_20261018/shared_policy_handoff/episode_000003`.
+It contains all 626 official-schema pose rows. Fresh shared evaluation on node01
+and node100, and a separate portable replay from `/tmp`, reproduce every state
+and action exactly. Earlier frozen component bundles keep their original
+evaluator manifests; final aggregation must re-evaluate under one common build.
+
 ## Episode 37
 
 The selected learned checkpoint is
