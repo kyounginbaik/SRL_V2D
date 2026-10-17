@@ -128,18 +128,33 @@ def main():
                 quality_promotion_claim=False))
         if candidates:row['physically_replayed_experiment_results']=candidates
         episodes.append(row)
+    scope_ready=len(verified)==len(AVAILABLE)
+    assembled=DEST/'available_13_episodes'
+    assembled_manifest=assembled/'manifest.json'
+    package=None
+    if assembled_manifest.exists():
+        ready_package=read(assembled_manifest)
+        if (ready_package['available_episodes']!=AVAILABLE or
+                not ready_package['available_episode_components_ready']):
+            raise ValueError('Assembled package source scope differs')
+        package=dict(directory=str(assembled),manifest_sha256=sha(assembled_manifest),
+                     archive=str(assembled)+'.tar',common_evaluator=ready_package['evaluator'])
     status=dict(collection='Incremental local Track3 learned-policy episode components',available_source_episodes=AVAILABLE,
         source_folder_episode_count=13,official_required_episode_count=20,missing_official_source_episodes=MISSING,
         verified_local_components=verified,verified_count=len(verified),
+        available_source_scope_components_ready=scope_ready,assembled_available_source_package=package,
         staged_components_pending_real_code_provenance=pending_provenance,episodes=episodes,
         source_pose_proxy_not_official_ground_truth=True,complete_submission_ready=False,kaggle_ready_archive_created=False,uploaded=False,
-        next_step='Refine and physically verify remaining episodes, train actual learned controllers, independently rerun, then stage each component. Final20-episode packing requires all missing source episodes too.')
+        next_step=('Available-source components are prepared. Full official packing still requires the seven absent source episodes.'
+                   if scope_ready else 'Refine and physically verify remaining episodes, train actual learned controllers, independently rerun, then stage each component. Final20-episode packing requires all missing source episodes too.'))
     tmp=DEST/f'.status.{os.getpid()}.json';tmp.write_text(json.dumps(status,indent=2)+'\n');tmp.replace(DEST/'status.json')
     lines=['# Incremental Track 3 collection','',
         f'{len(verified)} locally validated learned-policy episode component(s) are linked under `components/`. Validation covers MP-SR, public format and replay; physical quality limitations are listed below. This is a partial working collection; no Kaggle-ready archive or upload has been made.','',
         'The source folder contains episodes 1, 3, 5, 6, 8, 10, 19, 32, 33, 35, 36, 37 and 38. The official 20-episode roster also requires missing source episodes 14, 15, 16, 20, 25, 28 and 30.','',
         'MP-SR below uses immutable reconstructed object poses as proxy ground truth. Each object must have mean position error below 3 cm and symmetry-aware mean orientation error below 30 degrees. These are not confidential leaderboard scores.','',
         '| Episode | Object | Mean position | Mean orientation | Proxy MP-SR |','|---|---|---:|---:|---:|']
+    if package:
+        lines[2:2]=['The complete available-source package is [available_13_episodes](available_13_episodes/README.md), with [one transport archive](available_13_episodes.tar). It contains all 13 requested episodes under one evaluator build, including trajectories, meshes, videos, portable actors and evidence. This remains incomplete for the official 20-episode roster.','']
     for row in episodes:
         component=row['submission_component'] or row.get('staged_learned_policy_component')
         if component:

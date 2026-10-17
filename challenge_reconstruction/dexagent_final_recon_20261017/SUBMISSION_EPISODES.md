@@ -357,3 +357,7 @@ its own directory; each uses a `component/` root.
 The official roster remains unchanged. Missing official source episodes are
 14, 15, 16, 20, 25, 28 and 30. An available-13-episode package is not a complete
 leaderboard submission and must not be padded with reconstructed target poses.
+
+The assembled available-source directory is
+`../../challenge_submissions/track3_dexagent_20261018/available_13_episodes`.
+Its sibling `.tar` file transports all 13 components and their reviewed videos.
