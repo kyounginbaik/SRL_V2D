@@ -361,3 +361,6 @@ leaderboard submission and must not be padded with reconstructed target poses.
 The assembled available-source directory is
 `../../challenge_submissions/track3_dexagent_20261018/available_13_episodes`.
 Its sibling `.tar` file transports all 13 components and their reviewed videos.
+
+The user explicitly limited the requested scope to these 13 episodes. Other
+official roster entries are outside this task and are not pending requested work.

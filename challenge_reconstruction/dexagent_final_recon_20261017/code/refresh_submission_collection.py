@@ -145,7 +145,7 @@ def main():
         available_source_scope_components_ready=scope_ready,assembled_available_source_package=package,
         staged_components_pending_real_code_provenance=pending_provenance,episodes=episodes,
         source_pose_proxy_not_official_ground_truth=True,complete_submission_ready=False,kaggle_ready_archive_created=False,uploaded=False,
-        next_step=('Available-source components are prepared. Full official packing still requires the seven absent source episodes.'
+        next_step=('All 13 requested episode components are prepared. Use the assembled available-source package; other official roster entries are outside this request.'
                    if scope_ready else 'Refine and physically verify remaining episodes, train actual learned controllers, independently rerun, then stage each component. Final20-episode packing requires all missing source episodes too.'))
     tmp=DEST/f'.status.{os.getpid()}.json';tmp.write_text(json.dumps(status,indent=2)+'\n');tmp.replace(DEST/'status.json')
     lines=['# Incremental Track 3 collection','',

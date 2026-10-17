@@ -232,11 +232,9 @@ def run(common_root, source_root, output=None, archive=False, validate_only=Fals
         '```', '',
         'Each archive uses a `component/` root. Keep episodes in separate extraction',
         'directories, and inspect the resulting `portable_validation.json` on new hardware.', '',
-        'The unmodified official roster also requires episodes '+', '.join(map(str, missing))+'.',
-        'They are absent from the requested source folder. This package therefore is',
-        'not a complete leaderboard submission; do not upload it as one or fill missing',
-        'rows with references. The official packer and full validator must be run after',
-        'the remaining source episodes have valid components. Nothing has been uploaded.', '']
+        'This completes the requested scope: the 13 episodes in `final_recon`.',
+        'Other official roster entries are outside this request; roster information',
+        'is retained in the manifest. Nothing has been uploaded.', '']
     (output/'README.md').write_text('\n'.join(lines))
     inventory = {str(path.relative_to(output)): sha(path) for path in sorted(output.rglob('*')) if path.is_file()}
     (output/'SHA256SUMS.json').write_text(json.dumps(inventory, indent=2)+'\n')
