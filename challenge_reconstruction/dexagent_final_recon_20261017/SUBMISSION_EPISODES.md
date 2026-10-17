@@ -137,6 +137,34 @@ Their source and teacher lineage, full joint audits, support-force evidence and
 visual limitations accompany the checkpoints. The archives contain the portable
 component and evidence; comparison videos remain adjacent to the archive.
 
+## Episodes 6 and 32
+
+Episode 6's learned controller now completes both carries and supported placement,
+then withdraws the left hand without striking the pot. Mean errors are
+**2.622 cm / 20.739 degrees** for the pot and **2.367 cm / 25.786 degrees** for
+the spoon. Maximum actual finger soft-limit excursion is **1.504 degrees**.
+A brief spoon settling gap begins with **3.79 mm** clearance of its lowest
+collision geometry above the tabletop; it is not a fall from its object-origin
+height. The selected eight-decimal actor reproduces exactly across hosts.
+
+Episode 32's learned controller maintains its cup grasp through stirring and
+returns the spoon to the table. Mean errors are **1.149 cm / 10.496 degrees** for
+the cup and **2.705 cm / 19.305 degrees** for the spoon. Maximum actual finger
+soft-limit excursion is **1.018 degrees**. Its final 50 ms settling gap starts
+with **15.49 mm** clearance over the finite tabletop; the lowest spoon point
+lies near/outside its edge. This limitation remains in the physical review.
+
+Episode 32 uses a separately versioned cup-height repair supported by source
+RGB/stereo and the measured tabletop, preserving the observed rim. Original
+object targets, metric anchors, masses and clock remain unchanged. The export
+verifies actual body-coordinate mesh agreement and archives the repair evidence.
+
+Their components are `refinement_20261018/shared_policy_handoff/episode_000006`
+and `episode_000032`, with **486** and **518** official-schema rows. Independent
+portable execution from `/tmp` on separate nodes reproduces every physical state
+and action exactly. Source and training lineage, full physical audits and reviewed
+comparison videos accompany both components.
+
 ## Episode 19
 
 The selected controller is
