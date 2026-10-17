@@ -64,6 +64,14 @@ def run(source_handoff, release_root, worktree, commit):
             options += ['--lineage-file', evidence]
     options += ['--lineage-file', source/'provenance/producing_code.json']
     command('prepare_shared_component.py', *options)
+    (component/'provenance').mkdir(exist_ok=True)
+    if not quality.exists():
+        # Early validated components stored these audits directly in validation/.
+        destination = component/'validation/physical_quality'
+        destination.mkdir(exist_ok=True)
+        for name in ['actual_joint_limits.json', 'grasp_stability.json', 'independent_mp_sr.json']:
+            if (source/'validation'/name).exists():
+                shutil.copy2(source/'validation'/name, destination/name)
     comparison = evaluation/'shared_evaluator_validation.json'
     shutil.copy2(comparison, component/'validation/reviewed_recording_exact.json')
     shutil.copy2(source/'README.md', component/'provenance/selected_component_notes.md')
