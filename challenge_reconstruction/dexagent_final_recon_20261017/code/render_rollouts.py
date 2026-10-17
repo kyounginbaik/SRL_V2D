@@ -12,6 +12,7 @@ if __name__ == "__main__" and _LIB.is_dir() and str(_LIB) not in os.environ.get(
     env = dict(os.environ, LD_LIBRARY_PATH=str(_LIB) + ":" + os.environ.get("LD_LIBRARY_PATH", ""))
     os.execve(sys.executable, [sys.executable, *sys.argv], env)
 os.environ["MUJOCO_GL"] = "osmesa"
+os.environ["PYOPENGL_PLATFORM"] = "osmesa"
 os.environ.setdefault("OPENBLAS_NUM_THREADS", "1")
 os.environ.setdefault("LP_NUM_THREADS", "2")
 import argparse
@@ -56,14 +57,18 @@ def _label(frame, title, timestamp, subtitle=""):
 
 
 def render_comparison(episode_dir, baseline_report, refined_report, out_dir,
-                      width=384, height=288, stride=2, include_source=True):
+                      width=384, height=288, stride=2, include_source=True,
+                      reference_scene=None):
     episode = Path(episode_dir).resolve(); out = Path(out_dir).resolve(); out.mkdir(parents=True, exist_ok=True)
     manifest = json.loads((episode / "input_manifest.json").read_text())
     base, refined = _load_report(baseline_report), _load_report(refined_report)
     camera = dict(np.load(episode / "camera_trajectory.npz", allow_pickle=False))
     ref = dict(np.load(episode / "tracking_reference.npz", allow_pickle=False))
     tracks = [ref, dict(np.load(base["trajectory"], allow_pickle=False)), dict(np.load(refined["trajectory"], allow_pickle=False))]
-    scenes = [base["scene"], base["scene"], refined["scene"]]
+    # Reference joint coordinates belong to the adapter's robot frame. A
+    # baseline can use an older wrist frame, so callers can supply that scene
+    # explicitly instead of rendering recharted angles in the old frame.
+    scenes = [reference_scene or base["scene"], base["scene"], refined["scene"]]
     fps = float(ref["fps"]); frames = len(ref["qpos"])
     if any(len(t["qpos"]) != frames for t in tracks):
         raise ValueError("full reference and physics timelines must have the same frame count")
@@ -126,6 +131,7 @@ def render_comparison(episode_dir, baseline_report, refined_report, out_dir,
               "moving_camera": True, "time_warping": False,
               "panels": (["original human video"] if include_source else []) + ["kinematic reference", "baseline physics", "refined physics"],
               "baseline_scene": base["scene"], "refined_scene": refined["scene"],
+              "reference_scene": scenes[0],
               "baseline_trajectory": base["trajectory"], "refined_trajectory": refined["trajectory"],
               "screenshots": [str(p) for p in sorted(out.glob("comparison_*.jpg"))]}
     (out / "render_report.json").write_text(json.dumps(report, indent=2))

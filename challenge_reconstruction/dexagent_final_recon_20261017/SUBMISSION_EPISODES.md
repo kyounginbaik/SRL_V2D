@@ -107,6 +107,37 @@ portable archive includes the complete episode component, learned weights and
 source/teacher evidence. These remain individual components, not a complete
 20-episode submission.
 
+## Episodes 33 and 35
+
+Episode 33 now carries both objects and places them with support before opening
+the hands. Mean errors are **2.506 cm / 5.333 degrees** for the cup and
+**2.554 cm / 20.517 degrees** for the spoon. Both retain continuous geometric
+hand contact while elevated. The maximum measured finger soft-limit excursion
+is **1.505 degrees**; spoon rolling and some extended unused fingers remain.
+`MultiReleasePolicy` applies independently fitted release primitives to the two
+hands while retaining the learned phase/proprioception feedback.
+
+Episode 35 carries the spoon and completes a supported set-down, replacing the
+previous late bounce. Mean errors are **2.461 cm / 22.279 degrees**, with
+**1.202 degrees** maximum finger soft-limit excursion. The selected controller
+keeps the right-hand grasp for final placement instead of reproducing the human
+left-hand takeover. It therefore passes the object-motion criterion, not an
+exact hand-role imitation criterion. Brief contact gaps, rolling/slip and a
+short pinky/table contact are documented in its physical review.
+
+Episode 35 uses a separately versioned wrist-coordinate frame to avoid the
+original near-singular Euler trajectory. The hand's reference world poses are
+verified unchanged by this coordinate conversion. The virtual robot axes and
+their dynamics change, so this is explicitly recorded as an embodiment variant;
+object geometry, target poses, timing, masses and force caps are unchanged.
+
+Components are `refinement_20261018/shared_policy_handoff/episode_000033` and
+`episode_000035`, with 696 and 421 official-schema rows. Fresh portable execution
+from `/tmp` on another node reproduces every physical state and action exactly.
+Their source and teacher lineage, full joint audits, support-force evidence and
+visual limitations accompany the checkpoints. The archives contain the portable
+component and evidence; comparison videos remain adjacent to the archive.
+
 ## Episode 8
 
 The selected learned checkpoint is
@@ -211,9 +242,9 @@ handoff records that distinction instead of inventing a reconstruction lineage.
 Current requested input scope is every episode present in `final_recon`:
 `1, 3, 5, 6, 8, 10, 19, 32, 33, 35, 36, 37, 38`.
 The official roster additionally includes `14, 15, 16, 20, 25, 28, 30`, which are
-not in that folder. Episode 3 has a fresh learned-policy metric and joint-quality
-pass on its original CPU, but a cross-CPU check revealed sensitivity at release.
-It is undergoing a supported-release correction before portable promotion.
+not in that folder. Episode 3's supported-release correction and explicit command
+precision now pass cross-node and portable checks; its earlier rejected variants
+remain preserved as research evidence.
 Components are promoted individually only after the current
 physical, metric, visual, and checkpoint checks pass.
 

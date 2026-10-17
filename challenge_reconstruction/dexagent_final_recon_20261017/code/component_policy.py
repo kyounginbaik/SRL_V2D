@@ -15,6 +15,7 @@ ACTORS = {
     'joint_margin_policy': 'JointMarginPolicy',
     'pinky_margin_policy_v2': 'PinkyMarginPolicy',
     'release_feedback_policy': 'ReleasePolicy',
+    'multi_release_feedback_policy': 'MultiReleasePolicy',
 }
 
 
@@ -22,7 +23,11 @@ class ComponentPolicy:
     def __init__(self, checkpoint):
         with np.load(checkpoint, allow_pickle=False) as z:
             keys = set(z.files)
-            if 'release_base_module' in keys:
+            if 'multi_release_prefixes' in keys:
+                if str(z['multi_release_base_module']) != 'pinky_margin_policy_v2':
+                    raise ValueError('Unsupported trained multi-release base architecture')
+                module = 'multi_release_feedback_policy'
+            elif 'release_base_module' in keys:
                 if (str(z['release_base_module']) != 'pinky_margin_policy_v2' or
                         str(z['release_base_class']) != 'PinkyMarginPolicy'):
                     raise ValueError('Unsupported trained release base architecture')

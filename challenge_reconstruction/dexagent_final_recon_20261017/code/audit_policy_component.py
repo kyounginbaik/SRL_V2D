@@ -22,6 +22,7 @@ def run(run, baseline_report):
     videos = run/'videos'
     videos.mkdir(exist_ok=True)
     args = dict(episode_dir=result['input_dir'],
+        reference_scene=ex['scene'],
         baseline_report=str(Path(baseline['trajectory']).parent/'execution_report.json'),
         refined_report=str(Path(ex['trajectory']).parent/'execution_report.json'),
         out_dir=str(videos), width=512, height=384, stride=1, include_source=True)

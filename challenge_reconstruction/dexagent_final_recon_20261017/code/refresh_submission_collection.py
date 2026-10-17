@@ -29,7 +29,7 @@ def main():
         # Keep original frozen components selected until a replacement is
         # actually staged, independently replayed and has real code provenance.
         shared=B/'refinement_20261018/shared_policy_handoff'/name
-        if ep in (3,5,10,38) and (shared/'readiness.json').exists():
+        if ep in (3,5,8,10,33,35,38) and (shared/'readiness.json').exists():
             sr=read(shared/'readiness.json');sp=shared/'portable_validation/portable_validation.json'
             if sr.get('episode_ready_for_packaging_review') and sp.exists():
                 portable_report=read(sp)
@@ -66,16 +66,39 @@ def main():
                             scope='Custom frozen-scene learned controller, validated public format; not bundled official harness'))
                     link=DEST/'components'/name;link.parent.mkdir(exist_ok=True)
                     if link.is_symlink():
-                        if link.resolve()!=handoff.resolve():raise FileExistsError('Existing collection component points elsewhere')
+                        if link.resolve()!=handoff.resolve():
+                            previous=B/'refinement_20261018/policy_handoff'/name
+                            if link.resolve()!=previous.resolve() or handoff.resolve()!=shared.resolve():
+                                raise FileExistsError('Unexpected component replacement; preserve both artifacts')
+                            history=DEST/'superseded_components'/name
+                            history.mkdir(parents=True,exist_ok=True)
+                            old_hash=sha(previous/'readiness.json')
+                            record=history/(old_hash+'.json')
+                            if not record.exists():record.write_text(json.dumps(dict(
+                                preserved_handoff=str(previous),readiness_sha256=old_hash,
+                                replaced_by_validated_component=str(handoff),
+                                replacement_checkpoint_sha256=cp['sha256']),indent=2)+'\n')
+                            temporary=link.with_name(link.name+f'.{os.getpid()}.new')
+                            temporary.symlink_to(handoff.resolve(),target_is_directory=True)
+                            temporary.replace(link)
                     elif link.exists():raise FileExistsError('Refusing to overwrite existing component directory')
                     else:link.symlink_to(handoff.resolve(),target_is_directory=True)
                     verified.append(name)
-                    quality=DEST/'quality'/name/'actual_joint_limits.json'
+                    # Prefer the selected checkpoint's own frozen evidence;
+                    # collection-level legacy audits can describe an older actor.
+                    quality=handoff/'validation/physical_quality/full_joint_limits.json'
+                    current_quality=quality.exists()
+                    if not current_quality:quality=DEST/'quality'/name/'actual_joint_limits.json'
                     if quality.exists():
                         joint=read(quality)
+                        maximum=(max(joint['maximum_angular_violation_deg'].values()) if current_quality
+                                 else joint['hinge_max_violation_degrees'])
+                        review=handoff/'validation/physical_quality/visual_review.json'
                         row['actual_joint_quality']=dict(audit=str(quality),
-                            max_hinge_violation_degrees=joint['hinge_max_violation_degrees'],
-                            quality_review_pending=joint['hinge_max_violation_degrees']>1.0,
+                            max_hinge_violation_degrees=maximum,
+                            soft_limit_review_triggered=maximum>1.,
+                            documented_physical_review=str(review) if review.exists() else None,
+                            quality_review_pending=maximum>1.0 and not review.exists(),
                             threshold_interpretation='1 degree flags local review only; no official joint tolerance is claimed')
                         if row['actual_joint_quality']['quality_review_pending']:
                             row['status']='MP-SR, public format and replay verified; actual joint-limit quality review pending'
@@ -126,6 +149,8 @@ def main():
         q=row.get('actual_joint_quality')
         if q and q['quality_review_pending']:
             lines.extend(['',f"**{row['episode']} quality review pending:** actual simulated soft joints exceed their bounds by up to {q['max_hinge_violation_degrees']:.3f} degrees despite bounded commands. The frozen component retains its valid proxy score and exact replay, but this does not certify acceptable grasp/joint quality. See `{q['audit']}`."])
+        elif q and q.get('soft_limit_review_triggered'):
+            lines.extend(['',f"**{row['episode']} reviewed limitations:** maximum measured soft-joint excursion {q['max_hinge_violation_degrees']:.3f} degrees. The local 1-degree flag prompted review; it is not an official tolerance. See `{q['documented_physical_review']}` for the recorded grasp, slip and release limitations."])
     lines+=['','`status.json` records the actual checkpoint, scene, input hashes, producing commit, full-horizon physical verification and portable reproduction evidence for each component. Custom learned MuJoCo execution is explicit; public-format validity does not certify organizer acceptance.',
         '', 'Symlinks currently point to frozen experiment handoffs. When every required episode is ready, final packing should copy the actual trajectory and mesh bytes into a complete portable submission and run the unmodified official roster validators. Missing episodes are never padded or fabricated.','']
     (DEST/'README.md').write_text('\n'.join(lines));print(json.dumps({'collection':str(DEST),'verified_components':verified,'complete_submission_ready':False}))
