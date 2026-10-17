@@ -42,6 +42,63 @@ def write(path, data):
     path.write_text(json.dumps(data, indent=2, allow_nan=False)+'\n')
 
 
+def reconstruction_provenance(source, manifest, output):
+    """Preserve independently documented repairs without relabeling originals."""
+    records = {}
+    repair = manifest.get('reconstruction_repair', {})
+    for name, entry in repair.get('lineage', {}).items():
+        records[name] = dict(original_visual=entry['original_visual'],
+            actual_visual_sha256=entry['repaired_visual']['sha256'],
+            changed=entry['changed_visual'],
+            body_frame_error_m=entry['compiled_body_frame_vertex_hausdorff_m'])
+    for entry in manifest.get('repaired_mesh_export_binding', []):
+        name = entry['object']
+        if name in records:
+            raise ValueError('Ambiguous reconstruction lineage for '+name)
+        records[name] = dict(original_visual=entry['original_visual'],
+            actual_visual_sha256=entry['actual_visual_sha256'], changed=entry['changed'],
+            body_frame_error_m=entry['body_frame_compiled_mesh_max_bidirectional_distance_m'])
+    if not records:
+        return records, None
+    if set(records) != {obj['id'] for obj in manifest['objects']}:
+        raise ValueError('Repaired adapter must bind every exported object')
+    for obj in manifest['objects']:
+        visual, = [asset for asset in obj['meshes'] if asset['kind'] == 'visual']
+        record = records[obj['id']]
+        original = record['original_visual']
+        if (record['actual_visual_sha256'] != visual['sha256'] or
+                sha(original['source']) != original['sha256'] or
+                bool(record['changed']) != (original['sha256'] != visual['sha256']) or
+                not 0 <= record['body_frame_error_m'] <= 1e-6):
+            raise ValueError('Repair/export geometry lineage mismatch: '+obj['id'])
+    evidence = []
+    report = source/'mesh_repair_provenance.json'
+    if report.exists():
+        evidence.append(report)
+        details = read(report)
+        for key in ['repair_report', 'source_evidence_report', 'body_coordinate_geometry_binding']:
+            if details.get(key):
+                evidence.append(Path(details[key]))
+    if repair.get('source_evidence'):
+        evidence.append(Path(repair['source_evidence']))
+    copied = []
+    for index, path in enumerate(dict.fromkeys(evidence)):
+        destination = output/'provenance/reconstruction_evidence'/f'{index:02d}_{path.name}'
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        if destination.exists() and sha(destination) != sha(path):
+            raise ValueError('Previously staged reconstruction evidence changed')
+        shutil.copy2(path, destination)
+        copied.append(dict(source=str(path), staged=str(destination), sha256=sha(path)))
+    destination = output/'provenance/reconstruction_repair.json'
+    write(destination, dict(source_manifest=str(source/'input_manifest.json'),
+        source_manifest_sha256=sha(source/'input_manifest.json'), objects=records,
+        reconstruction_repair=repair,
+        repaired_mesh_export_binding=manifest.get('repaired_mesh_export_binding', []),
+        evidence=copied, original_object_targets_unchanged=True,
+        scope='Versioned participant reconstruction; not an organizer ground-truth asset'))
+    return records, dict(path=str(destination), sha256=sha(destination))
+
+
 def prepare(episode, output, episode_dir=None):
     name = f'episode_{episode:06d}'
     source = Path(episode_dir).resolve() if episode_dir else B/'episodes'/name
@@ -60,6 +117,7 @@ def prepare(episode, output, episode_dir=None):
     kit_tools.__path__ = [str(KIT/'tools')]
     sys.modules['tools'] = kit_tools
     from v2dlb.track3_pose import pack_object_meshes, validate_packed_meshes
+    repairs, repair_provenance = reconstruction_provenance(source, manifest, output)
     mesh_manifest = {}
     for obj in manifest['objects']:
         visuals = [a for a in obj['meshes'] if a['kind'] == 'visual']
@@ -76,7 +134,10 @@ def prepare(episode, output, episode_dir=None):
             shutil.copy2(visual['source'], destination)
         mesh_manifest[obj['id']] = dict(source=visual['source'], staged=str(destination),
             sha256=sha(destination), body_coordinates_preserved=True,
-            provenance='Participant-supplied final_recon asset; reconstruction origin must remain documented separately')
+            provenance=('Versioned participant reconstruction repair; evidence and original lineage preserved'
+                if repairs.get(obj['id'], {}).get('changed') else
+                'Participant-supplied final_recon visual asset; original reconstruction lineage retained'),
+            reconstruction_repair=repairs.get(obj['id']))
     # Exercise the actual official mesh packer/decoder without emitting fake pose rows.
     mesh_rows = pd.DataFrame({'row_id':[f'track_3/e{episode:06d}/w000/f000000/o{i}'
                                       for i in range(len(roster['object_names']))]})
@@ -94,7 +155,8 @@ def prepare(episode, output, episode_dir=None):
         source_object_poses_sha256=manifest['source_object_poses_sha256'],
         original_object_targets_unchanged=True, fps=manifest['fps'], frames=manifest['frames'],
         expected_trajectory_rows=len(roster['rows']), object_names=roster['object_names'],
-        meshes=mesh_manifest, official_mesh_pack_decode_validation=budget,
+        meshes=mesh_manifest, reconstruction_provenance=repair_provenance,
+        official_mesh_pack_decode_validation=budget,
         learned_policy_checkpoint=None, policy_rollout=None, episode_ready_for_packaging_review=False,
         complete_submission_ready=False, official_score=None, uploaded=False,
         limitations=['This is one episode of the official 20; the public roster is not changed.',

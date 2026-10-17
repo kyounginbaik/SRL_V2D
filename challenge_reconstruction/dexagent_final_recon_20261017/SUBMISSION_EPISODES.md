@@ -78,8 +78,7 @@ python /path/to/portable/code/reproduce_policy_component.py replay \
 The newer `evaluate_policy_component.py` registry supports both the original
 BC actors and their explicitly recorded posture/finger refinements.
 `prepare_shared_component.py` stages these actors with a consistent evaluation
-code manifest and an explicit adapter path. Existing episode8/37 bundles remain
-unchanged. The final combined submission must use one common evaluator build;
+code manifest and an explicit adapter path. Existing frozen bundles retain their original code manifests. The final combined submission must use one common evaluator build;
 older components are re-evaluated and compared before final aggregation.
 
 ## Episodes 10 and 38
@@ -141,82 +140,60 @@ component and evidence; comparison videos remain adjacent to the archive.
 ## Episode 8
 
 The selected learned checkpoint is
-`refinement_20261018/learned_episode8/gain_0.01/training/policy.npz`.
-Its independent full-horizon local reference-proxy MP-SR is **1**:
+`refinement_20261018/pinky_margin_v2/episode_000008/policy.npz`.
+Its full-horizon reference-proxy MP-SR is **1**:
 
 | Object | Mean position error | Mean symmetry-aware orientation error |
 | --- | ---: | ---: |
-| Beige cup | 1.9159 cm | 8.2593 degrees |
-| White pot | 1.9932 cm | 11.3697 degrees |
+| Beige cup | 1.8691 cm | 8.1818 degrees |
+| White pot | 2.1303 cm | 12.3268 degrees |
 
-The policy is evaluated online at 500 Hz from the exact scene home, with
-56 bounded robot actuators, no object actuation/attachments, no object force
-assistance, and the full original 219-frame, 10.9-second timeline. Every recorded
-action reproduces from the checkpoint and its causal pre-step observation.
-Independent control replay reproduces all 5,450 physical steps exactly.
+The cup is carried, poured and placed upright. Both hands are clear at the end,
+with measured tabletop support of approximately 0.98 N for the cup and 1.96 N
+for the pot. The pot under-lifts relative to the demonstration; passing the
+mean-error criterion does not imply every detail of the motion matches.
 
-An additional all-joint audit found actual pinky CMC soft-limit excursions of
-5.650 degrees on the right (during initial settling) and 3.798 degrees on the
-left. Commands remain within bounds, but that does not guarantee actual joint
-positions do. The frozen passing component is preserved; joint-quality review
-and separate corrective policy trials are pending. Do not describe it as having
-passed every physical-quality check.
+Physically fitted finger command margins reduce the previous maximum actual
+soft-limit excursions from 5.650/3.798 degrees to **1.846/1.801 degrees** for the
+right/left hand. These residual excursions are disclosed in the physical review;
+bounded commands are not claimed to guarantee bounded actual joint positions.
 
-The component is staged at:
-
-```
-refinement_20261018/policy_handoff/episode_000008/
-  results/episode_000008.parquet
-  meshes/episode_000008/{beige_cup,white_pot}.obj
-  readiness.json
-  validation/
-  provenance/
-  portable/
-```
-
-The official trajectory reader verifies all 438 episode/object rows. The
-official mesh packer verifies the exact body-coordinate meshes and its budgets.
-The source `final_recon` was not overwritten. Object poses in the submitted
-component are achieved simulated poses, not the reconstructed reference.
+The selected component is
+`refinement_20261018/shared_policy_handoff/episode_000008`, with all **438**
+official-schema rows, exact meshes, learned weights, physical audits, actual Git
+provenance and a portable archive. A separate execution on node200 from `/tmp`
+reproduced all recorded physical states and actions exactly. The earlier bundle
+at `refinement_20261018/policy_handoff/episode_000008` remains preserved; the live
+collection records the supersession instead of rewriting the earlier evidence.
 
 ### Reproduce on another server
 
-Copy the whole `portable/` directory, then create a Python 3.11 environment:
+Copy the complete `portable/` directory and install its pinned dependencies:
 
 ```sh
 python3.11 -m venv .venv
 .venv/bin/python -m pip install -r /path/to/portable/requirements.txt
-.venv/bin/python /path/to/portable/code/reproduce_portable_policy.py replay \
+.venv/bin/python /path/to/portable/code/reproduce_policy_component.py replay \
   --bundle /path/to/portable --output /tmp/episode8-reproduction
 ```
 
-The helper enforces single-thread BLAS/OpenMP before numerical imports. This is
-material: different BLAS reduction order changed the very first control by
-4.4e-16 and later contact dynamics diverged. With the tested settings, node01
-and node100 reproduce the selected rollout bit for bit. Do not assume arbitrary
-hardware/library versions are deterministic; inspect `portable_validation.json`.
+The helper enforces single-thread numerical libraries, verifies the learned
+weights and compiled physical model after path relocation, and compares every
+state and action against the recorded rollout. Inspect `portable_validation.json`
+on new hardware. The learned actor observes phase and robot proprioception;
+original object targets, future states and action tables are not runtime inputs.
 
-The bundle preserves original checkpoint/XML/teacher data and includes all scene
-assets. Relocation changes only paths and the copied checkpoint's XML-hash
-metadata. All learned arrays and compiled physical arrays/options are checked
-against the original before running. `--retrain` additionally fits a separate
-policy from the preserved causal teacher data; the primary reproduction always
-uses the original learned weights. Training uses eight BLAS threads in the
-original experiment; single-thread refitting may differ slightly numerically.
+The bundle preserves the original BC training evidence and the later physical
+finger-margin fit. Replaying uses the selected fitted checkpoint. A base BC
+refit alone does not reproduce the complete physically refined controller.
+Synthetic recovery labels encode a local stabilizing-teacher assumption;
+interleaved held-out loss measures interpolation, not task generalization.
 
 To install the source checkout's CPU dependencies and pinned upstream DexAgent:
 
 ```sh
 bash challenge_reconstruction/dexagent_final_recon_20261017/code/bootstrap_policy.sh
 ```
-
-`learned_feedback_policy.py` trains the policy;
-`evaluate_learned_feedback.py` executes it online;
-`stage_learned_policy_episode.py` validates and writes an episode component;
-`reproduce_portable_policy.py` builds/replays the self-contained artifact.
-The physical teacher data is supplied with the artifact, not fabricated by the
-learner. Synthetic recovery labels encode a local stabilizing-teacher assumption;
-interleaved held-out loss measures interpolation, not task generalization.
 
 ## Submission scope and provenance
 
@@ -270,3 +247,9 @@ repair under `refinement_20261018/episode_000001/reconstruction_repair`. It is
 not promoted merely because its image fit improves; collision, settling, grasp,
 full-horizon tracking and learned-policy checks remain required. Optional
 reconstruction dependencies are in `code/requirements_reconstruction.txt`.
+
+For versioned geometry repairs, `stage_policy_component.py` verifies the original
+visual hash, actual repaired visual hash, and compiled body-frame mesh agreement
+before packing. It archives the source evidence and repair reports beside the
+component. Repaired meshes are labeled as repairs rather than unchanged
+`final_recon` assets. Source object targets and timestamps remain unchanged.
