@@ -7,9 +7,41 @@ inference in the exact scene. This controller is radial-basis behavior cloning,
 not FlashSAC and not a native end-to-end DexAgent LLM run.
 
 The live collection is `../../challenge_submissions/track3_dexagent_20261018`.
-Its `status.json` distinguishes metric/format/replay passes from unresolved hand
-quality checks. All 13 available episodes are in scope; no complete submission
-archive or upload has been made.
+Its `status.json` distinguishes metric/format/replay passes from the documented
+hand-quality limitations. All 13 available episodes now have validated learned
+controllers. No complete official 20-episode submission or upload has been made.
+
+## Episodes 1 and 36
+
+Episode 1's selected unrounded learned controller completes both lid transfers,
+pot shaking, final seating and release. Against the unchanged original targets,
+mean errors are **2.017 cm / 16.970 degrees** for the pot and **2.909 cm / 20.195
+degrees** for the lid. All 670 official-schema rows contain achieved physics.
+The checkpoint reproduces exactly on node01, node100 and node200, including a
+portable replay from `/tmp`. Six-decimal rounding was tested and rejected because
+it degraded the grasp; the exact unrounded actor is retained.
+
+The versioned pot bowl-height repair (scale 0.94), calibrated support and fixed
+initial seating remove the original pot/lid interlock. Triangle-patch collision
+meshes preserve shell surfaces without filling the pot/lid interiors. Original
+reference targets, original source files and the lid visual mesh remain unchanged.
+The original lid topology still causes visual speckling. Retaining the original
+inertia after a small geometry repair is an explicit approximation. Actual
+finger soft-limit excursion reaches **1.577 degrees**; lid contact gaps total
+**34 ms** during second seating. Final lid/pot support is stable with hands clear.
+
+Episode 36's selected learned controller carries and places the spoon with
+**2.015 cm / 25.689 degrees** mean error over all 20.3 seconds (**407** pose rows).
+It uses the right hand throughout, rather than the demonstrated handover, and a
+short wrist detour at 14.4–15.8 seconds avoids the table. Unused fingers remain
+extended early before curling; a brief release settling motion remains. These
+are disclosed strategy/quality limitations. The spoon ends table-supported with
+both hands clear. Maximum actual finger soft-limit excursion is **1.137 degrees**.
+Cross-host and portable execution reproduce all recorded states/actions exactly.
+
+Components are `refinement_20261018/shared_policy_handoff/episode_000001` and
+`episode_000036`. They include their actual learned checkpoints, physical teacher
+lineage, repair evidence, comparison videos and full-step physical audits.
 
 ## Episode 3
 
@@ -305,3 +337,23 @@ visual hash, actual repaired visual hash, and compiled body-frame mesh agreement
 before packing. It archives the source evidence and repair reports beside the
 component. Repaired meshes are labeled as repairs rather than unchanged
 `final_recon` assets. Source object targets and timestamps remain unchanged.
+
+## Common release and assembly
+
+`build_common_component.py` performs fresh online evaluation and requires exact
+agreement with each reviewed recording before restaging. It preserves earlier
+components, carries their physical reviews and training lineage forward, reruns
+the portable actor, and records actual common-build Git/source hashes. The release
+under `refinement_20261018/common_release_v2_20261018` uses one evaluator code hash.
+
+`assemble_available_components.py` rereads the actual exported Parquet files,
+checks every mesh/checkpoint/source hash and archive, and refuses to assemble
+until every episode physically present in `final_recon` has a completed component.
+`--validate-only` reports remaining work without writing a partial package. The
+assembled available-episode package contains results, meshes, evidence, comparison
+videos and one portable archive per episode. Extract each portable archive into
+its own directory; each uses a `component/` root.
+
+The official roster remains unchanged. Missing official source episodes are
+14, 15, 16, 20, 25, 28 and 30. An available-13-episode package is not a complete
+leaderboard submission and must not be padded with reconstructed target poses.

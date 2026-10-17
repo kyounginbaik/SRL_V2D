@@ -47,9 +47,22 @@ def prepare(mode,version='pot_geometry_rgb_depth'):
                     mesh=trimesh.load(path,force='mesh',process=False);mesh.vertices=warp(mesh.vertices)
                     result=mesh.convex_hull;target=dest/path.name;result.export(target);new.append(target)
                 paths=new
+        elif mode=='patch':
+            patch_dir=OUT/('patch_collision_'+version)/o
+            report=json.loads((patch_dir/'report.json').read_text())
+            visual_source=OUT/version/'white_pot_visual.obj' if o=='white_pot' else B.parent/'final_recon/episode_000001/assets/white_pot_lid_visual.obj'
+            if hashlib.sha256(visual_source.read_bytes()).hexdigest()!=report['source_sha256']:raise ValueError('Patch collision source hash mismatch')
+            paths=sorted(patch_dir.glob('part_*.obj'))
         else:
-            if suffix:raise ValueError('New shape needs its own fine collision decomposition; use warped32 diagnostic first')
-            paths=sorted((OUT/'fine_collision'/o).glob('part_*.obj'))
+            fine_dir=OUT/('fine_collision'+suffix)/o
+            # The lid mesh is immutable in these shape variants; its existing
+            # fine decomposition may be reused only after verifying that hash.
+            if o=='white_pot_lid' and not fine_dir.exists():
+                fine_dir=OUT/'fine_collision'/o
+                report=json.loads((fine_dir/'report.json').read_text())
+                actual=hashlib.sha256((B.parent/'final_recon/episode_000001/assets/white_pot_lid_visual.obj').read_bytes()).hexdigest()
+                if actual!=report['source_sha256']:raise ValueError('Lid decomposition source hash changed')
+            paths=sorted(fine_dir.glob('part_*.obj'))
             if not paths:raise FileNotFoundError(f'fine collision not ready: {o}')
         new_parts[o]=[str(p) for p in paths]
         old_geoms=[g for g in body.findall('geom') if '_collision_' in g.get('name','')]
@@ -109,5 +122,5 @@ def run(mode,version='pot_geometry_rgb_depth'):
     print(json.dumps(dict(mode=mode,physics_verified=execution['physics_verified'],initial_penetration_m=provenance['initial_max_penetration_m'],movement=movement,final_force=trace[-1]),indent=2),flush=True)
 
 if __name__=='__main__':
-    p=argparse.ArgumentParser();p.add_argument('--mode',choices=['warped32','fine'],default='warped32')
+    p=argparse.ArgumentParser();p.add_argument('--mode',choices=['warped32','fine','patch'],default='warped32')
     p.add_argument('--version',default='pot_geometry_rgb_depth');run(**vars(p.parse_args()))
