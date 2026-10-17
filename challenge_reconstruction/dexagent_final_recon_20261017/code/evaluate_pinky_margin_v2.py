@@ -125,7 +125,7 @@ def evaluate(episode,scene,checkpoint,output,episode_dir):
     metrics=evaluate_files(manifest['source'],execution['trajectory'],inp/'input_manifest.json',execution['scene'],inp/'metric_geometry.json')
     result=dict(episode=f'episode_{episode:06d}',input_dir=str(inp),learned_policy=True,policy_checkpoint=str(Path(checkpoint).resolve()),
         policy_checkpoint_sha256=sha(checkpoint),execution=execution,metrics=metrics,
-        evaluator_script_sha256=sha(__file__),policy_code_sha256=sha(Path(__file__).with_name('joint_margin_policy.py')),
+        evaluator_script_sha256=sha(__file__),policy_code_sha256=sha(Path(__file__).with_name('pinky_margin_policy_v2.py')),
         evaluation_backend='Custom frozen-scene MuJoCo500Hz; not bundled FlashSAC/official harness',
         reference_proxy_success=metrics['reference_proxy_mp_sr']==1.)
     (out/'mp_sr.json').write_text(json.dumps(metrics,indent=2)+'\n')

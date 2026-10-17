@@ -59,6 +59,31 @@ code manifest and an explicit adapter path. Existing episode8/37 bundles remain
 unchanged. The final combined submission must use one common evaluator build;
 older components are re-evaluated and compared before final aggregation.
 
+## Episodes 10 and 38
+
+Episode 10 now completes both cup pickups, nesting and a supported release.
+Its learned controller has mean errors **1.046 cm / 5.283 degrees** for the blue
+cup and **2.576 cm / 5.427 degrees** for the beige cup. Both hands disengage by
+6 seconds; the cup stack stays supported through the complete 8-second episode.
+The source reconstruction gives a shallower simulated nesting than the observed
+video; that remaining error is included in the score. Maximum actual finger
+soft-limit excursion is **1.012 degrees**, recorded separately from the metric.
+
+Episode 38's learned controller carries and releases the dustpan with mean
+errors **1.790 cm / 23.794 degrees**. Hand contact is present throughout the
+measured airborne motion. Some rolling/slip remains and is documented in its
+physical review; maximum actual finger soft-limit excursion is **0.981 degree**.
+
+Their components are `refinement_20261018/shared_policy_handoff/episode_000010`
+and `episode_000038`, with 322 and 263 official-schema pose rows, respectively.
+Fresh portable policy execution on another node reproduced all physical states
+and actions exactly. They use the same shared evaluator build as episode 5.
+`finalize_component_provenance.py` verifies each evaluator file against both its
+recorded SHA-256 and the actual Git commit before recording provenance. The
+portable archive includes the complete episode component, learned weights and
+source/teacher evidence. These remain individual components, not a complete
+20-episode submission.
+
 ## Episode 8
 
 The selected learned checkpoint is
