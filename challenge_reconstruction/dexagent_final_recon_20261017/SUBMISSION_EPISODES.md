@@ -137,6 +137,30 @@ Their source and teacher lineage, full joint audits, support-force evidence and
 visual limitations accompany the checkpoints. The archives contain the portable
 component and evidence; comparison videos remain adjacent to the archive.
 
+## Episode 19
+
+The selected controller is
+`refinement_20261018/expanded_batch/learned_repaired_final/episode_000019/precisionexact/policy.npz`.
+Mean errors are **1.375 cm / 14.686 degrees** for the brush and
+**2.853 cm / 23.065 degrees** for the dustpan. Both objects are acquired and
+carried; the pan is released onto the table while the right hand retains the
+brush, matching the demonstrated final hand roles. The full 11.7-second recording
+contains all **470** expected official-schema rows.
+
+A source-reviewed lower bristle-envelope repair prevents the original brush
+from toppling before either hand arrives. Its original mesh and source RGB/depth
+evidence remain preserved. The repaired visual exported for submission matches
+the actual compiled simulation geometry. Rigid bristles approximate compliance;
+source stereo fit is mixed at millimetric scale, not uniformly improved.
+Original object target poses, metric anchors, masses and timestamps are unchanged.
+
+The selected actor's maximum actual finger soft-limit excursion is **1.642 degrees**.
+The pan retains contact throughout its elevated motion; brief brush contact gaps
+total 46 ms, with a longest gap of 26 ms. Physical review documents remaining
+rolling/slip. Fresh execution on another node and portable execution from `/tmp`
+reproduce all states and actions exactly. The staged component is
+`refinement_20261018/shared_policy_handoff/episode_000019`.
+
 ## Episode 8
 
 The selected learned checkpoint is
