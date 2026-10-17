@@ -25,6 +25,16 @@ def main():
             immutable_source_hashes={f:sha(source/f) for f in ['reference.parquet','object_poses.npz','manifest.json']},
             status='refinement or baseline evaluation pending',submission_component=None)
         handoff=B/'refinement_20261018/policy_handoff'/name
+        # Explicitly registered unified components use the same evaluator build.
+        # Keep original frozen components selected until a replacement is
+        # actually staged, independently replayed and has real code provenance.
+        shared=B/'refinement_20261018/shared_policy_handoff'/name
+        if ep in (5,) and (shared/'readiness.json').exists():
+            sr=read(shared/'readiness.json');sp=shared/'portable_validation/portable_validation.json'
+            if sr.get('episode_ready_for_packaging_review') and sp.exists():
+                portable_report=read(sp)
+                if portable_report.get('all_physical_states_actions_exact') and portable_report.get('source_object_targets_unchanged'):
+                    handoff=shared
         if (handoff/'readiness.json').exists():
             r=read(handoff/'readiness.json');commit=handoff/'provenance/producing_code.json'
             portable=handoff/'portable_validation/portable_validation.json'

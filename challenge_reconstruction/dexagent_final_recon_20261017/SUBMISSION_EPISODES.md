@@ -27,6 +27,38 @@ Its component is `refinement_20261018/policy_handoff/episode_000037`, with all
 The portable execution was repeated on another node with bitwise-identical
 controls and states under the documented single-thread numerical settings.
 
+## Episode 5
+
+The selected checkpoint is
+`refinement_20261018/pinky_margin_v2/episode_000005/policy.npz`.
+Fresh online inference passes reference-proxy MP-SR: pot **2.5094 cm / 20.4090
+degrees**, spoon **2.5524 cm / 25.8931 degrees**. Both hands' measured joints are
+audited at every 500 Hz physics step; the maximum angular soft-limit excursion
+is **0.919 degrees**. Object targets, timestamps, initial state, masses and
+actuator limits are unchanged.
+
+This actor is the trained phase/proprioception controller plus physically fitted
+pinky command margins. Its calibrated table/gravity adapter uses one rigid
+transform for hands, objects and cameras, with the inverse applied at export.
+The teacher and every original learning/search report remain separately recorded.
+
+Its component is `refinement_20261018/shared_policy_handoff/episode_000005`.
+It contains all 576 official pose rows, exact reconstructed object meshes and a
+portable checkpoint. A fresh replay on node200 from `/tmp` reproduced every
+recorded physical state and action exactly. Use:
+
+```sh
+python /path/to/portable/code/reproduce_policy_component.py replay \
+  --bundle /path/to/portable --output /tmp/episode5-reproduction
+```
+
+The newer `evaluate_policy_component.py` registry supports both the original
+BC actors and their explicitly recorded posture/finger refinements.
+`prepare_shared_component.py` stages these actors with a consistent evaluation
+code manifest and an explicit adapter path. Existing episode8/37 bundles remain
+unchanged. The final combined submission must use one common evaluator build;
+older components are re-evaluated and compared before final aggregation.
+
 ## Episode 8
 
 The selected learned checkpoint is
@@ -131,8 +163,9 @@ handoff records that distinction instead of inventing a reconstruction lineage.
 Current requested input scope is every episode present in `final_recon`:
 `1, 3, 5, 6, 8, 10, 19, 32, 33, 35, 36, 37, 38`.
 The official roster additionally includes `14, 15, 16, 20, 25, 28, 30`, which are
-not in that folder. Episodes 3 and 5 now have fresh learned-policy metric passes,
-but their inherited left-pinky soft-limit excursions are still under review.
+not in that folder. Episode 3 has a fresh learned-policy metric and joint-quality
+pass on its original CPU, but a cross-CPU check revealed sensitivity at release.
+It is undergoing a supported-release correction before portable promotion.
 Components are promoted individually only after the current
 physical, metric, visual, and checkpoint checks pass.
 
