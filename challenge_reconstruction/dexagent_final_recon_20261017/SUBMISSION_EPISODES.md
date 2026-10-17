@@ -1,10 +1,31 @@
-# Verified learned-policy episode components
+# Incremental learned-policy episode components
 
 This workspace adapts the released DexAgent MuJoCo tools to floating Sharpa
 hands. A successful physical reference is distilled into a learned
 phase/proprioception feedback controller, then evaluated through fresh online
 inference in the exact scene. This controller is radial-basis behavior cloning,
 not FlashSAC and not a native end-to-end DexAgent LLM run.
+
+The live collection is `../../challenge_submissions/track3_dexagent_20261018`.
+Its `status.json` distinguishes metric/format/replay passes from unresolved hand
+quality checks. All 13 available episodes are in scope; no complete submission
+archive or upload has been made.
+
+## Episode 37
+
+The selected learned checkpoint is
+`refinement_20261018/expanded_batch/learned/episode_000037/gain_0.03/training/policy.npz`.
+The wooden spoon has mean position error **1.462 cm** and mean orientation error
+**9.603 degrees**, passing reference-proxy MP-SR. Fresh online policy inference,
+causal action verification and independent physical replay pass. Maximum measured
+finger soft-limit excursion is **0.919 degrees**. The separately measured physical
+teacher has continuous hand contact during its elevated motion and an opposed
+thumb/finger pinch; reference poses are never substituted for achieved motion.
+
+Its component is `refinement_20261018/policy_handoff/episode_000037`, with all
+151 expected pose rows, meshes, actual trained weights, and a portable replay.
+The portable execution was repeated on another node with bitwise-identical
+controls and states under the documented single-thread numerical settings.
 
 ## Episode 8
 
@@ -22,6 +43,13 @@ The policy is evaluated online at 500 Hz from the exact scene home, with
 assistance, and the full original 219-frame, 10.9-second timeline. Every recorded
 action reproduces from the checkpoint and its causal pre-step observation.
 Independent control replay reproduces all 5,450 physical steps exactly.
+
+An additional all-joint audit found actual pinky CMC soft-limit excursions of
+5.650 degrees on the right (during initial settling) and 3.798 degrees on the
+left. Commands remain within bounds, but that does not guarantee actual joint
+positions do. The frozen passing component is preserved; joint-quality review
+and separate corrective policy trials are pending. Do not describe it as having
+passed every physical-quality check.
 
 The component is staged at:
 
@@ -103,6 +131,30 @@ handoff records that distinction instead of inventing a reconstruction lineage.
 Current requested input scope is every episode present in `final_recon`:
 `1, 3, 5, 6, 8, 10, 19, 32, 33, 35, 36, 37, 38`.
 The official roster additionally includes `14, 15, 16, 20, 25, 28, 30`, which are
-not in that folder. Episode 3's promising metric result is still under grasp
-posture review. Components are promoted individually only after the current
+not in that folder. Episodes 3 and 5 now have fresh learned-policy metric passes,
+but their inherited left-pinky soft-limit excursions are still under review.
+Components are promoted individually only after the current
 physical, metric, visual, and checkpoint checks pass.
+
+## Versioned reconstruction and grasp work
+
+For the eight added scenes, `inspect_table_support.py` fits the tabletop to
+calibrated stereo depth while excluding hand/object masks. `prepare_episodes.py`
+can apply that measured rigid frame to objects, both wrists and moving cameras;
+the inverse transform is used for scoring and export. This corrects the support
+and gravity setup without editing source object trajectories. Original adapters
+and source `final_recon` directories remain available.
+
+`physics_pickup_search_v2.py` tests staged approach, open pinch, closure and lift
+commands in physics. `refine_versioned_retention.py` preserves an acquired pickup
+prefix and refines subsequent robot commands against the full original object
+timeline. Search trajectories are research teachers; a separate trained policy
+must succeed online before its result is packaged. The scripts and SBATCH files
+record exact scene/reference paths; these research paths are not portable data.
+Use each completed component's `portable/` bundle for server-to-server replay.
+
+Episode 1 has a separately versioned RGB/stereo-supported pot registration/mesh
+repair under `refinement_20261018/episode_000001/reconstruction_repair`. It is
+not promoted merely because its image fit improves; collision, settling, grasp,
+full-horizon tracking and learned-policy checks remain required. Optional
+reconstruction dependencies are in `code/requirements_reconstruction.txt`.
