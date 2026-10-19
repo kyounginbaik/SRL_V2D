@@ -1,0 +1,85 @@
+# @package _global_
+
+# Dexmate/Vega Sharpa PPO counterpart to dexmate_sharpa_flash_sac. Keep the
+# simulator, embodiment, controller, observations, objectives, termination,
+# reset, and curriculum identical so algorithm is the only learner variable.
+defaults:
+  - override /sim: rl
+  - override /scene: train
+  - override /collision: manipulation
+  - override /embodiment: dexmate_sharpa
+  - override /action: residual_joint_position
+  - override /observation: articulated_arm
+  - override /objective: tracking
+  - override /termination: tracking
+  - override /reset: reference
+  - override /env: rl
+  - override /curriculum: dexmate_tracking_250m_mixed_reset
+  - override /training: reference_ppo
+  - _self_
+
+task:
+  motion_speed: 0.5
+  source_frame_playback: false
+  motion_start_frame: 0
+  motion_end_frame: -1
+
+embodiment:
+  config:
+    interpolated_frame_position_tolerance: null
+    interpolated_frame_orientation_tolerance: null
+    arm_feedback_scale: 20.0
+
+action:
+  input_mode: normalized
+  normalized_mapping: rational
+  arm_scale: 0.075
+  finger_scale: 0.15
+  arm_clip: 1.0
+  rate_semantics: processed_target
+  final_target:
+    mode: ema
+    arm_ema: 0.75
+    finger_ema: 0.75
+
+observation:
+  object_body_velocity:
+    enabled: true
+
+objective:
+  hand_keypoint_frame: fingertip
+  action_l2:
+    weight: -0.002
+  action_rate_l2:
+    weight: -0.05
+  contact_wrench_support:
+    weight: 20.0
+    excluded_sim_link_names: []
+  contact_force_l2:
+    enabled: false
+    weight: 0.0
+    mode: per_hand_log
+  force_closure:
+    enabled: false
+    weight: 0.0
+
+collision:
+  robot_support_collision: true
+
+sim:
+  fps: 20
+  substeps: 10
+  njmax: 1024
+
+scene:
+  world_count: 2048
+
+env:
+  arm_position_integral:
+    gain_s_inv2: 0.02
+    max_effort_fraction: 0.15
+
+logging:
+  experiment: dexmate_sharpa
+  run_name: dexmate_sharpa_ppo
+  log_interval: 10

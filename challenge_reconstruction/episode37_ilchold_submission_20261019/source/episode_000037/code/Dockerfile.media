@@ -1,0 +1,3 @@
+FROM flash_chord:latest
+RUN uv pip install --python /opt/venv/bin/python --no-deps opencv-python-headless==4.11.0.86
+RUN /opt/venv/bin/python -c "import cv2, mujoco, wandb, pyarrow; print(cv2.__version__)"

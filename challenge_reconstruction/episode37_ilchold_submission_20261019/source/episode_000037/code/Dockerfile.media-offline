@@ -1,0 +1,4 @@
+FROM flash_chord:latest
+COPY wheels/opencv_python_headless-4.11.0.86-cp37-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl /tmp/opencv.whl
+RUN mv /tmp/opencv.whl /tmp/opencv_python_headless-4.11.0.86-cp37-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl && uv pip install --python /opt/venv/bin/python --no-deps --no-index /tmp/opencv_python_headless-4.11.0.86-cp37-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl && rm /tmp/opencv_python_headless*.whl
+RUN /opt/venv/bin/python -c "import cv2, mujoco, wandb, pyarrow; print(cv2.__version__)"
