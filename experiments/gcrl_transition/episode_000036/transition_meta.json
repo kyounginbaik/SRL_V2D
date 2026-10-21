@@ -1,0 +1,7 @@
+{
+ "source": "/data3/exaFLOPs/uniretarget_tracklower_20261017/repaired_000036/episode_000036/frozen/episode_000036/reference.parquet",
+ "segment": "right_seg0",
+ "start_frame": 130,
+ "frames": 60,
+ "object_index": 0
+}
