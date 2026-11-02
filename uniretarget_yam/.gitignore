@@ -1,0 +1,5 @@
+out/
+.cache/
+episodes/*/yam/yam_model.mjb
+__pycache__/
+MUJOCO_LOG.TXT

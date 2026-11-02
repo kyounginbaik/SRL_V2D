@@ -1,0 +1,12 @@
+# Plain git, so a clone runs without git-lfs.
+*.obj -filter -diff -merge
+*.OBJ -filter -diff -merge
+*.stl -filter -diff -merge
+*.STL -filter -diff -merge
+*.dae -filter -diff -merge
+*.mtl -filter -diff -merge
+*.gz -filter -diff -merge
+*.npz -filter -diff -merge
+*.parquet -filter -diff -merge
+*.ttf -filter -diff -merge
+*.otf -filter -diff -merge

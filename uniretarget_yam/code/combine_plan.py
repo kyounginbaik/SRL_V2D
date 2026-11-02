@@ -1,0 +1,3 @@
+import sys,json,numpy as np
+from pathlib import Path
+src,tape,out=map(Path,sys.argv[1:4]);a=np.load(src/'plan.npz');b=np.load(tape/'plan.npz');out.mkdir(exist_ok=True,parents=True);np.savez_compressed(out/'plan.npz',joint_q=np.concatenate([a['joint_q'][:1],b['joint_q'][:1]]),joint_target=np.concatenate([a['joint_target'][:1],b['joint_target'][:1]]));m=json.loads((src/'manifest.json').read_text());m['candidates']=[dict(name='source_unchanged',controller='zero residual native targets'),dict(name='refined',controller='zero residual native targets')];(out/'manifest.json').write_text(json.dumps(m,indent=1))

@@ -1,0 +1,102 @@
+# YAM + Sharpa with vendor gains (furniturebench_yam assets/yam_sharpa.py). urdf_path is set per episode.
+_target_: flash_chord.embodiments.yam_sharpa.YamSharpa
+config:
+  _target_: flash_chord.embodiments.yam_sharpa.YamSharpaConfig
+  urdf_path:
+    _target_: pathlib.Path
+    _args_: [null]
+  asset_id: null
+  asset_sha256: null
+  arm_feedback_scale: 1.0
+  semantic_frame_names: []
+  gravity_compensation: true
+  validate_named_frames: false
+  default_joint:
+    _target_: flash_chord.embodiments.base.JointControlSpec
+    kp: 2.0
+    kd: 0.05
+    armature: 0.0006
+    effort_limit: 0.638
+    velocity_limit: 11.62
+    friction: 0.01276
+  joint_overrides:
+    '(?:^|/)(?:L|R)_arm_j1$':
+      kp: 80.0
+      kd: 6.0
+      mode: position_velocity
+      default_pos: 0.0
+      armature: 0.02
+      effort_limit: 20.0
+      velocity_limit: 3.0
+      friction: 0.05
+    '(?:^|/)(?:L|R)_arm_j2$':
+      kp: 80.0
+      kd: 6.0
+      mode: position_velocity
+      default_pos: 0.0
+      armature: 0.02
+      effort_limit: 20.0
+      velocity_limit: 3.0
+      friction: 0.05
+    '(?:^|/)(?:L|R)_arm_j3$':
+      kp: 80.0
+      kd: 6.0
+      mode: position_velocity
+      default_pos: 0.0
+      armature: 0.02
+      effort_limit: 20.0
+      velocity_limit: 3.0
+      friction: 0.05
+    '(?:^|/)(?:L|R)_arm_j4$':
+      kp: 30.0
+      kd: 2.0
+      mode: position_velocity
+      default_pos: 0.0
+      armature: 0.02
+      effort_limit: 10.0
+      velocity_limit: 3.0
+      friction: 0.05
+    '(?:^|/)(?:L|R)_arm_j5$':
+      kp: 30.0
+      kd: 2.0
+      mode: position_velocity
+      default_pos: 0.0
+      armature: 0.02
+      effort_limit: 10.0
+      velocity_limit: 3.0
+      friction: 0.05
+    '(?:^|/)(?:L|R)_arm_j6$':
+      kp: 30.0
+      kd: 2.0
+      mode: position_velocity
+      default_pos: 0.0
+      armature: 0.02
+      effort_limit: 10.0
+      velocity_limit: 3.0
+      friction: 0.05
+    '_(?:thumb_)?IP$':
+      armature: 0.0006
+      effort_limit: 0.638
+      friction: 0.01276
+    '_CMC_(?:FE|AA)$':
+      armature: 0.0032
+      effort_limit: 3.3
+      friction: 0.132
+    '_DIP$':
+      armature: 0.00042
+      effort_limit: 0.18937
+      friction: 0.00378738
+    '_MCP_(?:FE|AA)$':
+      armature: 0.00265
+      effort_limit: 1.864
+      friction: 0.07456
+    '_PIP$':
+      armature: 0.0006
+      effort_limit: 0.638
+      friction: 0.01276
+    '_pinky_CMC$':
+      armature: 0.00012
+      effort_limit: 0.5285
+      friction: 0.012
+  preserve_palm_bodies: true
+  joint_limit_tolerance: 1.0e-5

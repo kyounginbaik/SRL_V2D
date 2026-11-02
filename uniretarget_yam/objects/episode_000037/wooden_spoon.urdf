@@ -1,0 +1,45 @@
+<?xml version='1.0' encoding='utf-8'?>
+<robot name="wooden_spoon">
+  <link name="object">
+    <inertial>
+      <origin xyz="0.024728 -0.000139 0.001309" rpy="0 0 0" />
+      <mass value="0.1" />
+      <inertia ixx="1.778e-05" ixy="2.110e-06" ixz="-6.020e-06" iyy="7.585e-04" iyz="1.344e-07" izz="7.707e-04" />
+    </inertial>
+    <visual>
+      <geometry>
+        <mesh filename="wooden_spoon_visual.obj" />
+      </geometry>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh filename="wooden_spoon_collision/part_000.obj" />
+      </geometry>
+    </collision>
+    <collision>
+      <geometry>
+        <mesh filename="wooden_spoon_collision/part_001.obj" />
+      </geometry>
+    </collision>
+    <collision>
+      <geometry>
+        <mesh filename="wooden_spoon_collision/part_002.obj" />
+      </geometry>
+    </collision>
+    <collision>
+      <geometry>
+        <mesh filename="wooden_spoon_collision/part_003.obj" />
+      </geometry>
+    </collision>
+    <collision>
+      <geometry>
+        <mesh filename="wooden_spoon_collision/part_004.obj" />
+      </geometry>
+    </collision>
+    <collision>
+      <geometry>
+        <mesh filename="wooden_spoon_collision/part_005.obj" />
+      </geometry>
+    </collision>
+  </link>
+</robot>

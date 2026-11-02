@@ -1,0 +1,13 @@
+{
+  "contract": "Minimal original-solver cache/force fixture extracted READONLY after genuine pinned CPU action+exactreference replay. All4statearrays and all actions/3reference streams matched bitwise through241. These native WORLD points, cached BODY origins/rotations and full NewtonSHAPE0 WORLD force/torque share the original force evaluation. Original Newton POST poses are included only as deliberately different-time counterexamples. Nativeobjectbody53,Newton52,freeDOFs56:62 are fixturebindings, not canonical-module assumptions. Physicalcomplete23links perhand takenfrom immutable replay slot/body labels.",
+  "fixture_sha256": "cc5956f185c43ad99d4102e3a481291d21144c40c993b07377ea2fc6c4a51aad",
+  "source_sha256": {
+    "/data3/exaFLOPs/uniretarget_tracklower_20261017/contact_response_20261026/ik_physics_cpu_20261026/v56_moment_force_frame_replay_v3/result/replay_report.json": "7d8666dcb7c9709aafd5d6af0a4bf96f2392c99efa16a3292cc38eb62aa34b5a",
+    "/data3/exaFLOPs/uniretarget_tracklower_20261017/contact_response_20261026/ik_physics_cpu_20261026/v56_moment_force_frame_replay_v3/result/fixed_model_mapping.npz": "2313334fbeff61a0a7bf8d3d3b77999a341d2d48f42cf274598e1724e6eca631",
+    "/data3/exaFLOPs/uniretarget_tracklower_20261017/contact_response_20261026/ik_physics_cpu_20261026/v56_moment_force_frame_replay_v3/result/POST_feedback000190.npz": "c8c85e2f4e0b24544b88a94fe3b746b100c7d8867a147ce8b5a4fd438bfcc9da",
+    "/data3/exaFLOPs/uniretarget_tracklower_20261017/contact_response_20261026/ik_physics_cpu_20261026/v56_moment_force_frame_replay_v3/result/POST_feedback000201.npz": "3117c9f378da79cc5638c3b62ee49b73c3de88e3adb12530506192935a4c1388",
+    "/data3/exaFLOPs/uniretarget_tracklower_20261017/contact_response_20261026/ik_physics_cpu_20261026/v56_moment_force_frame_replay_v3/result/POST_feedback000209.npz": "8a2ad8527987d5105a9762ce355d4298a159a05275983387039f62e258225e0f",
+    "/data3/exaFLOPs/uniretarget_tracklower_20261017/contact_response_20261026/ik_physics_cpu_20261026/v56_moment_force_frame_replay_v3/result/POST_feedback000211.npz": "a3d59ac5039b0e02ec274fd7e14563e6cb05ed89f67bc510aee7cbf1175c8e1c",
+    "/data3/exaFLOPs/uniretarget_tracklower_20261017/contact_response_20261026/ik_physics_cpu_20261026/v56_moment_force_frame_replay_v3/result/POST_feedback000240.npz": "2b61dd72f821da3c732c2f6ccb3aa2d2b270450f02376b4611765d089a43be92"
+  }
+}
