@@ -40,6 +40,9 @@ observation:
 
 objective:
   hand_keypoint_frame: fingertip
+  # Contact targets are off here, so this is the policy's only positive reward. 2.0 kept the lift on episode 37 where 0.5 collapsed.
+  object_keypoints:
+    weight: 2.0
   action_l2:
     weight: -0.002
   action_rate_l2:
