@@ -16,7 +16,7 @@ Team SRL (Kyoungin Baik, Hansol Ryu, Jisu Shin, Hae-Gon Jeon, Youngwoon Lee).
 | file | parquet sha256 (16) | MP-SR | SP-SR | AUC | MPPE (cm) | RPE (cm) |
 |---|---|---|---|---|---|---|
 | track3_FINAL_ep32T32cb1_ep33R6M2_20261105 | 8b6fa2b9a0513b8b | 1.000 | 1.000 | 0.92086 | 1.40441 | 1.51105 |
-| track3_FINAL_ep32T32cb1_ep33R6M2_ep36s4_20261105 | 9bc322af8242e7ee | see Kaggle (submitted 21:03 UTC 2026-11-04) | | | | |
+| track3_FINAL_ep32T32cb1_ep33R6M2_ep36s4_20261105 (final) | 9bc322af8242e7ee | 1.000 | 1.000 | 0.92269 | 1.38958 | 1.51105 |
 
 Poses in every submitted row come from recorded build-v2 physics rollouts of per-episode actors; mesh cells are the
 team's own reconstructions (no public scan or ground-truth meshes were used anywhere in the pipeline).
