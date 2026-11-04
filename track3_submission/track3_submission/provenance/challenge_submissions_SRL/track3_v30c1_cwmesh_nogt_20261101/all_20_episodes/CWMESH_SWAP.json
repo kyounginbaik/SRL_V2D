@@ -1,0 +1,740 @@
+{
+ "variant": "nogt",
+ "base_package": "/data1/SRL_V2D/challenge_submissions_SRL/track3_v30c1_20261101/all_20_episodes",
+ "base_parquet_sha256": "7f44ef5e5728a59ee91a0026ac9582ef79f7314dcc1d42c7ba9aa4c37f44e21b",
+ "parquet_sha256": "37038573ad9b0a05122c2b4efb78a9b0d21507a292b7d96bbf0ffb3a97ba2bc7",
+ "changed_rows": [
+  "track_3/e000001/w000/f000000/o0",
+  "track_3/e000003/w000/f000000/o0",
+  "track_3/e000005/w000/f000000/o0",
+  "track_3/e000006/w000/f000000/o0",
+  "track_3/e000008/w000/f000000/o0",
+  "track_3/e000008/w000/f000000/o1",
+  "track_3/e000010/w000/f000000/o0",
+  "track_3/e000010/w000/f000000/o1",
+  "track_3/e000014/w000/f000000/o0",
+  "track_3/e000019/w000/f000000/o0",
+  "track_3/e000019/w000/f000000/o1",
+  "track_3/e000020/w000/f000000/o0",
+  "track_3/e000028/w000/f000000/o1",
+  "track_3/e000030/w000/f000000/o0",
+  "track_3/e000032/w000/f000000/o0",
+  "track_3/e000033/w000/f000000/o0",
+  "track_3/e000038/w000/f000000/o0"
+ ],
+ "swaps": [
+  {
+   "ep": 1,
+   "obj": "white_pot",
+   "object_id": 0,
+   "source": "/data1/SRL_V2D/challenge_submissions_SRL/cowork_recon_gdrive_20261101/Jisu/final_episode_meshes_20261029/episode_000001/white_pot_mesh_metric.obj",
+   "aligned": "/data1/SRL_V2D/challenge_reconstruction/campaign_v22_20261028/streamC30_compose/cwmesh/episode_000001/white_pot.obj",
+   "rigid_R": [
+    [
+     -0.02723583591471234,
+     0.9925252990582574,
+     0.11896108595393987
+    ],
+    [
+     0.9987287720302641,
+     0.032067437565782016,
+     -0.0388911219546466
+    ],
+    [
+     -0.042415199645329416,
+     0.11775062707806884,
+     -0.9921369566051693
+    ]
+   ],
+   "rigid_t": [
+    -0.002625433275200742,
+    0.0009907174005592337,
+    0.06167420343498115
+   ],
+   "icp_cost_mm": 3.862419850087812,
+   "kit_max_rot_deg": 2.7469158807453375,
+   "kit_pass_or_symmetric": true,
+   "budget": [
+    4096,
+    4096
+   ],
+   "old_mesh_sha256": "a55317043909ef4e2e299fd786e4b5121cc896dabeaa8af980210b514a4f182d",
+   "new_mesh_sha256": "403f23355a7840176cd499be286aba66316ffb7a18becae0f12b9e2e80d8f745",
+   "provenance": "data-only per coworker README (final_episode_meshes_20261029)"
+  },
+  {
+   "ep": 3,
+   "obj": "white_pot",
+   "object_id": 0,
+   "source": "/data1/SRL_V2D/challenge_submissions_SRL/cowork_recon_gdrive_20261101/Jisu/final_episode_meshes_20261029/episode_000003/white_pot_mesh_metric.obj",
+   "aligned": "/data1/SRL_V2D/challenge_reconstruction/campaign_v22_20261028/streamC30_compose/cwmesh/episode_000003/white_pot.obj",
+   "rigid_R": [
+    [
+     -0.02148441139770436,
+     0.9829105040368293,
+     0.18282604059860208
+    ],
+    [
+     0.9991953338200004,
+     0.027304988505172594,
+     -0.029378946118934303
+    ],
+    [
+     -0.03386893767483056,
+     0.18204773730205628,
+     -0.9827062208025165
+    ]
+   ],
+   "rigid_t": [
+    -0.005891698356154621,
+    0.0009364493852029943,
+    0.062381219589024865
+   ],
+   "icp_cost_mm": 1.2296479601372232,
+   "kit_max_rot_deg": 0.02269235740921486,
+   "kit_pass_or_symmetric": true,
+   "budget": [
+    4096,
+    4096
+   ],
+   "old_mesh_sha256": "8cbd35431829ae37eddb9ad8fc573f823836d880f21519f99d18c7420726d8f8",
+   "new_mesh_sha256": "ab37a94b39424434b4d87621ea93a2d5df560ba46f3ac0b25d083cc4eecd9b24",
+   "provenance": "data-only per coworker README (final_episode_meshes_20261029)"
+  },
+  {
+   "ep": 5,
+   "obj": "white_pot",
+   "object_id": 0,
+   "source": "/data1/SRL_V2D/challenge_submissions_SRL/cowork_recon_gdrive_20261101/Jisu/final_episode_meshes_20261029/episode_000005/white_pot_mesh_metric.obj",
+   "aligned": "/data1/SRL_V2D/challenge_reconstruction/campaign_v22_20261028/streamC30_compose/cwmesh/episode_000005/white_pot.obj",
+   "rigid_R": [
+    [
+     -0.022362546249847726,
+     0.9829275782456084,
+     0.18262883794582419
+    ],
+    [
+     0.9991724969562138,
+     0.028181313340148107,
+     -0.02932805661306527
+    ],
+    [
+     -0.033974076168433114,
+     0.1818218620041137,
+     -0.9827444086057359
+    ]
+   ],
+   "rigid_t": [
+    -0.005760768673464086,
+    0.0008900062914579905,
+    0.06146632953327817
+   ],
+   "icp_cost_mm": 0.13428574788092998,
+   "kit_max_rot_deg": 0.00011004061775508154,
+   "kit_pass_or_symmetric": true,
+   "budget": [
+    4096,
+    4096
+   ],
+   "old_mesh_sha256": "8cbd35431829ae37eddb9ad8fc573f823836d880f21519f99d18c7420726d8f8",
+   "new_mesh_sha256": "0223d950b00cfe323e9a470f991a0d61187e3ac0ca07950c0fb2f4f99a885b58",
+   "provenance": "data-only per coworker README (final_episode_meshes_20261029)"
+  },
+  {
+   "ep": 6,
+   "obj": "white_pot",
+   "object_id": 0,
+   "source": "/data1/SRL_V2D/challenge_submissions_SRL/cowork_recon_gdrive_20261101/Jisu/final_episode_meshes_20261029/episode_000006/white_pot_mesh_metric.obj",
+   "aligned": "/data1/SRL_V2D/challenge_reconstruction/campaign_v22_20261028/streamC30_compose/cwmesh/episode_000006/white_pot.obj",
+   "rigid_R": [
+    [
+     -0.020623455040646197,
+     0.9828496758440229,
+     0.18325170611882266
+    ],
+    [
+     0.9992010365601537,
+     0.026538273961796345,
+     -0.0298832486896163
+    ],
+    [
+     -0.0342339252687061,
+     0.18248899886952816,
+     -0.9826117257860744
+    ]
+   ],
+   "rigid_t": [
+    -0.00590023850865248,
+    0.0009947538534089083,
+    0.06281644966469059
+   ],
+   "icp_cost_mm": 1.5976432323057723,
+   "kit_max_rot_deg": 0.0421523341699122,
+   "kit_pass_or_symmetric": true,
+   "budget": [
+    4096,
+    4096
+   ],
+   "old_mesh_sha256": "8cbd35431829ae37eddb9ad8fc573f823836d880f21519f99d18c7420726d8f8",
+   "new_mesh_sha256": "63ad417bb2e84eb0e4bfd8c24513543cc4e066765ea64e284ee6384423eab7eb",
+   "provenance": "data-only per coworker README (final_episode_meshes_20261029)"
+  },
+  {
+   "ep": 8,
+   "obj": "beige_cup",
+   "object_id": 0,
+   "source": "/data1/SRL_V2D/challenge_submissions_SRL/cowork_recon_gdrive_20261101/Jisu/final_episode_meshes_20261029/episode_000008/beige_cup_mesh_metric.obj",
+   "aligned": "/data1/SRL_V2D/challenge_reconstruction/campaign_v22_20261028/streamC30_compose/cwmesh/episode_000008/beige_cup.obj",
+   "rigid_R": [
+    [
+     0.9516071062794149,
+     -0.013767744581255613,
+     0.30700873682626445
+    ],
+    [
+     -0.3071387548303002,
+     -0.008559833294649294,
+     0.951626247292119
+    ],
+    [
+     -0.010473803502303805,
+     -0.9998685805960383,
+     -0.01237420611926217
+    ]
+   ],
+   "rigid_t": [
+    0.00019617912092302397,
+    0.0007305376224506532,
+    0.025517417735795214
+   ],
+   "icp_cost_mm": 2.2563971412955754,
+   "kit_max_rot_deg": 0.20256222490082867,
+   "kit_pass_or_symmetric": true,
+   "budget": [
+    4096,
+    4096
+   ],
+   "old_mesh_sha256": "2c041e69fbd3be79fa953609276ffc4a54a513ec2ca7e7f31020a78ab6871431",
+   "new_mesh_sha256": "693dd98a3d0e49c6a41a2dae8807bf45a0c9437e9e0e8f98a254f5957b2b212d",
+   "provenance": "data-only per coworker README (final_episode_meshes_20261029)"
+  },
+  {
+   "ep": 8,
+   "obj": "white_pot",
+   "object_id": 1,
+   "source": "/data1/SRL_V2D/challenge_submissions_SRL/cowork_recon_gdrive_20261101/Jisu/final_episode_meshes_20261029/episode_000008/white_pot_mesh_metric.obj",
+   "aligned": "/data1/SRL_V2D/challenge_reconstruction/campaign_v22_20261028/streamC30_compose/cwmesh/episode_000008/white_pot.obj",
+   "rigid_R": [
+    [
+     -0.02183430739971691,
+     0.982939234461842,
+     0.18263002046743376
+    ],
+    [
+     0.9991853204501722,
+     0.027656054145944464,
+     -0.029391122230164123
+    ],
+    [
+     -0.03394051291961283,
+     0.18183950072698016,
+     -0.9827423047564976
+    ]
+   ],
+   "rigid_t": [
+    -0.005817927829298799,
+    0.0009111862873651985,
+    0.06196738049035065
+   ],
+   "icp_cost_mm": 0.7712922825549001,
+   "kit_max_rot_deg": 0.00545302184991316,
+   "kit_pass_or_symmetric": true,
+   "budget": [
+    4096,
+    4096
+   ],
+   "old_mesh_sha256": "8cbd35431829ae37eddb9ad8fc573f823836d880f21519f99d18c7420726d8f8",
+   "new_mesh_sha256": "9e1ffc6cb8864b3c9364fca1f0c551be62d730eae4f3717d87a7c8eab0a2fba7",
+   "provenance": "data-only per coworker README (final_episode_meshes_20261029)"
+  },
+  {
+   "ep": 10,
+   "obj": "beige_cup",
+   "object_id": 1,
+   "source": "/data1/SRL_V2D/challenge_submissions_SRL/cowork_recon_gdrive_20261101/Jisu/final_episode_meshes_20261029/episode_000010/beige_cup_mesh_metric.obj",
+   "aligned": "/data1/SRL_V2D/challenge_reconstruction/campaign_v22_20261028/streamC30_compose/cwmesh/episode_000010/beige_cup.obj",
+   "rigid_R": [
+    [
+     0.7015480744589939,
+     -0.017426607432415708,
+     0.7124090205607244
+    ],
+    [
+     -0.7125597690759593,
+     -0.00392916995282005,
+     0.7016004112868794
+    ],
+    [
+     -0.009427338824209862,
+     -0.9998404247563163,
+     -0.015174000982444208
+    ]
+   ],
+   "rigid_t": [
+    -0.0004783962678834593,
+    -0.00035655641074140286,
+    0.028817210747657893
+   ],
+   "icp_cost_mm": 2.32590086146664,
+   "kit_max_rot_deg": 0.22952297017201273,
+   "kit_pass_or_symmetric": true,
+   "budget": [
+    4096,
+    4096
+   ],
+   "old_mesh_sha256": "2c041e69fbd3be79fa953609276ffc4a54a513ec2ca7e7f31020a78ab6871431",
+   "new_mesh_sha256": "866494928c9029dc6899957d3dc76cf47f13ed5d11cda364369d85def75f6a68",
+   "provenance": "data-only per coworker README (final_episode_meshes_20261029)"
+  },
+  {
+   "ep": 10,
+   "obj": "blue_cup",
+   "object_id": 0,
+   "source": "/data1/SRL_V2D/challenge_submissions_SRL/cowork_recon_gdrive_20261101/Jisu/final_episode_meshes_20261029/episode_000010/blue_cup_mesh_metric.obj",
+   "aligned": "/data1/SRL_V2D/challenge_reconstruction/campaign_v22_20261028/streamC30_compose/cwmesh/episode_000010/blue_cup.obj",
+   "rigid_R": [
+    [
+     -0.6380007848384606,
+     0.07574525610506345,
+     -0.7663012819531809
+    ],
+    [
+     0.7695842299713683,
+     0.028648142659750284,
+     -0.6379023411945763
+    ],
+    [
+     -0.0263649677580565,
+     -0.996715576330447,
+     -0.0765698920946879
+    ]
+   ],
+   "rigid_t": [
+    -0.0012082747982734227,
+    -0.0008606301406593096,
+    0.0016000040863637657
+   ],
+   "icp_cost_mm": 1.2277353698927818,
+   "kit_max_rot_deg": 0.14079224519949102,
+   "kit_pass_or_symmetric": true,
+   "budget": [
+    4096,
+    4096
+   ],
+   "old_mesh_sha256": "57bb269a06a44f9f56ea59c9eea8b0d704b20d5a8cfd8bbc89f73f5e2f2b1d8f",
+   "new_mesh_sha256": "c7bbcd1fe4538952e9ccc2d8f9904a6913c251c9399ecddf63d0e140798b0945",
+   "provenance": "data-only per coworker README (final_episode_meshes_20261029)"
+  },
+  {
+   "ep": 14,
+   "obj": "blue_cup",
+   "object_id": 0,
+   "source": "/data1/SRL_V2D/challenge_submissions_SRL/cowork_recon_gdrive_20261101/Jisu/final_episode_meshes_20261029/episode_000014/blue_cup_mesh_metric.obj",
+   "aligned": "/data1/SRL_V2D/challenge_reconstruction/campaign_v22_20261028/streamC30_compose/cwmesh/episode_000014/blue_cup.obj",
+   "rigid_R": [
+    [
+     0.10675656731866402,
+     0.06824541834351346,
+     -0.9919403198829319
+    ],
+    [
+     -0.03813957390660121,
+     0.9971884956761163,
+     0.06450175961497502
+    ],
+    [
+     0.9935534249533674,
+     0.03094619469860409,
+     0.10905927194474205
+    ]
+   ],
+   "rigid_t": [
+    -0.0038014012544675853,
+    0.0007062996640363238,
+    -0.0013968306596411286
+   ],
+   "icp_cost_mm": 2.358937069416333,
+   "kit_max_rot_deg": 175.86373955688595,
+   "kit_pass_or_symmetric": true,
+   "budget": [
+    4096,
+    4096
+   ],
+   "old_mesh_sha256": "78bd065c74039ff91a21ad6532924c4f4797025228eeb127225a20e78f1ec6ec",
+   "new_mesh_sha256": "b4a7d02a09c246e15ec189eaf38a735857fd34ffe68492b4d6579a8ea8f0c8a0",
+   "provenance": "data-only per coworker README (final_episode_meshes_20261029)"
+  },
+  {
+   "ep": 19,
+   "obj": "mini_dust_pan",
+   "object_id": 1,
+   "source": "/data1/SRL_V2D/challenge_submissions_SRL/cowork_recon_gdrive_20261101/Jisu/final_episode_meshes_20261029/episode_000019/mini_dust_pan_mesh_metric.obj",
+   "aligned": "/data1/SRL_V2D/challenge_reconstruction/campaign_v22_20261028/streamC30_compose/cwmesh/episode_000019/mini_dust_pan.obj",
+   "rigid_R": [
+    [
+     0.01579114273192795,
+     0.9842849975133445,
+     -0.17587974153204683
+    ],
+    [
+     -0.9990064636967227,
+     0.0228628621894654,
+     0.03825408507168731
+    ],
+    [
+     0.04167403632222849,
+     0.17510092290637783,
+     0.9836681053556365
+    ]
+   ],
+   "rigid_t": [
+    -0.0030130586745212833,
+    0.00317211664947034,
+    0.017683029401293064
+   ],
+   "icp_cost_mm": 1.532768135591198,
+   "kit_max_rot_deg": 0.5053517501612691,
+   "kit_pass_or_symmetric": true,
+   "budget": [
+    4096,
+    4096
+   ],
+   "old_mesh_sha256": "1d298c012d68712ce49ff3b73a36f1b8f76e6cdb6bba3ee1357c467c3e61075f",
+   "new_mesh_sha256": "0790d90d939e461ab91d2bdf373b92a5ca7a7a745e01f2684e1b86c0db25c737",
+   "provenance": "data-only per coworker README (final_episode_meshes_20261029)"
+  },
+  {
+   "ep": 19,
+   "obj": "mini_sweeper",
+   "object_id": 0,
+   "source": "/data1/SRL_V2D/challenge_submissions_SRL/cowork_recon_gdrive_20261101/Jisu/final_episode_meshes_20261029/episode_000019/mini_sweeper_mesh_metric.obj",
+   "aligned": "/data1/SRL_V2D/challenge_reconstruction/campaign_v22_20261028/streamC30_compose/cwmesh/episode_000019/mini_sweeper.obj",
+   "rigid_R": [
+    [
+     0.9999854335712753,
+     -0.005395513652061419,
+     -0.00014518161663984601
+    ],
+    [
+     0.005392664440972711,
+     0.999868643257702,
+     -0.015284482334260243
+    ],
+    [
+     0.0002276301791530813,
+     0.015283476778198258,
+     0.9998831749369864
+    ]
+   ],
+   "rigid_t": [
+    4.088937272336856e-05,
+    0.0004847080817781406,
+    -0.00019319283627814538
+   ],
+   "icp_cost_mm": 1.6553403638773638,
+   "kit_max_rot_deg": 1.0689648674639687,
+   "kit_pass_or_symmetric": true,
+   "budget": [
+    4096,
+    4096
+   ],
+   "old_mesh_sha256": "cf7bf340cfaddef30fa4c9b2d33ffc64959a7299487c9f49999ae7ed7843b9cb",
+   "new_mesh_sha256": "c52dc9f5f1189d677db934f0848ff2292d4ab1725ad2d65650b2f129cab7401e",
+   "provenance": "data-only per coworker README (final_episode_meshes_20261029)"
+  },
+  {
+   "ep": 20,
+   "obj": "blue_cup",
+   "object_id": 0,
+   "source": "/data1/SRL_V2D/challenge_submissions_SRL/cowork_recon_gdrive_20261101/Jisu/final_episode_meshes_20261029/episode_000020/blue_cup_mesh_metric.obj",
+   "aligned": "/data1/SRL_V2D/challenge_reconstruction/campaign_v22_20261028/streamC30_compose/cwmesh/episode_000020/blue_cup.obj",
+   "rigid_R": [
+    [
+     -0.9802737396087882,
+     0.023949530083185826,
+     0.19618821433052364
+    ],
+    [
+     0.04510761969985363,
+     0.9935435516283685,
+     0.1040985766603707
+    ],
+    [
+     -0.19242842326023438,
+     0.11089468439242854,
+     -0.9750249591139144
+    ]
+   ],
+   "rigid_t": [
+    -0.0015531694547770984,
+    0.0011587952170300365,
+    -0.0059216162463944545
+   ],
+   "icp_cost_mm": 2.3809910620378902,
+   "kit_max_rot_deg": 165.71659426160602,
+   "kit_pass_or_symmetric": true,
+   "budget": [
+    4096,
+    4096
+   ],
+   "old_mesh_sha256": "ff3784a8fa2527b55c4e77584ffc37d842c40fb1afd5c5ef0abc3ce5f59ad2fd",
+   "new_mesh_sha256": "63e6dd93389910408ee512d3834baf456782ea535b3784a6a41e09ac2d2f74df",
+   "provenance": "data-only per coworker README (final_episode_meshes_20261029)"
+  },
+  {
+   "ep": 28,
+   "obj": "white_pot",
+   "object_id": 1,
+   "source": "/data1/SRL_V2D/challenge_submissions_SRL/cowork_recon_gdrive_20261101/Jisu/final_episode_meshes_20261029/episode_000028/white_pot_mesh_metric.obj",
+   "aligned": "/data1/SRL_V2D/challenge_reconstruction/campaign_v22_20261028/streamC30_compose/cwmesh/episode_000028/white_pot.obj",
+   "rigid_R": [
+    [
+     0.9999545738888556,
+     0.003974530766378037,
+     0.008663328687347233
+    ],
+    [
+     -0.003973489709109625,
+     0.9999920962222849,
+     -0.000137377177848057
+    ],
+    [
+     -0.008663806224142588,
+     0.00010294728995014536,
+     0.9999624632272761
+    ]
+   ],
+   "rigid_t": [
+    -0.0006077709937632201,
+    -0.0001505884136166377,
+    -0.0006169669688378029
+   ],
+   "icp_cost_mm": 2.777251203523906,
+   "kit_max_rot_deg": 0.7938715614989961,
+   "kit_pass_or_symmetric": true,
+   "budget": [
+    4096,
+    4096
+   ],
+   "old_mesh_sha256": "69677910d854cc15affe19d7b885b06da2642b49b27777f0af2641f441c54e9e",
+   "new_mesh_sha256": "a30ed24d2116a875891af7a7e61e508959bef7cec3d96a69fb54b334560c5a94",
+   "provenance": "data-only per coworker README (final_episode_meshes_20261029)"
+  },
+  {
+   "ep": 30,
+   "obj": "mini_sweeper",
+   "object_id": 0,
+   "source": "/data1/SRL_V2D/challenge_submissions_SRL/cowork_recon_gdrive_20261101/Jisu/final_episode_meshes_20261029/episode_000030/mini_sweeper_mesh_metric.obj",
+   "aligned": "/data1/SRL_V2D/challenge_reconstruction/campaign_v22_20261028/streamC30_compose/cwmesh/episode_000030/mini_sweeper.obj",
+   "rigid_R": [
+    [
+     -0.9975157143621092,
+     0.0003569321204367765,
+     -0.07044339713638662
+    ],
+    [
+     -0.0060131252860244335,
+     -0.9967688186465083,
+     0.08009846751553636
+    ],
+    [
+     -0.07018719202922499,
+     0.08032306501562445,
+     0.9942947064636039
+    ]
+   ],
+   "rigid_t": [
+    0.0012572359686976603,
+    0.0031591779184043513,
+    0.0004251301152000213
+   ],
+   "icp_cost_mm": 1.6647806975564057,
+   "kit_max_rot_deg": 1.5235702382950438,
+   "kit_pass_or_symmetric": true,
+   "budget": [
+    4096,
+    4096
+   ],
+   "old_mesh_sha256": "ccb942f574b628b70b6ca6c847b1046c2d7506076dca031b8d8500b03db0ce2a",
+   "new_mesh_sha256": "36d6812b8c909562aa61f800cb305a9dce4ec64c6c775a3bd01ff62407b7f152",
+   "provenance": "data-only per coworker README (final_episode_meshes_20261029)"
+  },
+  {
+   "ep": 32,
+   "obj": "blue_cup",
+   "object_id": 0,
+   "source": "/data1/SRL_V2D/challenge_submissions_SRL/cowork_recon_gdrive_20261101/Jisu/final_episode_meshes_20261029/episode_000032/blue_cup_mesh_metric.obj",
+   "aligned": "/data1/SRL_V2D/challenge_reconstruction/campaign_v22_20261028/streamC30_compose/cwmesh/episode_000032/blue_cup.obj",
+   "rigid_R": [
+    [
+     0.5309913300307965,
+     -0.03443073630258368,
+     0.8466774662347886
+    ],
+    [
+     -0.8473220642502847,
+     -0.010170545997154145,
+     0.5309819953903808
+    ],
+    [
+     -0.009670928949609678,
+     -0.9993553343990307,
+     -0.03457439430373336
+    ]
+   ],
+   "rigid_t": [
+    0.005172864975631023,
+    0.00080359211107912,
+    -0.01044378665209347
+   ],
+   "icp_cost_mm": 2.6550380919505105,
+   "kit_max_rot_deg": 145.01222710446686,
+   "kit_pass_or_symmetric": true,
+   "budget": [
+    4096,
+    4096
+   ],
+   "old_mesh_sha256": "3c3c5328180b5af8b28833e9b82f4a187a3b370ba7a12a63f2a054d133903276",
+   "new_mesh_sha256": "15921d1e555efe444d0bc8421074cc9a8459bba93acdf7c9741a1b8924913c62",
+   "provenance": "data-only per coworker README (final_episode_meshes_20261029)"
+  },
+  {
+   "ep": 33,
+   "obj": "blue_cup",
+   "object_id": 0,
+   "source": "/data1/SRL_V2D/challenge_submissions_SRL/cowork_recon_gdrive_20261101/Jisu/final_episode_meshes_20261029/episode_000033/blue_cup_mesh_metric.obj",
+   "aligned": "/data1/SRL_V2D/challenge_reconstruction/campaign_v22_20261028/streamC30_compose/cwmesh/episode_000033/blue_cup.obj",
+   "rigid_R": [
+    [
+     -0.6370011685694241,
+     0.07612230483524844,
+     -0.7670951088018843
+    ],
+    [
+     0.7704104286240937,
+     0.028778780610136064,
+     -0.6368983853440354
+    ],
+    [
+     -0.026406111194917203,
+     -0.9966830872916232,
+     -0.07697753437463813
+    ]
+   ],
+   "rigid_t": [
+    -0.0012201862964072436,
+    -0.0008412342825521337,
+    0.0016756052317753421
+   ],
+   "icp_cost_mm": 1.2068496107388114,
+   "kit_max_rot_deg": 0.14568168272267018,
+   "kit_pass_or_symmetric": true,
+   "budget": [
+    4096,
+    4096
+   ],
+   "old_mesh_sha256": "57bb269a06a44f9f56ea59c9eea8b0d704b20d5a8cfd8bbc89f73f5e2f2b1d8f",
+   "new_mesh_sha256": "15b050cbb49cae461a0089e444f3c4629b297eec8d6568a14a8527b431f87a20",
+   "provenance": "data-only per coworker README (final_episode_meshes_20261029)"
+  },
+  {
+   "ep": 38,
+   "obj": "mini_dust_pan",
+   "object_id": 0,
+   "source": "/data1/SRL_V2D/challenge_submissions_SRL/cowork_recon_gdrive_20261101/Jisu/final_episode_meshes_20261029/episode_000038/mini_dust_pan_mesh_metric.obj",
+   "aligned": "/data1/SRL_V2D/challenge_reconstruction/campaign_v22_20261028/streamC30_compose/cwmesh/episode_000038/mini_dust_pan.obj",
+   "rigid_R": [
+    [
+     0.013164258379992445,
+     0.9839895746928132,
+     -0.17773918869275465
+    ],
+    [
+     -0.9995195573905612,
+     0.01793771792563417,
+     0.02527632626379819
+    ],
+    [
+     0.028059876961215105,
+     0.17732105112330643,
+     0.983752960927407
+    ]
+   ],
+   "rigid_t": [
+    -0.0026252253938750573,
+    0.003304109697973721,
+    0.017170049379308706
+   ],
+   "icp_cost_mm": 1.6245147887465334,
+   "kit_max_rot_deg": 0.4154829212214671,
+   "kit_pass_or_symmetric": true,
+   "budget": [
+    4096,
+    4096
+   ],
+   "old_mesh_sha256": "1d298c012d68712ce49ff3b73a36f1b8f76e6cdb6bba3ee1357c467c3e61075f",
+   "new_mesh_sha256": "088436cf43c3c36d781898b6464dc59460f3cae3233d5735a44e6fb7ee0fc7f7",
+   "provenance": "data-only per coworker README (final_episode_meshes_20261029)"
+  }
+ ],
+ "kept_ours": [
+  {
+   "ep": 1,
+   "obj": "white_pot_lid",
+   "reason": "nogt variant: guided mesh excluded"
+  },
+  {
+   "ep": 14,
+   "obj": "plastic_dish_rack",
+   "reason": "nogt variant: guided mesh excluded"
+  },
+  {
+   "ep": 15,
+   "obj": "plastic_dish_rack",
+   "reason": "nogt variant: guided mesh excluded"
+  },
+  {
+   "ep": 16,
+   "obj": "plastic_dish_rack",
+   "reason": "nogt variant: guided mesh excluded"
+  },
+  {
+   "ep": 20,
+   "obj": "water_pitcher",
+   "reason": "nogt variant: guided mesh excluded"
+  },
+  {
+   "ep": 25,
+   "obj": "wooden_piece_1",
+   "reason": "kit registration twin check failed (180 deg flips across seeds)"
+  },
+  {
+   "ep": 25,
+   "obj": "wooden_piece_2",
+   "reason": "kit registration twin check failed (180 deg flips across seeds)"
+  },
+  {
+   "ep": 28,
+   "obj": "plastic_dish_rack",
+   "reason": "nogt variant: guided mesh excluded"
+  },
+  {
+   "ep": 30,
+   "obj": "plastic_dish_rack",
+   "reason": "nogt variant: guided mesh excluded"
+  }
+ ],
+ "spoon": "G18 spoon kept (no coworker spoon mesh)",
+ "poses_results_robot_actions": "byte-identical to the base package (mesh-only swap)",
+ "ground_truth_note": "Coworker meshes are their own reconstruction; see provenance per swap. Not verified by us beyond their README."
+}

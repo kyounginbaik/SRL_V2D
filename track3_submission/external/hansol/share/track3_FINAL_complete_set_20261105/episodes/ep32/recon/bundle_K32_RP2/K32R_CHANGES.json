@@ -1,0 +1,25 @@
+{
+ "stream": "K32-roll",
+ "label": "K32_R10",
+ "source": "/data1/SRL_V2D/challenge_reconstruction/reconstruction_recovery_20261026/selected20_final_v14_g17/episode_000032",
+ "ground_truth_used": false,
+ "rule": "body-frame roll about the spoon long PCA axis through the COM",
+ "c_deg": -10.0,
+ "c_mode": "-10",
+ "per_frame_rest_roll_deg": [],
+ "t_s": 20,
+ "t_e": 35,
+ "long_axis_body": [
+  1.0,
+  4.227115960309546e-11,
+  -8.637119676197261e-11
+ ],
+ "com_body": [
+  0.024727964802719566,
+  -0.00013872531035200774,
+  0.0013090429554173215
+ ],
+ "support_plane": "/data1/SRL_V2D/challenge_reconstruction/reconstruction_recovery_20261026/canonical/evaluation/episode_000032/support_plane.npz",
+ "frames_changed": 35,
+ "object_poses_sha256": "4073b024e1862bd55224c66dc390cc4daf5d7e5a46ad0ec451653fa78b582cac"
+}

@@ -1,0 +1,1129 @@
+{
+  "variant": "fused_v3_gap",
+  "policy": "single fixed selection policy (fuse.py --tag fused_v3) validated 10/10 MP-SR on public clips; no per-episode GT choice",
+  "ground_truth_used": false,
+  "submitted": false,
+  "frame_convention": "world_from_object / camera_from_object 4x4, RGB physical pinhole camera (intrinsics.json), 20 fps",
+  "episodes": [
+    {
+      "episode": 1,
+      "frames": 335,
+      "camera_valid_fraction": 1.0,
+      "objects": {
+        "white_pot": {
+          "source_counts": {
+            "raw": 245,
+            "multimap": 60,
+            "metric_motion_odometry": 30
+          },
+          "observed_fraction": 1.0,
+          "max_center_step_cm": 2.82,
+          "max_rotation_step_deg": 8.5,
+          "large_motion_frames": [],
+          "geometry_reason": "our validated source mesh",
+          "review_median_iou": 0.864,
+          "review_min_iou": 0.769
+        },
+        "white_pot_lid": {
+          "source_counts": {
+            "raw": 201,
+            "multimap": 61,
+            "metric_motion_odometry": 73
+          },
+          "observed_fraction": 0.761,
+          "max_center_step_cm": 2.94,
+          "max_rotation_step_deg": 21.0,
+          "large_motion_frames": [],
+          "geometry_reason": "our validated source mesh",
+          "review_median_iou": 0.893,
+          "review_min_iou": 0.0
+        }
+      }
+    },
+    {
+      "episode": 3,
+      "frames": 313,
+      "camera_valid_fraction": 1.0,
+      "objects": {
+        "white_pot": {
+          "source_counts": {
+            "raw": 157,
+            "pointmap_cotracker": 96,
+            "multimap": 39,
+            "metric_motion_odometry": 21
+          },
+          "observed_fraction": 1.0,
+          "max_center_step_cm": 1.35,
+          "max_rotation_step_deg": 8.3,
+          "large_motion_frames": [],
+          "geometry_reason": "our validated source mesh",
+          "review_median_iou": 0.825,
+          "review_min_iou": 0.759
+        },
+        "wooden_spoon": {
+          "source_counts": {
+            "raw": 99,
+            "pointmap_cotracker": 8,
+            "multimap": 68,
+            "bundle_adjusted": 46,
+            "bundle_hand_guided": 2,
+            "raw_principal_twin_2": 90
+          },
+          "observed_fraction": 0.958,
+          "max_center_step_cm": 4.14,
+          "max_rotation_step_deg": 44.2,
+          "large_motion_frames": [],
+          "geometry_reason": "our validated source mesh",
+          "review_median_iou": 0.783,
+          "review_min_iou": 0.749
+        }
+      }
+    },
+    {
+      "episode": 5,
+      "frames": 288,
+      "camera_valid_fraction": 1.0,
+      "objects": {
+        "white_pot": {
+          "source_counts": {
+            "raw": 113,
+            "pointmap_cotracker": 12,
+            "multimap": 82,
+            "bundle_adjusted": 58,
+            "metric_motion_odometry": 23
+          },
+          "observed_fraction": 0.958,
+          "max_center_step_cm": 5.24,
+          "max_rotation_step_deg": 17.0,
+          "large_motion_frames": [],
+          "geometry_reason": "our validated source mesh",
+          "review_median_iou": 0.761,
+          "review_min_iou": 0.71
+        },
+        "wooden_spoon": {
+          "source_counts": {
+            "raw": 12,
+            "pointmap_cotracker": 2,
+            "multimap": 16,
+            "bundle_adjusted": 191,
+            "bundle_hand_guided": 4,
+            "metric_motion_odometry": 2,
+            "raw_principal_twin_2": 61
+          },
+          "observed_fraction": 0.965,
+          "max_center_step_cm": 5.74,
+          "max_rotation_step_deg": 59.2,
+          "large_motion_frames": [],
+          "geometry_reason": "our validated source mesh",
+          "review_median_iou": 0.793,
+          "review_min_iou": 0.356
+        }
+      }
+    },
+    {
+      "episode": 6,
+      "frames": 243,
+      "camera_valid_fraction": 1.0,
+      "objects": {
+        "white_pot": {
+          "source_counts": {
+            "raw": 206,
+            "pointmap_cotracker": 18,
+            "multimap": 19
+          },
+          "observed_fraction": 0.984,
+          "max_center_step_cm": 5.18,
+          "max_rotation_step_deg": 30.1,
+          "large_motion_frames": [],
+          "geometry_reason": "our validated source mesh",
+          "review_median_iou": 0.786,
+          "review_min_iou": 0.515
+        },
+        "wooden_spoon": {
+          "source_counts": {
+            "raw": 140,
+            "pointmap_cotracker": 33,
+            "multimap": 45,
+            "metric_motion_odometry": 25
+          },
+          "observed_fraction": 0.979,
+          "max_center_step_cm": 5.7,
+          "max_rotation_step_deg": 63.5,
+          "large_motion_frames": [],
+          "geometry_reason": "our validated source mesh",
+          "review_median_iou": 0.829,
+          "review_min_iou": 0.775
+        }
+      }
+    },
+    {
+      "episode": 8,
+      "frames": 219,
+      "camera_valid_fraction": 1.0,
+      "objects": {
+        "beige_cup": {
+          "source_counts": {
+            "raw": 48,
+            "pointmap_cotracker": 43,
+            "multimap": 44,
+            "bundle_adjusted": 5,
+            "metric_motion_odometry": 37,
+            "raw_principal_twin_2": 42
+          },
+          "observed_fraction": 0.973,
+          "max_center_step_cm": 3.0,
+          "max_rotation_step_deg": 44.0,
+          "large_motion_frames": [],
+          "geometry_reason": "our validated source mesh",
+          "review_median_iou": 0.928,
+          "review_min_iou": 0.739
+        },
+        "white_pot": {
+          "source_counts": {
+            "raw": 67,
+            "multimap": 49,
+            "bundle_adjusted": 103
+          },
+          "observed_fraction": 1.0,
+          "max_center_step_cm": 2.34,
+          "max_rotation_step_deg": 6.4,
+          "large_motion_frames": [],
+          "geometry_reason": "our validated source mesh",
+          "review_median_iou": 0.832,
+          "review_min_iou": 0.753
+        }
+      }
+    },
+    {
+      "episode": 10,
+      "frames": 161,
+      "camera_valid_fraction": 1.0,
+      "objects": {
+        "blue_cup": {
+          "source_counts": {
+            "raw": 1,
+            "pointmap_cotracker": 22,
+            "multimap": 104,
+            "metric_motion_odometry": 34
+          },
+          "observed_fraction": 1.0,
+          "max_center_step_cm": 0.82,
+          "max_rotation_step_deg": 3.5,
+          "large_motion_frames": [],
+          "geometry_reason": "our validated source mesh",
+          "review_median_iou": 0.92,
+          "review_min_iou": 0.832
+        },
+        "beige_cup": {
+          "source_counts": {
+            "raw": 51,
+            "pointmap_cotracker": 29,
+            "multimap": 36,
+            "metric_motion_odometry": 16,
+            "raw_principal_twin_2": 29
+          },
+          "observed_fraction": 1.0,
+          "max_center_step_cm": 3.77,
+          "max_rotation_step_deg": 48.1,
+          "large_motion_frames": [],
+          "geometry_reason": "our validated source mesh",
+          "review_median_iou": 0.923,
+          "review_min_iou": 0.734
+        }
+      }
+    },
+    {
+      "episode": 14,
+      "frames": 158,
+      "camera_valid_fraction": 1.0,
+      "objects": {
+        "blue_cup": {
+          "source_counts": {
+            "raw": 144,
+            "pointmap_cotracker": 4,
+            "multimap": 10
+          },
+          "observed_fraction": 1.0,
+          "max_center_step_cm": 3.45,
+          "max_rotation_step_deg": 36.5,
+          "large_motion_frames": [],
+          "geometry_reason": "our validated source mesh",
+          "review_median_iou": 0.943,
+          "review_min_iou": 0.806
+        },
+        "plastic_dish_rack": {
+          "source_counts": {
+            "raw": 89,
+            "multimap": 3,
+            "metric_motion_odometry": 66
+          },
+          "observed_fraction": 1.0,
+          "max_center_step_cm": 2.44,
+          "max_rotation_step_deg": 4.5,
+          "large_motion_frames": [],
+          "geometry_reason": "our validated source mesh",
+          "review_median_iou": 0.919,
+          "review_min_iou": 0.913
+        }
+      }
+    },
+    {
+      "episode": 15,
+      "frames": 166,
+      "camera_valid_fraction": 1.0,
+      "objects": {
+        "plastic_dish_rack": {
+          "source_counts": {
+            "raw": 166
+          },
+          "observed_fraction": 1.0,
+          "max_center_step_cm": 0.89,
+          "max_rotation_step_deg": 1.7,
+          "large_motion_frames": [],
+          "geometry_reason": "our validated source mesh",
+          "review_median_iou": 0.928,
+          "review_min_iou": 0.922
+        },
+        "wooden_spoon": {
+          "source_counts": {
+            "raw": 152,
+            "multimap": 1,
+            "metric_motion_odometry": 13
+          },
+          "observed_fraction": 1.0,
+          "max_center_step_cm": 3.62,
+          "max_rotation_step_deg": 30.7,
+          "large_motion_frames": [],
+          "geometry_reason": "our validated source mesh",
+          "review_median_iou": 0.815,
+          "review_min_iou": 0.795
+        }
+      }
+    },
+    {
+      "episode": 16,
+      "frames": 173,
+      "camera_valid_fraction": 1.0,
+      "objects": {
+        "plastic_dish_rack": {
+          "source_counts": {
+            "raw": 133,
+            "multimap": 40
+          },
+          "observed_fraction": 1.0,
+          "max_center_step_cm": 1.13,
+          "max_rotation_step_deg": 5.0,
+          "large_motion_frames": [],
+          "geometry_reason": "our validated source mesh",
+          "review_median_iou": 0.936,
+          "review_min_iou": 0.927
+        },
+        "wooden_spoon": {
+          "source_counts": {
+            "raw": 171,
+            "multimap": 1,
+            "metric_motion_odometry": 1
+          },
+          "observed_fraction": 1.0,
+          "max_center_step_cm": 3.35,
+          "max_rotation_step_deg": 17.4,
+          "large_motion_frames": [],
+          "geometry_reason": "our validated source mesh",
+          "review_median_iou": 0.816,
+          "review_min_iou": 0.773
+        }
+      }
+    },
+    {
+      "episode": 19,
+      "frames": 235,
+      "camera_valid_fraction": 0.996,
+      "objects": {
+        "mini_sweeper": {
+          "source_counts": {
+            "raw": 50,
+            "pointmap_cotracker": 28,
+            "multimap": 121,
+            "raw_principal_twin_2": 36
+          },
+          "observed_fraction": 0.902,
+          "max_center_step_cm": 3.64,
+          "max_rotation_step_deg": 38.9,
+          "large_motion_frames": [],
+          "geometry_reason": "two or more round gray markers with stereo MAD below3mm; unsupported seed asymmetry removed",
+          "review_median_iou": 0.773,
+          "review_min_iou": 0.49
+        },
+        "mini_dust_pan": {
+          "source_counts": {
+            "raw": 222,
+            "pointmap_cotracker": 3,
+            "multimap": 7,
+            "metric_motion_odometry": 3
+          },
+          "observed_fraction": 0.966,
+          "max_center_step_cm": 3.89,
+          "max_rotation_step_deg": 16.1,
+          "large_motion_frames": [],
+          "geometry_reason": "our validated source mesh",
+          "review_median_iou": 0.91,
+          "review_min_iou": 0.311
+        }
+      }
+    },
+    {
+      "episode": 20,
+      "frames": 202,
+      "camera_valid_fraction": 1.0,
+      "objects": {
+        "blue_cup": {
+          "source_counts": {
+            "raw": 202
+          },
+          "observed_fraction": 1.0,
+          "max_center_step_cm": 1.19,
+          "max_rotation_step_deg": 27.8,
+          "large_motion_frames": [],
+          "geometry_reason": "our validated source mesh",
+          "review_median_iou": 0.925,
+          "review_min_iou": 0.85
+        },
+        "water_pitcher": {
+          "source_counts": {
+            "raw": 169,
+            "pointmap_cotracker": 21,
+            "multimap": 4,
+            "metric_motion_odometry": 8
+          },
+          "observed_fraction": 0.995,
+          "max_center_step_cm": 7.99,
+          "max_rotation_step_deg": 20.5,
+          "large_motion_frames": [],
+          "geometry_reason": "our validated source mesh",
+          "review_median_iou": 0.89,
+          "review_min_iou": 0.798
+        }
+      }
+    },
+    {
+      "episode": 25,
+      "frames": 356,
+      "camera_valid_fraction": 1.0,
+      "objects": {
+        "wooden_piece_1": {
+          "source_counts": {
+            "raw": 354,
+            "multimap": 2
+          },
+          "observed_fraction": 0.829,
+          "max_center_step_cm": 2.17,
+          "max_rotation_step_deg": 12.2,
+          "large_motion_frames": [],
+          "geometry_reason": "image circles and stereo support-plane marker reconstruction",
+          "review_median_iou": 0.871,
+          "review_min_iou": 0.0
+        },
+        "wooden_piece_2": {
+          "source_counts": {
+            "raw": 254,
+            "multimap": 7,
+            "metric_motion_odometry": 95
+          },
+          "observed_fraction": 0.983,
+          "max_center_step_cm": 2.91,
+          "max_rotation_step_deg": 9.1,
+          "large_motion_frames": [],
+          "geometry_reason": "image circles and stereo support-plane marker reconstruction",
+          "review_median_iou": 0.861,
+          "review_min_iou": 0.0
+        }
+      }
+    },
+    {
+      "episode": 28,
+      "frames": 220,
+      "camera_valid_fraction": 1.0,
+      "objects": {
+        "plastic_dish_rack": {
+          "source_counts": {
+            "raw": 211,
+            "pointmap_cotracker": 6,
+            "multimap": 3
+          },
+          "observed_fraction": 1.0,
+          "max_center_step_cm": 1.16,
+          "max_rotation_step_deg": 2.9,
+          "large_motion_frames": [],
+          "geometry_reason": "our validated source mesh",
+          "review_median_iou": 0.909,
+          "review_min_iou": 0.811
+        },
+        "white_pot": {
+          "source_counts": {
+            "raw": 214,
+            "pointmap_cotracker": 6
+          },
+          "observed_fraction": 0.5,
+          "max_center_step_cm": 3.02,
+          "max_rotation_step_deg": 14.8,
+          "large_motion_frames": [],
+          "geometry_reason": "our validated source mesh",
+          "review_median_iou": 0.806,
+          "review_min_iou": 0.0
+        }
+      }
+    },
+    {
+      "episode": 30,
+      "frames": 263,
+      "camera_valid_fraction": 1.0,
+      "objects": {
+        "mini_sweeper": {
+          "source_counts": {
+            "raw": 207,
+            "pointmap_cotracker": 30,
+            "multimap": 8,
+            "metric_motion_odometry": 18
+          },
+          "observed_fraction": 1.0,
+          "max_center_step_cm": 2.61,
+          "max_rotation_step_deg": 17.7,
+          "large_motion_frames": [],
+          "geometry_reason": "our validated source mesh",
+          "review_median_iou": 0.909,
+          "review_min_iou": 0.788
+        },
+        "plastic_dish_rack": {
+          "source_counts": {
+            "raw": 191,
+            "metric_motion_odometry": 72
+          },
+          "observed_fraction": 1.0,
+          "max_center_step_cm": 0.62,
+          "max_rotation_step_deg": 3.9,
+          "large_motion_frames": [],
+          "geometry_reason": "our validated source mesh",
+          "review_median_iou": 0.916,
+          "review_min_iou": 0.906
+        }
+      }
+    },
+    {
+      "episode": 32,
+      "frames": 259,
+      "camera_valid_fraction": 1.0,
+      "objects": {
+        "blue_cup": {
+          "source_counts": {
+            "raw": 161,
+            "pointmap_cotracker": 36,
+            "multimap": 62
+          },
+          "observed_fraction": 1.0,
+          "max_center_step_cm": 3.61,
+          "max_rotation_step_deg": 32.9,
+          "large_motion_frames": [],
+          "geometry_reason": "our validated source mesh",
+          "review_median_iou": 0.924,
+          "review_min_iou": 0.764
+        },
+        "wooden_spoon": {
+          "source_counts": {
+            "raw": 90,
+            "pointmap_cotracker": 38,
+            "multimap": 52,
+            "metric_motion_odometry": 5,
+            "raw_principal_twin_2": 74
+          },
+          "observed_fraction": 0.988,
+          "max_center_step_cm": 5.36,
+          "max_rotation_step_deg": 70.0,
+          "large_motion_frames": [],
+          "geometry_reason": "our validated source mesh",
+          "review_median_iou": 0.767,
+          "review_min_iou": 0.602
+        }
+      }
+    },
+    {
+      "episode": 33,
+      "frames": 348,
+      "camera_valid_fraction": 0.991,
+      "objects": {
+        "blue_cup": {
+          "source_counts": {
+            "raw": 348
+          },
+          "observed_fraction": 0.986,
+          "max_center_step_cm": 2.04,
+          "max_rotation_step_deg": 40.0,
+          "large_motion_frames": [],
+          "geometry_reason": "our validated source mesh",
+          "review_median_iou": 0.922,
+          "review_min_iou": 0.896
+        },
+        "wooden_spoon": {
+          "source_counts": {
+            "raw": 167,
+            "pointmap_cotracker": 2,
+            "multimap": 40,
+            "bundle_adjusted": 22,
+            "bundle_hand_guided": 7,
+            "metric_motion_odometry": 52,
+            "raw_principal_twin_2": 58
+          },
+          "observed_fraction": 0.974,
+          "max_center_step_cm": 4.67,
+          "max_rotation_step_deg": 71.6,
+          "large_motion_frames": [],
+          "geometry_reason": "our validated source mesh",
+          "review_median_iou": 0.738,
+          "review_min_iou": 0.431
+        }
+      }
+    },
+    {
+      "episode": 35,
+      "frames": 421,
+      "camera_valid_fraction": 1.0,
+      "objects": {
+        "wooden_spoon": {
+          "source_counts": {
+            "raw": 380,
+            "pointmap_cotracker": 13,
+            "metric_motion_odometry": 28
+          },
+          "observed_fraction": 0.998,
+          "max_center_step_cm": 2.56,
+          "max_rotation_step_deg": 26.6,
+          "large_motion_frames": [],
+          "geometry_reason": "our validated source mesh",
+          "review_median_iou": 0.808,
+          "review_min_iou": 0.668
+        }
+      }
+    },
+    {
+      "episode": 36,
+      "frames": 407,
+      "camera_valid_fraction": 1.0,
+      "objects": {
+        "wooden_spoon": {
+          "source_counts": {
+            "raw": 190,
+            "multimap": 14,
+            "bundle_adjusted": 152,
+            "bundle_hand_guided": 33,
+            "metric_motion_odometry": 18
+          },
+          "observed_fraction": 0.941,
+          "max_center_step_cm": 3.09,
+          "max_rotation_step_deg": 38.1,
+          "large_motion_frames": [],
+          "geometry_reason": "our validated source mesh",
+          "review_median_iou": 0.793,
+          "review_min_iou": 0.167
+        }
+      }
+    },
+    {
+      "episode": 37,
+      "frames": 151,
+      "camera_valid_fraction": 1.0,
+      "objects": {
+        "wooden_spoon": {
+          "source_counts": {
+            "raw": 77,
+            "pointmap_cotracker": 60,
+            "multimap": 11,
+            "metric_motion_odometry": 3
+          },
+          "observed_fraction": 0.96,
+          "max_center_step_cm": 2.73,
+          "max_rotation_step_deg": 9.6,
+          "large_motion_frames": [],
+          "geometry_reason": "our validated source mesh",
+          "review_median_iou": 0.814,
+          "review_min_iou": 0.728
+        }
+      }
+    },
+    {
+      "episode": 38,
+      "frames": 263,
+      "camera_valid_fraction": 1.0,
+      "objects": {
+        "mini_dust_pan": {
+          "source_counts": {
+            "raw": 263
+          },
+          "observed_fraction": 1.0,
+          "max_center_step_cm": 2.27,
+          "max_rotation_step_deg": 18.1,
+          "large_motion_frames": [],
+          "geometry_reason": "our validated source mesh",
+          "review_median_iou": 0.916,
+          "review_min_iou": 0.856
+        }
+      }
+    }
+  ],
+  "sha256": {
+    "episode_000001/camera.npz": "8e45748e24d84d778e7257115dfbcae394c58258f72e472f302efc679c16f77c",
+    "episode_000001/camera_report.json": "6ea4638bf030a20d4797f1ba2cfbae57e867e9b7f5b23fea3514394497f2a93c",
+    "episode_000001/intrinsics.json": "abf46ba3ceafec82b07b7a0710f89f8051e1f3ace8685e2dc39f875194a768ea",
+    "episode_000001/meshes/white_pot.obj": "a55317043909ef4e2e299fd786e4b5121cc896dabeaa8af980210b514a4f182d",
+    "episode_000001/meshes/white_pot_lid.obj": "bc1443c51ad9634ab73582c2bef132307d00d1f0a9e76e18a9b2032eaedfeba2",
+    "episode_000001/meshes.json": "f3ee059d955b08e3b6e190488d216b5a6df0aa238a059d7010af430cba0b9800",
+    "episode_000001/object_poses.npz": "471cfd8454a8f8380b0eba1af87025b1c8478cf8a26e367cc1e2d78db4506bf7",
+    "episode_000001/prepared.json": "b16a4319d1b64c19306b519d80ad323678eb55fe6ace92204cec7bc591b9a9be",
+    "episode_000001/review/contact_sheet.jpg": "39d7c5cf6ac5d16945df18589abe1446c4f341cffa09c7c351e43ebb831b1497",
+    "episode_000001/review/frame_000000.jpg": "33b92ed7e1101831a211e08b7c4b8fa15f6c921a35b1514d1b10eaa925f94859",
+    "episode_000001/review/frame_000030.jpg": "3f58681da14172eae69c3b1a605fd49dafc619a2e2b1bb900df4b2d3ef665783",
+    "episode_000001/review/frame_000060.jpg": "5e1fbc0d1506d0239aec45e8a1b7e5822f588d4d2b867a7c7d6f6fa4405e0c84",
+    "episode_000001/review/frame_000091.jpg": "1b6931fb46f651a70601c6cf816c0c49be09fe9e155ab1e649c72ae91ed42767",
+    "episode_000001/review/frame_000121.jpg": "4ce3c89f903a8ea703fea7d3f330b20237c43a7824d9a4f4a91e8289b9568cac",
+    "episode_000001/review/frame_000151.jpg": "367241c7d1d9a481dd9c908c4866dcf60ca9c367e9024bc5b930228a74489fbc",
+    "episode_000001/review/frame_000182.jpg": "190ae716d2a644ea22e8b3ff3dcd1b0be1fc11916bb6753066944e7bae348aab",
+    "episode_000001/review/frame_000212.jpg": "2b7dfab73d2bbb7ff4a609076424216d9bb42f08e8f9a8656d8349fdb670776c",
+    "episode_000001/review/frame_000242.jpg": "3ae8482a73b5a330476697cc5a1e987313f94c726e5dbcc1a955e60c15fbc2f1",
+    "episode_000001/review/frame_000273.jpg": "8db79cfb8d8bfcaeb4ef2f848b7e20ab20728f28bc2139d2613287b92bd8c6f8",
+    "episode_000001/review/frame_000303.jpg": "22ff3de8d2661cf9c23ff122f55d6ee6e741174102002110061dc2788d14dbf8",
+    "episode_000001/review/frame_000334.jpg": "cafe43ab23cc1785bd4c54844577be97c2a8c8f5b9f4d76cd3af7fb17749fbcc",
+    "episode_000001/review/image_evidence.json": "5b29a162ea187dcb68c168831d851feac154dccba576d22c13fbe03446c875b9",
+    "episode_000001/selection.json": "5fc56cc68c9cb3be989126516d36c88cebd49efddc32f893c7c4d4be8cb373a2",
+    "episode_000003/camera.npz": "6effe48534165dcfde99bec24ad3ee46baa93e736b7fe301cbc951c0f556c05b",
+    "episode_000003/camera_report.json": "ea20e8726ca9fe896159670cd9d3bd9159818d2cb753d8ef8779a8ad739d5fd4",
+    "episode_000003/intrinsics.json": "abf46ba3ceafec82b07b7a0710f89f8051e1f3ace8685e2dc39f875194a768ea",
+    "episode_000003/meshes/white_pot.obj": "a55317043909ef4e2e299fd786e4b5121cc896dabeaa8af980210b514a4f182d",
+    "episode_000003/meshes/wooden_spoon.obj": "c9ab88e33e5c78bfbd5e492d12565effafa8cd2c26d14fe6600e7fb0c1c5d904",
+    "episode_000003/meshes.json": "572ae30e27e29934d8edb9ac491a78ad03bccbad5dc75deb8e6ef52626fb35c5",
+    "episode_000003/object_poses.npz": "c012ad53e16fc5e3a291ba91b1f8d2a5e9e1f6d2643f8750427b47b35c8ea234",
+    "episode_000003/prepared.json": "21cb3d89fc85b90e44bb05ae7169d10ca46987c58b57b9aa1b64db1336a360bb",
+    "episode_000003/review/contact_sheet.jpg": "042034908187053848f55973eeac91240f2d4aaa5af546dc6449c7c55becbb21",
+    "episode_000003/review/frame_000000.jpg": "5e0198dea5d40eafd553a45bb40d722044c2a348fa29cbbd3347f8e4fcf23a1e",
+    "episode_000003/review/frame_000028.jpg": "127977ece52abf099a67fe013eae5b8720f2a6194809926995bb16b681fde4c5",
+    "episode_000003/review/frame_000056.jpg": "a0ad31e71d9aad64ea2c779385243c64486a83969ae860d8b230db0f9ca08bbc",
+    "episode_000003/review/frame_000085.jpg": "d156ac73e4c42db3a944fdacfd4d7f6c500d4a730f80f861ec9c83f096158a35",
+    "episode_000003/review/frame_000113.jpg": "f3d1481baa1138ea65a2ade39e9bc0146479e25a33aa8a0a4d5d0378fca45bf9",
+    "episode_000003/review/frame_000141.jpg": "9d1afd5f6d626850a2cc80ec89323bfd071ca20ed4208dd4a82c52009c67c98b",
+    "episode_000003/review/frame_000170.jpg": "191588eaf195f4b43de23296abf1a6e9bcde95112b21d5a9e4151c9f2de34ff1",
+    "episode_000003/review/frame_000198.jpg": "8234b7774741123d48d74491370bf98d784a902cb27a6454920d4f429786a270",
+    "episode_000003/review/frame_000226.jpg": "3315ab57fed17db5c3ae1c9f8502de432f0a7a97d7d510377227be3f0c8b3aca",
+    "episode_000003/review/frame_000255.jpg": "964d4e84f001754cb35bf683248c12bf20ebca36d0c4d7de77ca94e43cb6766f",
+    "episode_000003/review/frame_000283.jpg": "19c8d7d461c463717c9a48485964cd31bb71a1d8afd1ffbc9f5814bc6f48091a",
+    "episode_000003/review/frame_000312.jpg": "f31394a14fbc5ffe87de0281330a3ab920e15b19f26930fbd1f04388e48a4d9f",
+    "episode_000003/review/image_evidence.json": "d7b22718ecafac10fed9545bd100e5026cf36f8e4bd22e6656c68a20336c7576",
+    "episode_000003/selection.json": "39064b601ddbdef6483d03461dd8d03b5224e9fb63abd866884a410782173c84",
+    "episode_000005/camera.npz": "b32ffb83cda5a240cfa1760dc166b542d23df1bda5fccced71792fde84a6173f",
+    "episode_000005/camera_report.json": "a4b9b90e2e110288920c277d1b83a3aed196fdc4df870178b8d1f0bf1ea068ce",
+    "episode_000005/intrinsics.json": "abf46ba3ceafec82b07b7a0710f89f8051e1f3ace8685e2dc39f875194a768ea",
+    "episode_000005/meshes/white_pot.obj": "a55317043909ef4e2e299fd786e4b5121cc896dabeaa8af980210b514a4f182d",
+    "episode_000005/meshes/wooden_spoon.obj": "c9ab88e33e5c78bfbd5e492d12565effafa8cd2c26d14fe6600e7fb0c1c5d904",
+    "episode_000005/meshes.json": "c28223e51e8c5767a0154cc38501f1b03cb0128e0d5e46eadc7b2628d14b2793",
+    "episode_000005/object_poses.npz": "e2c07f92e03732fee013cde893643fa028719c5816641e5ffcc090287c875d9d",
+    "episode_000005/prepared.json": "037779d2f9a8b1b837d874838dca05cc93201966d9f2ea2aeedebd01b5cbbb1e",
+    "episode_000005/review/contact_sheet.jpg": "fbde4b4482e7ffb62b05a1149728b3ae4c165b9864d148083e30a26b05809dea",
+    "episode_000005/review/frame_000000.jpg": "83197e3075a912a4f74f6fbace2ef09e5a0ae1ec11a3be6616e37510e8b3d28e",
+    "episode_000005/review/frame_000026.jpg": "511fa7da2acf305395196bb89471ff99345b953bde19272b985adebbf5fb6a70",
+    "episode_000005/review/frame_000052.jpg": "75d8435e3d8051ca3c9979c45ba548fe1e637b7ebac8fb765aefc35b46c7ff9c",
+    "episode_000005/review/frame_000078.jpg": "a9ec0f416a6a804ea24a61e5066db1ace4d1b09787b70b8e052a22f51250a7ac",
+    "episode_000005/review/frame_000104.jpg": "a1318c62ebad250cd8d60c10bd2e972fcc13e349cc3a3b30b8e9cf9c9a6d4176",
+    "episode_000005/review/frame_000130.jpg": "b4f56893e4bb3119f3f689704a8b3dcabb9067ac95471ca589a7d843559cf4ea",
+    "episode_000005/review/frame_000156.jpg": "0ab0175c5ac95fd48f9ad74cef6354fe21e3a5f29f00a91ba6d321f1474012a2",
+    "episode_000005/review/frame_000182.jpg": "6ccd2efdb5448af3d0a700cc8dd568f76a64bbbc40842b7accc556247f53ec12",
+    "episode_000005/review/frame_000208.jpg": "f6287f36838113765ec2a096683b295ffc90b6de41ecf730c7f7d82205e75843",
+    "episode_000005/review/frame_000234.jpg": "3a332b60a199783c2a57a9bbc5f65e8360e16cf3f993220a21f2f9dda3f74285",
+    "episode_000005/review/frame_000260.jpg": "f73f4692d008d03e91c4ede86c02b5ebb5b49442c65d266d72830f831489c993",
+    "episode_000005/review/frame_000287.jpg": "e889c4ab8a8b5e3971d34497052481e92695fb5e765d298aaf4718328a8dc81d",
+    "episode_000005/review/image_evidence.json": "5c38d33d581e04c2bb6814b5e4f376d398d646e2207e30f845af14acdcb8aafa",
+    "episode_000005/selection.json": "3ceba6208860bb3a646617316dc046a521bbb4e912f99887c034665d5cd9231e",
+    "episode_000006/camera.npz": "cfd3aa81cf3a87126572b8ea6acc1b7fc5f28fc5b730b59429e236b29f0baa0e",
+    "episode_000006/camera_report.json": "3e1b1f9c7b9bbedf9ae26ba0af1deda89755c32873d3d3ac168d8a7d17feeea4",
+    "episode_000006/intrinsics.json": "abf46ba3ceafec82b07b7a0710f89f8051e1f3ace8685e2dc39f875194a768ea",
+    "episode_000006/meshes/white_pot.obj": "a55317043909ef4e2e299fd786e4b5121cc896dabeaa8af980210b514a4f182d",
+    "episode_000006/meshes/wooden_spoon.obj": "c9ab88e33e5c78bfbd5e492d12565effafa8cd2c26d14fe6600e7fb0c1c5d904",
+    "episode_000006/meshes.json": "3dec20efd48f7821c6312737597bfcb4866871f1d116993dce8ddcf78650e4ce",
+    "episode_000006/object_poses.npz": "917e31e2d505f41de77f1a52592c4471d035efbe4ddbd32c833512244adc6c22",
+    "episode_000006/prepared.json": "b38a9c7ec31e086d348d7e826dcfefe5b724ca65150a9a25a249c89f2a7adc29",
+    "episode_000006/review/contact_sheet.jpg": "74073a871780c8eb6418db98444dbc023fa2381e398e7c27e18f4b940abc552a",
+    "episode_000006/review/frame_000000.jpg": "9a6efad023499b0d8ff6037c1c213e984ba2a49c938db11552448852439f3a57",
+    "episode_000006/review/frame_000022.jpg": "1ffc04879ce8c34e579d5db50fed2deeffe956b50ff2fe29ef2c2a4637b4a16f",
+    "episode_000006/review/frame_000044.jpg": "c79f9c8d1d4bb28b5a603e49c0a53fe460bb41ddf89685910d9cce99dd55320a",
+    "episode_000006/review/frame_000066.jpg": "c3fe75b309f6017b8228e8ecb13cfdb4c09927f4a22e01b24a5f30cd1146b272",
+    "episode_000006/review/frame_000088.jpg": "350c3fbd678a59db0718bee65ccd312f16c64f6ead9bf89be20e5582705536dc",
+    "episode_000006/review/frame_000110.jpg": "a834f5f3d940b747dc4e26360b34e4fc1ca641e9a15760d3d432deb585f8d011",
+    "episode_000006/review/frame_000132.jpg": "e3d2825f6f88d47c92fe0020a81049a30f812e5a916ced42a3be192fdb1c8916",
+    "episode_000006/review/frame_000154.jpg": "15baf629a297b3291b59368623dbb52a12520a3ff132c42c0172fcda5a5c1d79",
+    "episode_000006/review/frame_000176.jpg": "ec1f4b6ae93dc239ed231019a91f084c7973cdc753eb11b6a5ab25ba949f81f4",
+    "episode_000006/review/frame_000198.jpg": "4f65d7f606c073f37fec5f447a3fa41ad3c34601aa49117a2495b08d6bc171a2",
+    "episode_000006/review/frame_000220.jpg": "353a90ea71f8e0a32416f475efd11ba503b8c83f4fcb3017a8d1faaf4d9b8b70",
+    "episode_000006/review/frame_000242.jpg": "e49e4ce9e483c92534f8a0a9f43a96102e296d248a14707decc3872136316615",
+    "episode_000006/review/image_evidence.json": "8c3ec06cf2a7656e40222a6514aa8e02991e961edc7e59b94eb50df207ad3081",
+    "episode_000006/selection.json": "592e686f57e18c23a6fc99dfd6b03b207f6ca31418ba74a649aac40271b5748a",
+    "episode_000008/camera.npz": "a38a602dc597dd0d529357df75bc89497be50d254124aa90ff676167e9d26cbe",
+    "episode_000008/camera_report.json": "6acdcb545e0af4239a31254a13a67812aadbf1529727f464691a31ddcea21fd6",
+    "episode_000008/intrinsics.json": "abf46ba3ceafec82b07b7a0710f89f8051e1f3ace8685e2dc39f875194a768ea",
+    "episode_000008/meshes/beige_cup.obj": "2c041e69fbd3be79fa953609276ffc4a54a513ec2ca7e7f31020a78ab6871431",
+    "episode_000008/meshes/white_pot.obj": "a55317043909ef4e2e299fd786e4b5121cc896dabeaa8af980210b514a4f182d",
+    "episode_000008/meshes.json": "79fa5bc89c3287d538c10bdd804d8e9a2b5bcef98a0e57a8febf8f49bcdbd429",
+    "episode_000008/object_poses.npz": "b450ace3b1179ab469da6b57666ff1862fc1a5b3be026f4814de7e7075a9e33b",
+    "episode_000008/prepared.json": "b88ebf41a4e8dd631eb7212d8aaf62e5f61727f15cb4dbce81cf8e00ab166eb8",
+    "episode_000008/review/contact_sheet.jpg": "27bfdb4105b3a705e334d408111ac3fa772b848a3bf94bb22ada71361ead0e2a",
+    "episode_000008/review/frame_000000.jpg": "7cf43435d06eba15db8e2007afff715abc2a0804f35f56dad16076477656fff9",
+    "episode_000008/review/frame_000019.jpg": "577f7deec9b2307be3928362ebf6a2e905c713dfeb24ed16ac329ca0b5bdcf94",
+    "episode_000008/review/frame_000039.jpg": "7b2c4671facbbfd791582cd1cc09277d5a214e02eba3dbcd74d434e3828745f1",
+    "episode_000008/review/frame_000059.jpg": "76adc1dff55a02e205d1b59e9ecfeb45ac6932f1ed614109af01b8abacbbd10c",
+    "episode_000008/review/frame_000079.jpg": "33f3492f258b20b8afb5634c16725875d47b95fd58d8205405f66af5e2305d26",
+    "episode_000008/review/frame_000099.jpg": "f53e99b24bef9998607cd3fd510a87bfdf9be3de99e7995ba59f25efed43bfc3",
+    "episode_000008/review/frame_000118.jpg": "b19a4dc3fe12ad9d2c2d1183854b36d17ee3051356a37a11c1133dc066d51e2a",
+    "episode_000008/review/frame_000138.jpg": "e42d36d00dd83d06972703cd91ecd9002e56f978026c5c24e8f73be9143b68b0",
+    "episode_000008/review/frame_000158.jpg": "3ab56b8ff4be3e4fad1f0e840cc194fa457a17b54bdc1e25aceb6983c607edf4",
+    "episode_000008/review/frame_000178.jpg": "ac3a3f154b1151fa0b9484178bddbb233420596eff18fa27aaaf53ec35b95061",
+    "episode_000008/review/frame_000198.jpg": "7919b86f8eb4c7fcbde26e5369747163652168366b46ccc83032bb0c1e710290",
+    "episode_000008/review/frame_000218.jpg": "4149a2aac0d4a0a6e85318a06cff941e3a983d4fa85e58264a3be79345c81e02",
+    "episode_000008/review/image_evidence.json": "551767db45ca758a7ef77b4bdfa6fe86e9ed7250d662df4192f15675547c5a58",
+    "episode_000008/selection.json": "3569aaf0fbf9b146a32fac9c681683a8c219fd4a4fcea1e3f4c456b873fefa9f",
+    "episode_000010/camera.npz": "5b6f460509f437fa4c24356a36bf93c40910140618388f75106b8763e6a4a4b7",
+    "episode_000010/camera_report.json": "b46ad666606bbb626542b06bc29aa307b2fbf092d09b564d06f25bdb61dc6592",
+    "episode_000010/intrinsics.json": "abf46ba3ceafec82b07b7a0710f89f8051e1f3ace8685e2dc39f875194a768ea",
+    "episode_000010/meshes/beige_cup.obj": "2c041e69fbd3be79fa953609276ffc4a54a513ec2ca7e7f31020a78ab6871431",
+    "episode_000010/meshes/blue_cup.obj": "57bb269a06a44f9f56ea59c9eea8b0d704b20d5a8cfd8bbc89f73f5e2f2b1d8f",
+    "episode_000010/meshes.json": "bc2b36ece12f40afd23ccc20add501aa717e8801f0e807ec0a17310ff3b2bbe9",
+    "episode_000010/object_poses.npz": "8e225f80840d15450f877b7acb4e39d5dbae85381639c02af989f46044d6b986",
+    "episode_000010/prepared.json": "3c4e008589661f3c42f72b4a3a63b9c572391b6723ae6bbad16715efb281b263",
+    "episode_000010/review/contact_sheet.jpg": "5388c644dab7b07be4a378b5533a2fed571b2515e22e55b7e58486719f1e0576",
+    "episode_000010/review/frame_000000.jpg": "aa130eabe1812cf37f336c70c2901733b71ab24d788ac7b7329f790890ce69bd",
+    "episode_000010/review/frame_000014.jpg": "91ca7997f03826a81be355f8a5ab515436fa6bdb8d975949f01b3eed87eed3dc",
+    "episode_000010/review/frame_000029.jpg": "1a6f1b583d38f1d1c662ecf5d23ae1ede0194fdb4fb1e5e396a15522c09283e6",
+    "episode_000010/review/frame_000043.jpg": "e3eabe0b02e2508aad0a5d3616299439d8a32cc8dc702394447f3abbdac2a78d",
+    "episode_000010/review/frame_000058.jpg": "4020d44b76e8d91be78eb210cabccea19fe056a8cf385145e91af42e19825216",
+    "episode_000010/review/frame_000072.jpg": "3cc846ed36f5d6b9b547eefc494d343cf63f6eee96886ce7fa951fd1985cef8f",
+    "episode_000010/review/frame_000087.jpg": "99ce6b980892932227256efc16d1de4381bbc3064931bf523c1ba30ae6dd1670",
+    "episode_000010/review/frame_000101.jpg": "e25b4170455792d176104afe3bc3234bd751747a5691e822b24c9851c08692cd",
+    "episode_000010/review/frame_000116.jpg": "5bd16741a36c267383f1459ea3a773dac8afffdbf063dcc5ab5a526dda318792",
+    "episode_000010/review/frame_000130.jpg": "92775097bc88e0c6e1b9c61eed62aa5bf12b59abc890fbb6e71bb08fa9265991",
+    "episode_000010/review/frame_000145.jpg": "91614f2e6b74f5f483ba770e0551179e6eab58c0eb02939cca9b7c984d6616a5",
+    "episode_000010/review/frame_000160.jpg": "10f38acf99887a9d663ddd9b39ae2f3650caf20ab9382c6308feef274c5c680e",
+    "episode_000010/review/image_evidence.json": "c79edc9ea54feadf33e8718f2f58fb72de05c666cc42899b5418c50099e0f698",
+    "episode_000010/selection.json": "a94aa5a526104a90cbd04406a8f15a44e1b49a9cda53a43af931e0e576af95f8",
+    "episode_000014/camera.npz": "0b472aee8ea668f69275ac1954f21874de2ebf3d28991c0efa226b48dd097def",
+    "episode_000014/camera_report.json": "6d08cce930de4a2c66dfc4f612f50fed604cd402113fd64f37e5881d73376ec6",
+    "episode_000014/intrinsics.json": "abf46ba3ceafec82b07b7a0710f89f8051e1f3ace8685e2dc39f875194a768ea",
+    "episode_000014/meshes/blue_cup.obj": "57bb269a06a44f9f56ea59c9eea8b0d704b20d5a8cfd8bbc89f73f5e2f2b1d8f",
+    "episode_000014/meshes/plastic_dish_rack.obj": "090b7d17790ef35fb1c1364488cdec5adc7232f208dfb430494b752b1ab69289",
+    "episode_000014/meshes.json": "ca38aded2bbfcd7e3c70a949a9822641006a110a467e74e13ab7ffd86897c136",
+    "episode_000014/object_poses.npz": "30edac710d0c16d2760f00e162b51b1b054614f8d45c0394a74ce0d1759e4c8e",
+    "episode_000014/prepared.json": "f6b799f345b57eafadba6bcce375afb49cbda7b0848cf9d5ae3ba0789b8e0550",
+    "episode_000014/review/contact_sheet.jpg": "b31516e8258ac21dd9ce5d2e4ce8c1750f9c89862eaa3514e26d55a1567d249b",
+    "episode_000014/review/frame_000000.jpg": "7cb724fbb6529447e689d06af5861e4454094702b5f317c7a4ece1d38cd3835e",
+    "episode_000014/review/frame_000014.jpg": "30fe03e02aadb262da6839db1d886dff54f32941191acc7af21596c9239ee69d",
+    "episode_000014/review/frame_000028.jpg": "54c16dc1dffe5a1f353b9b7f00bcf23d2758937818d7f6bab8a24b2def99da28",
+    "episode_000014/review/frame_000042.jpg": "8e73048bc00ec96d3c9c4dbac60e74ed29c52908997f1b0e0b11c801ae55b65c",
+    "episode_000014/review/frame_000057.jpg": "0b77c605c19ba0cc4c971f21f2615b6dcdc3442e403bf5f67dfa860b58fb36d7",
+    "episode_000014/review/frame_000071.jpg": "d8bf9514ef24ffc9cb335685301be6378883eda27697be0b3a765baf6fa91064",
+    "episode_000014/review/frame_000085.jpg": "f1bbb1c2d219ece83fd6381474196418daf9358d5d3353bfdb3675df2e382193",
+    "episode_000014/review/frame_000099.jpg": "1c3ead783d66ced45343443e14a3c809ebea121e58398f35bd7fbbcf3243fc98",
+    "episode_000014/review/frame_000114.jpg": "96fbf67176941df186e1134570a0735ea909284f94b6fed2672ffd553c344b7a",
+    "episode_000014/review/frame_000128.jpg": "2d6e7be70d240d9161ad16c4c066efc6a91dd1600ee7cbb39d384c84c19dea67",
+    "episode_000014/review/frame_000142.jpg": "64cd5c0c95625e0660f445bb625e916889ea9e4717f77c508eecf762fbc51c5f",
+    "episode_000014/review/frame_000157.jpg": "1c7eb143f330c7e9a8ab59fe3848975fded21538beff35b8857e3f2dc10a320b",
+    "episode_000014/review/image_evidence.json": "197987d19454ffbfe492179c46d12feee12f864420231eadc4a87b9338132ae3",
+    "episode_000014/selection.json": "afba2ef517e85fad8fab7f028cf755d33af557fbc2f43b2d92349e63128a65d0",
+    "episode_000015/camera.npz": "f77ae15768347498c2336ff4f0926a269915f177320cef0892476fd32e7c682d",
+    "episode_000015/camera_report.json": "0a123fe2331b30acbcb22a17fa1f2b8091b57ed61719789d2a04cb49c7fb11d5",
+    "episode_000015/intrinsics.json": "abf46ba3ceafec82b07b7a0710f89f8051e1f3ace8685e2dc39f875194a768ea",
+    "episode_000015/meshes/plastic_dish_rack.obj": "090b7d17790ef35fb1c1364488cdec5adc7232f208dfb430494b752b1ab69289",
+    "episode_000015/meshes/wooden_spoon.obj": "c9ab88e33e5c78bfbd5e492d12565effafa8cd2c26d14fe6600e7fb0c1c5d904",
+    "episode_000015/meshes.json": "333df1c61635432015f9c1260c6d943f5751ef9f8376a7e4a993871da6a5f184",
+    "episode_000015/object_poses.npz": "11faf01f70d70ef03d8eb448b3d6d00e1f81d6f42e1d220fadc3c29e532e2168",
+    "episode_000015/prepared.json": "dc9a7caf9c8d7c4cb9e208962521c13061ba42175ba0cc8db581aff085ae278a",
+    "episode_000015/review/contact_sheet.jpg": "a3ca907b85f076e6843f70aac0864d1a504e308734d5289843e197c95a6d6314",
+    "episode_000015/review/frame_000000.jpg": "e5a368cf9d0e2bcf52f7c205e873d00f97c08fd8a066ec13fa5e74ba62aee710",
+    "episode_000015/review/frame_000015.jpg": "03fa9b5034aa3b034f269679996583d0f14779ec5de46c2258e8b75e8cf78d7e",
+    "episode_000015/review/frame_000030.jpg": "baa4c93c4fe8ee80a48a12644971f1f453d69ac7d71701993379cae804a6cfe2",
+    "episode_000015/review/frame_000045.jpg": "11d4d89728d0ac217983d0745baf8cf10a2eabc97dae1559076b14c0ad39949e",
+    "episode_000015/review/frame_000060.jpg": "24a9361a27c52eff9b838af418ddb05a14048f0e365bf65cc1e7f6805cac692c",
+    "episode_000015/review/frame_000075.jpg": "2d1018b839637e87970a08fb49ae6c3bb4ec029a49c6959b86bc0752920e8a51",
+    "episode_000015/review/frame_000090.jpg": "c997c5bb2914113c12cd589c3a136617ee42db82047a6c3bc9f8ad22b10e980d",
+    "episode_000015/review/frame_000105.jpg": "29b0bdeb7e4feace222e9a78cb375a292ef80c5c4b61bc09b84dc5205ec2713a",
+    "episode_000015/review/frame_000120.jpg": "4df1d588c0e95bab09230d198150514321072054567a11de32b502caab8af166",
+    "episode_000015/review/frame_000135.jpg": "ea1fb1b5d31ba08d2b08b0e7d15f92c0c5058fa3e3b75d838ea7cf94979c5c11",
+    "episode_000015/review/frame_000150.jpg": "d425401b91b1f4104878280f4c51104317294854b8927a22f47cc14fa2d5106e",
+    "episode_000015/review/frame_000165.jpg": "763a1c4e59a485ee102c96744948a343b9921f992dac33bc4811f23d1f4334fb",
+    "episode_000015/review/image_evidence.json": "6367ce4645532c172b203d1fd22e18342364431b759db2c66117b8008ad9fbde",
+    "episode_000015/selection.json": "3c41558fbda9c827ff0765c3d83af9df7bf78d986c1d20340794ddd2883e95b3",
+    "episode_000016/camera.npz": "2a8d44c12cf5707f60fbc6298077ea14bf5b03b5672d8d6511393a4a002211f1",
+    "episode_000016/camera_report.json": "0708f5ee4d6cd174c5956fcee70ccaaebcb8ad3c1682c8ab4d1c6697ce358c61",
+    "episode_000016/intrinsics.json": "abf46ba3ceafec82b07b7a0710f89f8051e1f3ace8685e2dc39f875194a768ea",
+    "episode_000016/meshes/plastic_dish_rack.obj": "090b7d17790ef35fb1c1364488cdec5adc7232f208dfb430494b752b1ab69289",
+    "episode_000016/meshes/wooden_spoon.obj": "c9ab88e33e5c78bfbd5e492d12565effafa8cd2c26d14fe6600e7fb0c1c5d904",
+    "episode_000016/meshes.json": "390f841a5c4eec349ab7a93892842784638d9e9a2e04170825159ffc2388b2cc",
+    "episode_000016/object_poses.npz": "a6c1e884181e02f7e573cc3df5c03f7c53a54b0589bcb498f4b5b80d31b2349c",
+    "episode_000016/prepared.json": "6e4110f4c908ff41f1d7d08d38c9743878b5ce17b25902626eef2c1ca95eb430",
+    "episode_000016/review/contact_sheet.jpg": "2898a85ad1294571cdf082a56337de33f167ec10f1837ea0ffa66911b891626d",
+    "episode_000016/review/frame_000000.jpg": "3c6ec9cb5a6ca6ef55ff6a2e17c515db76fd5c2880b917bb96eedd12dd1d177f",
+    "episode_000016/review/frame_000015.jpg": "4557d4c46b4fdfae5e10ecde488de69a4eced5230cb4d3a9a022ae22fe7eb78c",
+    "episode_000016/review/frame_000031.jpg": "71e6c677700ba2a328c39125fd9c1c0c6e46fe27096d641ee4b9ab3095a5541e",
+    "episode_000016/review/frame_000046.jpg": "ad5debcf3bd07e39c1ebeb45830eec5fcf2f246331bcbe3a49e33a77b304e2ce",
+    "episode_000016/review/frame_000062.jpg": "7d2abd647fc06b86513c1ea100f597f20cbea9f8ebd26d81e5af68abc80893c3",
+    "episode_000016/review/frame_000078.jpg": "23b7cc1ef11ac9a525d93f5c87dc64561ca69509ef867528f44b8030aee2c130",
+    "episode_000016/review/frame_000093.jpg": "c639c6090c185ab0583d8c222fbdd611f06b23d57af3c6581beda6a8079fb321",
+    "episode_000016/review/frame_000109.jpg": "52d038ab8bccdb981389a50069f89134c9c21f5d98b070e053befb29d444a182",
+    "episode_000016/review/frame_000125.jpg": "d763750425257b8200d7a5bd31d0a9ebb00696aee4478fc00a356c3f062829df",
+    "episode_000016/review/frame_000140.jpg": "c01cf99ad5a14d265b818c0f4cae44fab54a3ce1f256cbf5a5be0c2bfb194481",
+    "episode_000016/review/frame_000156.jpg": "43e9356dd15a4fe3321a758cda4458a922f9886811a4cb65a99dc83e1d1fd485",
+    "episode_000016/review/frame_000172.jpg": "8ca1674e534bdc8a4a842a3ad5bf6098b7932471620143f718ff2daaf979adc8",
+    "episode_000016/review/image_evidence.json": "51164b316b88cd092d993c8e34e9681831b2185e18aaae5e0a8f9c0cae2660e4",
+    "episode_000016/selection.json": "9e77dd9e1945c1e05927f23ec4cd91bac41e746fbcfb82c7696703fd0a5d6f31",
+    "episode_000019/camera.npz": "89157f78ca7077ee796e2e5ebe16f09a54a9956b2c9df118e1d353be2f686f61",
+    "episode_000019/camera_report.json": "98bdc3e692ec0596ad57954ff30a151f939ccb6e7f42574362a7103eec8c7efe",
+    "episode_000019/intrinsics.json": "abf46ba3ceafec82b07b7a0710f89f8051e1f3ace8685e2dc39f875194a768ea",
+    "episode_000019/meshes/mini_dust_pan.obj": "1d298c012d68712ce49ff3b73a36f1b8f76e6cdb6bba3ee1357c467c3e61075f",
+    "episode_000019/meshes/mini_sweeper.obj": "26bc3aa1275707d2609754317959eb8daead3463bcbb2d5f397ee3fee03db47e",
+    "episode_000019/meshes.json": "13f3e21cc06448aa2e25cf920cfe812b3cdc2232d35b3cff4c1196e3a53c69ad",
+    "episode_000019/object_poses.npz": "b677e3f222b6a8d6248465dc83d28c9d16fc55a606faf975e8653c15fc3ac5e6",
+    "episode_000019/prepared.json": "2ae4b30e6e0d3b739cdf4d2b3cb39a44688857de45e7804007dfdd392a672271",
+    "episode_000019/review/contact_sheet.jpg": "2d664f35826146583b515625ecef13466755725b868982d7624b96d861ea32d7",
+    "episode_000019/review/frame_000000.jpg": "a59108f9c61b91c3e6b9d2c234c52fc4bc61c04390a278b589dae0dbb9c281ba",
+    "episode_000019/review/frame_000021.jpg": "69bb8211d04139eea6409b066c4506b0084acff6853b148a9fedcbceeedba2f9",
+    "episode_000019/review/frame_000042.jpg": "6c7b69c4ba9c828b4ccbf22782e8e207652e614c22a531763bac35a0be53b7c4",
+    "episode_000019/review/frame_000063.jpg": "8b89cebb9949e29ed69510a836ef2a0dd8f9268c1abe00cb492c67e06164d184",
+    "episode_000019/review/frame_000085.jpg": "9bba4945846fafc84c3707d331b0a37debedd7b666043249cce59238e4d019b1",
+    "episode_000019/review/frame_000106.jpg": "c0ab484877b2d218300039006ed47a684b276b4dffe5726d1067eea0429f44a4",
+    "episode_000019/review/frame_000127.jpg": "fef48c98c711b52595cacf35074a2708413a1484dfb01073753ca5a1bc8b3164",
+    "episode_000019/review/frame_000148.jpg": "57bd855dfedc2bede2d9d0016fde9943e2cfd8c9a30f8a0643c3e4ab0755113e",
+    "episode_000019/review/frame_000170.jpg": "938c2b8924bbe310a980fddaf58975f66c590e486ae818fa850656d72a6eda73",
+    "episode_000019/review/frame_000191.jpg": "f097f6389c1d170c62fa146c3a38a6121009aea5fa6c0ffb546874bc512c0fca",
+    "episode_000019/review/frame_000212.jpg": "27df95c8b560730118e2d2237f9c643cca2d0199917cfe85d59a457d219c65c6",
+    "episode_000019/review/frame_000234.jpg": "993b92924e7c297f8f49068144a96bd340605ed14a0c148f300ecfaef186d1fd",
+    "episode_000019/review/image_evidence.json": "c0b6158e74b4e50e20155843f6c51ab7445e3488d9a0b60c9853a95bc9b2affc",
+    "episode_000019/selection.json": "1c60c3011c801eaf31be396c11b095ce312930cc896f48171a0d401774f3eae5",
+    "episode_000020/camera.npz": "a0e40faa3ce2820df06841651f8d9d6890d5fa95f7a23bc0adfc094262eb6ba2",
+    "episode_000020/camera_report.json": "777b3fd2b09626ab1c990ed8ef3ebf5f09c1a55fd42d62b0e056e0520043cf43",
+    "episode_000020/intrinsics.json": "abf46ba3ceafec82b07b7a0710f89f8051e1f3ace8685e2dc39f875194a768ea",
+    "episode_000020/meshes/blue_cup.obj": "57bb269a06a44f9f56ea59c9eea8b0d704b20d5a8cfd8bbc89f73f5e2f2b1d8f",
+    "episode_000020/meshes/water_pitcher.obj": "08e6ab820cf67665b9e5879e33c352fc680c35297631b5d3431bae23c8d9b9b7",
+    "episode_000020/meshes.json": "a9beb1ab3d131cc12c4d04c1870e79d29e2543ff69d18e8036724e6a10a32d92",
+    "episode_000020/object_poses.npz": "89916218637e2df87bee71308da3f00462f5840159a9522e83bfc067c3ba07ad",
+    "episode_000020/prepared.json": "223bbe1f7a5b66723f93ec27ade135276270b85ef3a7171cd150fc39fea55b3e",
+    "episode_000020/review/contact_sheet.jpg": "149c535e7aa756c0a4f3c66440dabaa6f5b161d7c254e76658319353273ee44c",
+    "episode_000020/review/frame_000000.jpg": "dc47205b4b385eeda5148f13f77feff145d374f32db08dbfc266936eb0f94ba7",
+    "episode_000020/review/frame_000018.jpg": "fe2291317292eb088c9439bbb1c98ead7da54b1852992c17f3aea849ac859a78",
+    "episode_000020/review/frame_000036.jpg": "2cf9179445699fbf9da7deabe35bd9c46b2ebdd4a3b35d227fe1ea16f32622eb",
+    "episode_000020/review/frame_000054.jpg": "85485edfc0e1559a0bf42beea2d9ce81c633743b930c32ace731ecf6646d1d2c",
+    "episode_000020/review/frame_000073.jpg": "139f7e21214c2fa8233c9e83497376838823f7d011bce6340f0d5f9d07816eb5",
+    "episode_000020/review/frame_000091.jpg": "fc4adbf3c14eb1c32d33d9934473ea9cf5bf3d43b81cef2bb36c687bfabd4fb7",
+    "episode_000020/review/frame_000109.jpg": "f4b75aa3fbf91a84486c45172e7113f98b55e7b61b2129d277b10138a71e8c16",
+    "episode_000020/review/frame_000127.jpg": "66339b14499341592e03674c7508672d117fe66fff2bac7e0c8a03e6ccf9c4ce",
+    "episode_000020/review/frame_000146.jpg": "4d9c459ab281d40bffffc8e0a435d04419d99fe8adf2f600eeadd2c60a0ed811",
+    "episode_000020/review/frame_000164.jpg": "6ad4280f8f31835d3e091d0d07a4d4afd6d13025c25511960ba496221ba6a5bc",
+    "episode_000020/review/frame_000182.jpg": "82a5d2c4ec206359eeeda0b39d2a5603a427be351a63f7c8884d896791cf2b25",
+    "episode_000020/review/frame_000201.jpg": "69ccac0e4af33fe0640d447d7d80da7ca33e7d6a988a0296b9ee7efd8ccd39b3",
+    "episode_000020/review/image_evidence.json": "754716abb1efeb434274537f27bcba48f098cd22a548a78b42349309e09bdfe4",
+    "episode_000020/selection.json": "107215f3b64d5b800dab06f1c751d4035a77f6d7593d20feb4b39702dbbb97b8",
+    "episode_000025/camera.npz": "ea38e126ba6d85d66c290aae8ff1a91c8f27a860e2c6425f8d9bb8605058b13d",
+    "episode_000025/camera_report.json": "5b6775775def37b50f9c98c61da791d0b9c95c4828e216a0864c304fbd361e47",
+    "episode_000025/intrinsics.json": "abf46ba3ceafec82b07b7a0710f89f8051e1f3ace8685e2dc39f875194a768ea",
+    "episode_000025/meshes/wooden_piece_1.obj": "535151e6e30b7f418cf59752675defdcf518e8544f7631fa93f7be0744dad98e",
+    "episode_000025/meshes/wooden_piece_2.obj": "07228eb8f638998d8268872b8c3b9fbd1cac218249f907cbaf06ba6aab72e33e",
+    "episode_000025/meshes.json": "a498dde7975532e1c41a47a097370d1160fae63df96bbb57ff64f5f2e309a94f",
+    "episode_000025/object_poses.npz": "9ecec79180e7060e40e7830a55f0b61fb84a64c8c4b678fb56f4c99fd4397458",
+    "episode_000025/prepared.json": "a3eb890288a44175c678257da1a95d0de2f0ab20ef6dfcfb24672e1cf76212e1",
+    "episode_000025/review/contact_sheet.jpg": "484ca968c815a6eeb3eaa660f76be311c8697cbb7788c03e82abb13dddf72f19",
+    "episode_000025/review/frame_000000.jpg": "5f4637fa64a3aee08a3d081e1cee4e2a59fa416493a5ee16bcc2655108eaa0ff",
+    "episode_000025/review/frame_000032.jpg": "74aa33d5da14e430465f27efd88104bdaf2136ac0571ca80296d6c98b4bd3cd6",
+    "episode_000025/review/frame_000064.jpg": "50517fa7de70902c22ef089db9ce1950b1f70c00b1fbb2499792e6cdbb87d422",
+    "episode_000025/review/frame_000096.jpg": "d5185062265b10003605c8fcba27791b9d9dc5348d2c32328c01acc28bed8bfd",
+    "episode_000025/review/frame_000129.jpg": "03a3c789b063656d63f0405f90ab76e5bfe7de66fbe916c4a969462cab358311",
+    "episode_000025/review/frame_000161.jpg": "dc452a873375c15aa50575dd6eb9f8977dcdb96f0e26fe2030e8d31186d19f2c",
+    "episode_000025/review/frame_000193.jpg": "e0a7531b9c8fdc533b218564a47607495523c0472f7adcd46330fa765dfd8df1",
+    "episode_000025/review/frame_000225.jpg": "eb94f416f641e0f562963c8ad6fe97cf3160282c925b4cbd706215ccae8367f9",
+    "episode_000025/review/frame_000258.jpg": "80e787a37e6cf1ac615a5c16b389a1ef823d3fc9512324b9e18c38f7258e3dbf",
+    "episode_000025/review/frame_000290.jpg": "e17601e3386d32b069512ae666447e0aa58085aded51005d3e5c66f013953e5c",
+    "episode_000025/review/frame_000322.jpg": "3af0d7974bed90cea23cc21d2cb7ca81395ab03eeeb751ebe687eb93684dc23b",
+    "episode_000025/review/frame_000355.jpg": "4c83a1e46b18ac27aa212017c8fd13e254c2d31723d741bda0bd34017715ce8e",
+    "episode_000025/review/image_evidence.json": "61533615a03fad1229a24f186f425df2f65ea8e8766feb2a25e75d58f974a244",
+    "episode_000025/selection.json": "70adb8af6d55c4825e0997a3b44a748c072eb4edee4c135f90bcf0ef5d85211f",
+    "episode_000028/camera.npz": "bab83c9097045407d18368803b81f87d51153260041d5f177dc47bd6f8b7d7d0",
+    "episode_000028/camera_report.json": "368db6f2713c55c22dcb22e3944e791a79651acbb82acd8b3f04482d79adb6f1",
+    "episode_000028/intrinsics.json": "abf46ba3ceafec82b07b7a0710f89f8051e1f3ace8685e2dc39f875194a768ea",
+    "episode_000028/meshes/plastic_dish_rack.obj": "090b7d17790ef35fb1c1364488cdec5adc7232f208dfb430494b752b1ab69289",
+    "episode_000028/meshes/white_pot.obj": "a55317043909ef4e2e299fd786e4b5121cc896dabeaa8af980210b514a4f182d",
+    "episode_000028/meshes.json": "348bb6a9a7f99414493b556404e32dd783196429f4af4f41db9b1cd59e8565d5",
+    "episode_000028/object_poses.npz": "3e2eb4c25e6649ed5c65bc79aa95b0890e8411087e78fbc262e0cb4e3238a1f6",
+    "episode_000028/prepared.json": "1f8ee3f77f3e8d65baae157bce8d607f3ec84679aa4faafe91b2002743642aed",
+    "episode_000028/review/contact_sheet.jpg": "24e8d7bb2319cdcb04dd69dd3ab4d63b2c5c49d0da6f3091e5d61d814ed3d970",
+    "episode_000028/review/frame_000000.jpg": "46f6a96528c0e626ca9cb3173413b45dc232d46673d392963f4eba9b41ddfdd3",
+    "episode_000028/review/frame_000019.jpg": "a663adf261e1db593f5ef4587df6951caf7b76bd798f0b1550ec65419e3b3c28",
+    "episode_000028/review/frame_000039.jpg": "403d5bf032a6fedb7e0a0823263a24588ba423d9b77ebf7988418a76754ee383",
+    "episode_000028/review/frame_000059.jpg": "fd0fd633ace9925d66b6aaddd061af80197a4441adb71f7d92b254aefcbced71",
+    "episode_000028/review/frame_000079.jpg": "ce86aae9af55bf1045e1b2a6194186b8cc41cb35e1357b3cdb091f335501e1eb",
+    "episode_000028/review/frame_000099.jpg": "325c7ab154712fd7a30e7fd8865aed24770dbec2dea42df947e4c47c611492ea",
+    "episode_000028/review/frame_000119.jpg": "43a03aae4ad7c109d367bb1ad09622d231842907ddc4ffc718e46718b939ca88",
+    "episode_000028/review/frame_000139.jpg": "a2ff26be0c30ccf4a215d51629667dbf6a6566c96f83023034ed312eaf7633e3",
+    "episode_000028/review/frame_000159.jpg": "27ab86094b61c5f91beaa332358f4ddec77d0220f6bec5184bf6a82be003c272",
+    "episode_000028/review/frame_000179.jpg": "8d4bd1c6d69f2df8d261de07af184681e2a63cf62e318d2ab1b7abf689326bbd",
+    "episode_000028/review/frame_000199.jpg": "65c881c08b5872b62652a7bc9f6b8041cd817c9b7ace6c0c9445adc7b8a1d725",
+    "episode_000028/review/frame_000219.jpg": "2ff482ce6017ef318b41ac5bb8ee0b4f411cf3dcd20cb17ddd29e5c19d1dcf72",
+    "episode_000028/review/image_evidence.json": "8741570f64d0cd258144e5fd06e7c1339651d8eb60da4a94c5fc31f5896c9767",
+    "episode_000028/selection.json": "98d43d3da35f457c402061aaaee7dc6651d4625d2d44a77fdcb6e3e524cc555d",
+    "episode_000030/camera.npz": "451338dc8af5c0d3f6119c382f73fe257fbb50a7b2600fa08e4ade6f62391478",
+    "episode_000030/camera_report.json": "1d83725b5f81a8f46ddac9e9f5f282f0417e914151b4065477a9dfc895de6541",
+    "episode_000030/intrinsics.json": "abf46ba3ceafec82b07b7a0710f89f8051e1f3ace8685e2dc39f875194a768ea",
+    "episode_000030/meshes/mini_sweeper.obj": "cf7bf340cfaddef30fa4c9b2d33ffc64959a7299487c9f49999ae7ed7843b9cb",
+    "episode_000030/meshes/plastic_dish_rack.obj": "090b7d17790ef35fb1c1364488cdec5adc7232f208dfb430494b752b1ab69289",
+    "episode_000030/meshes.json": "374e51028c92d3ecb9e5016be55a538ef34b113ac6d7efdcfd4b0c7797c79ebd",
+    "episode_000030/object_poses.npz": "4fe24b8441f24c88f620a17fb88836ce6e1e177bbf0480341cceacf358261d05",
+    "episode_000030/prepared.json": "61eb9c513986067b22784f356328d5779923d5993b12b933228b426835a87f4b",
+    "episode_000030/review/contact_sheet.jpg": "5313649a4bdaa38bc7b8d4e916181874cea52866b215a2ac6bb87e8946042605",
+    "episode_000030/review/frame_000000.jpg": "f745a178de7c640b72317845423c8f8184c73511b11cea1fda8ec19c17237064",
+    "episode_000030/review/frame_000023.jpg": "8991ef951a2afcd1be62aba600378a94d274d1dd5625aeff807800487dd87e41",
+    "episode_000030/review/frame_000047.jpg": "e4cd66177369f78d77adf71964d598dbd2b6dacbdbde11dcaa4de27005a156fd",
+    "episode_000030/review/frame_000071.jpg": "a306f3144beb907b532bdf88106296aaab4b99898573299db158f41c0a7c6258",
+    "episode_000030/review/frame_000095.jpg": "aa788dcb5bc755252fcde649e2dd558f44979ab2cc21ee956e8ab6530eefae7c",
+    "episode_000030/review/frame_000119.jpg": "f3299f5cd3878b87bd44b2eae0e077dc3039aed6f221f551c02c19c6c5798bd2",
+    "episode_000030/review/frame_000142.jpg": "e0aca3d87050fe06184582d120486f4c617446b1f69a21905c16bd59bef381af",
+    "episode_000030/review/frame_000166.jpg": "7a75a7f89d196886630d0f7a135a2c0e9d8b62a7af07a7ada169392b13a4ac64",
+    "episode_000030/review/frame_000190.jpg": "84452a959c2d6cbe9523f681cc8564a712701202533986a039efe8ba5dca3beb",
+    "episode_000030/review/frame_000214.jpg": "315bd07944440affac71055ae00dfbe4ead30b433285a5d14af6aaff67625e15",
+    "episode_000030/review/frame_000238.jpg": "fd52052edba52eee19e68b614a1336837d99840bdfbc1b9ee243d28e06d140b7",
+    "episode_000030/review/frame_000262.jpg": "7f0221706170df975d3d2feb7bff1899fbc24b4b7a381001563de0cd76472b12",
+    "episode_000030/review/image_evidence.json": "8126fda767baf7dc577a56bb26c9c22bb88764da6cb61a1726a228dba3673868",
+    "episode_000030/selection.json": "39cd00f1d4cf748f461a0e131d8b76513379dcb656476a0052a11f8577be24a9",
+    "episode_000032/camera.npz": "601efa6af8f3be3f9df41929a0483e7226879ed52607ff999ac8b4a36873ccac",
+    "episode_000032/camera_report.json": "8e12d7e1ce8c096c4cc8f89b9828cf5d5e9ac15d1571747fe5a57b7b9d708f88",
+    "episode_000032/intrinsics.json": "abf46ba3ceafec82b07b7a0710f89f8051e1f3ace8685e2dc39f875194a768ea",
+    "episode_000032/meshes/blue_cup.obj": "57bb269a06a44f9f56ea59c9eea8b0d704b20d5a8cfd8bbc89f73f5e2f2b1d8f",
+    "episode_000032/meshes/wooden_spoon.obj": "c9ab88e33e5c78bfbd5e492d12565effafa8cd2c26d14fe6600e7fb0c1c5d904",
+    "episode_000032/meshes.json": "3053e1524d15ddd943a2d234ac2589984a5874d13ae471be405a19f1e419fd5b",
+    "episode_000032/object_poses.npz": "e968329df86f89ed369c5f241c50e2c0bba7c3265fbdd11ed5c2139e27ebd4a4",
+    "episode_000032/prepared.json": "75ef48b157a8fdbb132e1ea51c65fbfd9c5f2e769e1675f9cf75a2bf13d1c018",
+    "episode_000032/review/contact_sheet.jpg": "1b20928f70e84554c880c83c69ef919ae5f1bc9d185798b22f45cebd27d952e3",
+    "episode_000032/review/frame_000000.jpg": "1bd8c06195a95e3275073c4963a562a6cc059e4e4d4a843b1ecb15ec79254d4a",
+    "episode_000032/review/frame_000023.jpg": "4864460385fbdc33aa9939fb10d99004b203a88894898a20483f6e816eb51937",
+    "episode_000032/review/frame_000046.jpg": "d43c18c5299d70255706ba3fb9219f943782552c11e8487baf834bd13703c29f",
+    "episode_000032/review/frame_000070.jpg": "67766a8f681dbc2289074f5658dae446458368530fbc20bd456307dede0dadd5",
+    "episode_000032/review/frame_000093.jpg": "d13eb247a0242492f719eaf8d64310e2154414ae3505ed245a61c46fde7395c9",
+    "episode_000032/review/frame_000117.jpg": "057b01f63ab74ed0009fbbb977d743634a690c07d85d0e1377e3ca8a44f200a6",
+    "episode_000032/review/frame_000140.jpg": "5c1df159eb3b12e82269d420079c22203fbbbc4e4a932c0d3b08e593208c21fe",
+    "episode_000032/review/frame_000164.jpg": "82baa895c404e32adb7c56ceb96b04dd7433d09956b003707589cb4f9abdb40f",
+    "episode_000032/review/frame_000187.jpg": "1d8529a9cea629a3072eb570af39a2afed08c6acfe42bf031601072f51b1ff52",
+    "episode_000032/review/frame_000211.jpg": "11d90fa7fefba34491794eb378983d1376e0b65828797e8843bc8b8620a5de12",
+    "episode_000032/review/frame_000234.jpg": "755caef21845133951748b4e539f973d4d9b901f37cf3138aef663778d8be7c3",
+    "episode_000032/review/frame_000258.jpg": "4c28cb1b58f4fdd4c691097dd8d38c56bc6e0bfdbaf566749372f4a3ebedbd3f",
+    "episode_000032/review/image_evidence.json": "15fda30036e62fc00ea9d522b2af191f16c43c46c6df9fe182e0ecdcd21eaf06",
+    "episode_000032/selection.json": "6f8891a27771e3fb8cbf198e26b2dc1f05d773c913eaeb33c3dbc5d391adf801",
+    "episode_000033/camera.npz": "6fd7f84a96ba6a7e39b9b84708c0bf988eb72a316ce095536840d87044ef4ae7",
+    "episode_000033/camera_report.json": "0113d4e5714371453d7e6e13af5c44d7b596bc8e3ba24011ea06c1ad0e682ee7",
+    "episode_000033/intrinsics.json": "abf46ba3ceafec82b07b7a0710f89f8051e1f3ace8685e2dc39f875194a768ea",
+    "episode_000033/meshes/blue_cup.obj": "57bb269a06a44f9f56ea59c9eea8b0d704b20d5a8cfd8bbc89f73f5e2f2b1d8f",
+    "episode_000033/meshes/wooden_spoon.obj": "c9ab88e33e5c78bfbd5e492d12565effafa8cd2c26d14fe6600e7fb0c1c5d904",
+    "episode_000033/meshes.json": "8068accbd3724d856e99e2712d1081cd9a222c7a5d14f0eb872e3da2b1ce57bf",
+    "episode_000033/object_poses.npz": "e5dd9116bba6087152ba4e88da07c05522b57de014392e98881d209ee5c79aae",
+    "episode_000033/prepared.json": "1da17675530400f6e259970d052d1bef8052590f0cae3b6542095c29a76194ab",
+    "episode_000033/review/contact_sheet.jpg": "b95de0be8cc117ac6c59e373b19283321d5d5c8bc5e97b59c8609c618659ab90",
+    "episode_000033/review/frame_000000.jpg": "dc7f13d7c1517af012b62a74fdf499c9b6c0ed058b07958c1809c11eeee44a08",
+    "episode_000033/review/frame_000031.jpg": "465c416e9c37fa94018e1d3d1b30a55c159c41d388d6d52e766a1146a77279b1",
+    "episode_000033/review/frame_000063.jpg": "021c5868f1297ddd19782900b6b3aa514bf7d28e0e00011db2ee7134bcd388e0",
+    "episode_000033/review/frame_000094.jpg": "a8826b1a9bb71c082153439c69a2d1af1a9fd3f6c91e4fd21cd2b0f9e672e324",
+    "episode_000033/review/frame_000126.jpg": "84f948baa7802a76bb887c5f3abeaef3bfa1879a349382548186a95d792d62d1",
+    "episode_000033/review/frame_000157.jpg": "690d40b420e08d1888926ab953adc2a629c653152624b6b3219925f7fb72d62e",
+    "episode_000033/review/frame_000189.jpg": "e0cbac974b7f899ad76f08538241a34791bdd3a921e64db32a2fbfdde09d4565",
+    "episode_000033/review/frame_000220.jpg": "694713f7c981c3ba818ccc3c9ba179ae826125fd7cd5a1f6e03c40f045eefe9d",
+    "episode_000033/review/frame_000252.jpg": "c4b093394c304df8d050e45d1a07735e04934d2b570a818fc4e34edf1a89b35e",
+    "episode_000033/review/frame_000283.jpg": "973266ac9082944c6ca3031c0eb22078bddc39b2f3a42f0d830c65c6b0918a86",
+    "episode_000033/review/frame_000315.jpg": "175ace767bf7ab40502e955821a255931d29e73940268beed904954007a6e047",
+    "episode_000033/review/frame_000347.jpg": "219924241b17c2381f6d730fda67bbe44bb2f08ce8fb95b4aa2acaeae6203902",
+    "episode_000033/review/image_evidence.json": "efda467516855352a0bc479b5512ac7f91b5ba13d5ded280df6bf50e198b9b14",
+    "episode_000033/selection.json": "9da2a2ca5fa1a67f4305c0f5e1582fd1e8d444f970b2893d10a8020b649c85db",
+    "episode_000035/camera.npz": "934e6bd4d519c2adcb9a75cc501f82c6e3a504c123941bf70e7e041efa779c51",
+    "episode_000035/camera_report.json": "3dbc43e577d49a9fa9dc71e7400e4632c902354eb0280c0573fabe6a7ebb371a",
+    "episode_000035/intrinsics.json": "abf46ba3ceafec82b07b7a0710f89f8051e1f3ace8685e2dc39f875194a768ea",
+    "episode_000035/meshes/wooden_spoon.obj": "c9ab88e33e5c78bfbd5e492d12565effafa8cd2c26d14fe6600e7fb0c1c5d904",
+    "episode_000035/meshes.json": "3310057a9918beb337d0022e3b6f4366a8d7787328560ca62c71a505564cad72",
+    "episode_000035/object_poses.npz": "13b503f6d4e7abe4225649e8f42ada73ae9f339216a228186a62ea2edd3c1dcc",
+    "episode_000035/prepared.json": "d1c6e8607f701c6d49bdd0f381e57427b7b3d4f3ce35d3697b60efb745941857",
+    "episode_000035/review/contact_sheet.jpg": "91d626807faa21c98a7d3fdbbf751c5266910366248f260c71d9c18b09907c2d",
+    "episode_000035/review/frame_000000.jpg": "aee6c993e3245de4d57e3b52bc739d49cffed594449cb16d8f1f5e4d03e3ea60",
+    "episode_000035/review/frame_000038.jpg": "f572ab6ac639b4351cb76f704ef736002b729fdc2979cc3b9daf7bb497b40d55",
+    "episode_000035/review/frame_000076.jpg": "adc12e4d62542d53c59f7ecfe98360f2b1da8a110d72f9ff4a89020a0074b9f5",
+    "episode_000035/review/frame_000114.jpg": "f3d8c9e912351c3168e81a16bd3c9acc5b69132d38d2202bd1aaf3c99fa4578b",
+    "episode_000035/review/frame_000152.jpg": "c4876b952f091636c1c0efe3068b7996834d8abe919cd277e3fac3ccb2150cd9",
+    "episode_000035/review/frame_000190.jpg": "dd2b2dbf5a4ba5418a928a991ee68df9e306939a6d6e048531dbc33d8ec1f64c",
+    "episode_000035/review/frame_000229.jpg": "175f0f0158b05068e1f645c6dd22ef56a0b6c43308ab040c687524d6cacf7733",
+    "episode_000035/review/frame_000267.jpg": "c73f480267478aee7e1959a24ec13ca59b579eaeb962dc6ada14817fb4fdef37",
+    "episode_000035/review/frame_000305.jpg": "78c520193e5c9d6315f90498c4f55eebaffae8d39602d97921cf25b8b4be4fc0",
+    "episode_000035/review/frame_000343.jpg": "349c095a4b87eb317f6759eac46de72d43c51fafd7a5758246ba7952923e3878",
+    "episode_000035/review/frame_000381.jpg": "72bed3b8c09e360323c32fd0b0bc22c9429a81c19b26abbe2f2ea7a3bcb6f13b",
+    "episode_000035/review/frame_000420.jpg": "b412bf14a193bd5da3b78ef4a3f9d7cb6bd46108a736aa5df0e6fb02cb9b1690",
+    "episode_000035/review/image_evidence.json": "e888b1588ae3d8fb7f46b8d0fca080414168f9bdb4c01496ae80e798e1d29f8a",
+    "episode_000035/selection.json": "49e3a3632555479418a9ff41921d3eeec4cd3685db10d7b328394c2648150af2",
+    "episode_000036/camera.npz": "53c33908f552533ee5ac28c80ab678ecc5ecf150353e6be7d03c3e52c34931e5",
+    "episode_000036/camera_report.json": "5b49f9940eb2355cc81ec7397dc9f4d9b3f5eef7510b9e5c535d500a0a5121b8",
+    "episode_000036/intrinsics.json": "abf46ba3ceafec82b07b7a0710f89f8051e1f3ace8685e2dc39f875194a768ea",
+    "episode_000036/meshes/wooden_spoon.obj": "c9ab88e33e5c78bfbd5e492d12565effafa8cd2c26d14fe6600e7fb0c1c5d904",
+    "episode_000036/meshes.json": "18f1eb4638e238c2a164249d39de623b5781b8c2d6f97a0193bd77a00de652e2",
+    "episode_000036/object_poses.npz": "aceb0ecf335b93e19314b102171f268d62e8de6c1fe1707bf7ff95c07642355e",
+    "episode_000036/prepared.json": "590eba2b60a4fce263aae3d298f3b9cbe8a3768caf100ea28aeed94e3595fb54",
+    "episode_000036/review/contact_sheet.jpg": "0cf5ef2d07bae70a139d69741dfa42e5396b72bcdbd7cf819fcf61cb8da6f9a9",
+    "episode_000036/review/frame_000000.jpg": "a39ced7acb700223febd232c80552294c45521bfea446a0cbe39d60aec87aaaa",
+    "episode_000036/review/frame_000036.jpg": "64e04fd226a3ab9665d0ed92ede7ab2f74b303d76f8b70059c60fcc40055029b",
+    "episode_000036/review/frame_000073.jpg": "03eb1ae1267777f3a6ac7172d9884f32002191c8f86b02f78ba2fa2e35decfa2",
+    "episode_000036/review/frame_000110.jpg": "fbd50de04a0636633870898f240db904e3f67ffe9a4b86f7d3bb459c2205612d",
+    "episode_000036/review/frame_000147.jpg": "31f520fc5a8fdbace6fa0c1e9ccc55b3806df27dbc567aa9dd076066badfa349",
+    "episode_000036/review/frame_000184.jpg": "4510ef92e7c5c3600b5d50bce19b5907742b3e75d1cd5a1af8bd5f866c0c7ed6",
+    "episode_000036/review/frame_000221.jpg": "2bbd7c3cbde0b55109ea745e1f931ed61f7b5e2b013d1ec74a6009e9edd997c9",
+    "episode_000036/review/frame_000258.jpg": "d3d01cf5d9cd02fadf295d470abe5ee369c8f6cea1a65ac86d09e0f568179e7d",
+    "episode_000036/review/frame_000295.jpg": "e8f8945a7bfc8974e8f934c3fcea23e6e663025f0148be71bf6090434db422dc",
+    "episode_000036/review/frame_000332.jpg": "c293109e83d69e0b0798ad48eef8ac0e8a1c130eb414557d1dcb788dc4b610cc",
+    "episode_000036/review/frame_000369.jpg": "f51ebad33571f0c401911dcea41bc0a7473683f6bb8d2c490a0c413b5249b9e5",
+    "episode_000036/review/frame_000406.jpg": "cbb292dc1109d2eda27c1a4c51d2af1619fc4d19892bd645db0b5de48be0ff48",
+    "episode_000036/review/image_evidence.json": "b46a72281ed3dbe4f8bfcfd1d46ff459b4c663721d9346adfc9940c3feb32e57",
+    "episode_000036/selection.json": "b1d44d75a6eb2890a9c7f671ce0544b2e33cc64e7b71e9253190c8522aba8200",
+    "episode_000037/camera.npz": "5439cd05bf9a763e6fc2b4727abdd62b2313014c8a4a5bdeb549b93fb9e28c48",
+    "episode_000037/camera_report.json": "9bb4a62575b9179999003b1cd3971e2c6a69fff9658eaa844c34629c1a139bdb",
+    "episode_000037/intrinsics.json": "abf46ba3ceafec82b07b7a0710f89f8051e1f3ace8685e2dc39f875194a768ea",
+    "episode_000037/meshes/wooden_spoon.obj": "c9ab88e33e5c78bfbd5e492d12565effafa8cd2c26d14fe6600e7fb0c1c5d904",
+    "episode_000037/meshes.json": "0025cfcf86594e988f4877315cc04f27c92b1fdd1c1496af97442a73467f21e8",
+    "episode_000037/object_poses.npz": "f8ba224cff986d21c1cb75f99f23bd78ad8714264de3ff65a1145b2baa6d578d",
+    "episode_000037/prepared.json": "55ef6b954a39ffa260a5c656b7f4903442ccedf9ec3d771bb17dfecbafcd1ee0",
+    "episode_000037/review/contact_sheet.jpg": "4a06c1d587d8a95da54b90511ff082c2bbb4608ee57f09a8d7013ca40b42d92e",
+    "episode_000037/review/frame_000000.jpg": "63fe26e21239eaf9835be7c54b70b696a399b64a3ea99115fe08e1e5f4c92723",
+    "episode_000037/review/frame_000013.jpg": "435188221934028b22c589a4d1c760925da2070a98588a9b8ed9247b21bd4307",
+    "episode_000037/review/frame_000027.jpg": "0550212563ffa8dac9d482dcf84ab9d1598f0fbcacf4a5578392a1aa17775c97",
+    "episode_000037/review/frame_000040.jpg": "257222495bb40783fb6eca54754ab129d4e620984754bb8fe48e84a6ba39fab9",
+    "episode_000037/review/frame_000054.jpg": "cf0636e815572437681f70f872d9808b82c450590123476f005f725935144efb",
+    "episode_000037/review/frame_000068.jpg": "f6b23640aa37332da341daff980405fde2f3b9b5caf61d8bdba31b59227629ab",
+    "episode_000037/review/frame_000081.jpg": "db7a1882cb6acba0648e4596b5998e37e6dd6870e2cd3dbb8c160acd410e0069",
+    "episode_000037/review/frame_000095.jpg": "47c4242e7956e4feb82b963b12d0e9d11ecfd100024c340d5c656fa7c82ba848",
+    "episode_000037/review/frame_000109.jpg": "9af5ce2ec11b80d65993efd5dedc992cf320b657bb9129b6b851849065799f04",
+    "episode_000037/review/frame_000122.jpg": "f3fb9f5152215c0d4d3694005ee9d336ae3b5edba2bae94a0407ef6b20955915",
+    "episode_000037/review/frame_000136.jpg": "6d7e7fb1d36bbd1ffe15cd7d9821682be5eb60427e128dccd3f0dcc650575a73",
+    "episode_000037/review/frame_000150.jpg": "31eaaa300bc5621793ad1321c7b742ad62432daea654c1dd83dcbfd713c2405a",
+    "episode_000037/review/image_evidence.json": "131656e61abca0afc012212afdb12d4890a6852cbd0c799c76947b15aa225f61",
+    "episode_000037/selection.json": "a07cf256142c65d8bed7111534cf5798d574830cdf1e56db47e9b359dd0e33e8",
+    "episode_000038/camera.npz": "55b4519219234af327a0788d0f95f2ef63d8ca1609aafa71cac8dffe6813d4be",
+    "episode_000038/camera_report.json": "92a8cd113f41aee4d169022b81bfa5b06e60ebe25fc341ad8bd35dd0f446de42",
+    "episode_000038/intrinsics.json": "abf46ba3ceafec82b07b7a0710f89f8051e1f3ace8685e2dc39f875194a768ea",
+    "episode_000038/meshes/mini_dust_pan.obj": "1d298c012d68712ce49ff3b73a36f1b8f76e6cdb6bba3ee1357c467c3e61075f",
+    "episode_000038/meshes.json": "6632c2146bf733288256660edc318cff11d2e5eb1f789e251a28cd345363556a",
+    "episode_000038/object_poses.npz": "f2a3aada317211540b2d41ac41647fd371a7a6ce15e91926e28e4959e16604f5",
+    "episode_000038/prepared.json": "19ccd28a09a9c976815dc9e3136fb8643674cd646e65bc8ce2dfc3d00ae5ed54",
+    "episode_000038/review/contact_sheet.jpg": "be89303a1a0e2592529ab3b45d07f871d2cba9a89167934d6c51ce32534346a0",
+    "episode_000038/review/frame_000000.jpg": "b42f84e9087c42a503afa9ffdebaeca67465b8ae9c6c93b776f26d5264247d8c",
+    "episode_000038/review/frame_000023.jpg": "2e5ff4e738527c4fae5c31b14f9c5f5b46b0dbbb4f102e9f20b347618558cad5",
+    "episode_000038/review/frame_000047.jpg": "ed143d59df86c6eb1eb4ea946af33cec01a2c27180a06e2add174774a92633f1",
+    "episode_000038/review/frame_000071.jpg": "9eb0f93b76fadbcfd783612522f171a7df9e3659b7c545de79d6e9514da7dd8c",
+    "episode_000038/review/frame_000095.jpg": "bbfeba2af590721e45e6cdaca09baf4fa582095d14ed9bd714f1edc4e6a604b8",
+    "episode_000038/review/frame_000119.jpg": "8e5c638e21879b07eb17115b1f8552a323fbbc3c8389892fb57c61138ac6b687",
+    "episode_000038/review/frame_000142.jpg": "3bb6072aa0406f9804b915d84891aa92e1487d8f1a6f9a653d534ad8acbe0821",
+    "episode_000038/review/frame_000166.jpg": "6325028472349752049238dbcc61f535626691e3c908e178ef12774ec9dc6ff2",
+    "episode_000038/review/frame_000190.jpg": "6c4a951a785c811b3cb4a3ac618dd0e71fda685d43802c449be82912e7ca1c0d",
+    "episode_000038/review/frame_000214.jpg": "051521e5b2138048730566006b63cd28d3c75831ec95430f88b72fa640c201a4",
+    "episode_000038/review/frame_000238.jpg": "8eb15505d1907e62cba0d968bac52ac60d8b26beaf4104e8452af0d6be080b66",
+    "episode_000038/review/frame_000262.jpg": "af1baf927cbeb5ca46bbb4d86adfac2987999dcffa567f5aed1c0de98d2e8186",
+    "episode_000038/review/image_evidence.json": "1e5aeb8ea8427e1c460d6af3ec4fb7163bd55a9bd54432a624fd34f89f5cb95a",
+    "episode_000038/selection.json": "6fc6fa62df1570b8c354cd8e4aa4e5d6ff594ef772104cffdcd103a11e08ddd2"
+  }
+}

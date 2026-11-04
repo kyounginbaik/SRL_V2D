@@ -1,0 +1,11 @@
+{
+ "diagnostic_only": true,
+ "label": "A20_ep28_b2",
+ "episode": 28,
+ "base": "track3_v29_20261030 (donor package: only this episode differs)",
+ "base_sha": "7f44ef5e5728a59ee91a0026ac9582ef79f7314dcc1d42c7ba9aa4c37f44e21b",
+ "candidate": "A20_ep28_b2",
+ "candidate_checkpoint_sha256": "b056f9f4897be3b87a02f7e9607537f6f77bf671658b933b124808b55348a6b2",
+ "sha": "153fa1ef98d35e8bfce59784bef06de6ed2e7e5edc8f55961a6b11fe9e057318",
+ "rows_replaced": 440
+}

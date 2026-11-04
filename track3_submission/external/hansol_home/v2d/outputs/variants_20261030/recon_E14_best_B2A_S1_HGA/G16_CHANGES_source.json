@@ -1,0 +1,36 @@
+{
+ "base": "/data1/SRL_V2D/challenge_reconstruction/reconstruction_recovery_20261026/selected20_final_v12b_g15",
+ "ground_truth_used": false,
+ "rule": "G16: constant spoon body roll where every early-window (f0-23) GT-free estimator agrees (2D ball roll scan plain/image-shift, 3D stereo ball plain/shift, 6-DoF ball fit 2D/3D): |median| >= 10 deg, same sign, bootstrap CI excludes 0",
+ "evidence": "reconstruction_recovery_20261026/streamG16_spoon/out/{roll_offsets,offs2_ep*,offs3_ep*,f0fit_ep*_w24}.json",
+ "episodes": {
+  "32": {
+   "roll_deg": -15.0,
+   "axis_body": [
+    -1.0,
+    -4.227115960309546e-11,
+    8.637119676197258e-11
+   ],
+   "centroid_body": [
+    -0.0010956958968087668,
+    -0.00023529495572413277,
+    0.0004255728542681947
+   ],
+   "md5": "23de0dc7"
+  },
+  "3": {
+   "roll_deg": -13.5,
+   "axis_body": [
+    -1.0,
+    -4.227115960309546e-11,
+    8.637119676197258e-11
+   ],
+   "centroid_body": [
+    -0.0010956958968087668,
+    -0.00023529495572413277,
+    0.0004255728542681947
+   ],
+   "md5": "a1d99b7d"
+  }
+ }
+}

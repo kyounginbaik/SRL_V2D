@@ -1,0 +1,91 @@
+{
+ "base": "/data1/SRL_V2D/challenge_reconstruction/reconstruction_recovery_20261026/selected20_final_v10_g12",
+ "retime": {
+  "1": [
+   0.9
+  ],
+  "3": [
+   0.9
+  ],
+  "5": [
+   0.9
+  ],
+  "6": [
+   0.9
+  ],
+  "8": [
+   0.875
+  ],
+  "10": [
+   0.9
+  ],
+  "14": [
+   0.875
+  ],
+  "15": [
+   0.9
+  ],
+  "16": [
+   0.9
+  ],
+  "19": [
+   0.9
+  ],
+  "20": [
+   0.925,
+   1.85
+  ],
+  "25": [
+   0.875
+  ],
+  "28": [
+   0.875
+  ],
+  "30": [
+   0.9
+  ],
+  "32": [
+   0.9
+  ],
+  "33": [
+   0.875
+  ],
+  "35": [
+   0.875
+  ],
+  "36": [
+   0.9
+  ],
+  "37": [
+   0.875
+  ],
+  "38": [
+   0.875
+  ]
+ },
+ "mesh_swaps": {},
+ "ground_truth_used": false,
+ "method": "G15: camera path re-estimated with clock-consistent stereo lifting (camera_sync.py, if camera given), then poses resampled at t+delta (ego_cam_a -> ego_cam_b/c clock, GT-free optical-flow sync); mesh swaps from GT-free silhouette mesh refinement",
+ "camera": {
+  "1": "/data1/SRL_V2D/challenge_reconstruction/campaign_v22_20261028/streamG15/cam/evaluation_1/camera.npz",
+  "3": "/data1/SRL_V2D/challenge_reconstruction/campaign_v22_20261028/streamG15/cam/evaluation_3/camera.npz",
+  "5": "/data1/SRL_V2D/challenge_reconstruction/campaign_v22_20261028/streamG15/cam/evaluation_5/camera.npz",
+  "6": "/data1/SRL_V2D/challenge_reconstruction/campaign_v22_20261028/streamG15/cam/evaluation_6/camera.npz",
+  "8": "/data1/SRL_V2D/challenge_reconstruction/campaign_v22_20261028/streamG15/cam/evaluation_8/camera.npz",
+  "10": "/data1/SRL_V2D/challenge_reconstruction/campaign_v22_20261028/streamG15/cam/evaluation_10/camera.npz",
+  "14": "/data1/SRL_V2D/challenge_reconstruction/campaign_v22_20261028/streamG15/cam/evaluation_14/camera.npz",
+  "15": "/data1/SRL_V2D/challenge_reconstruction/campaign_v22_20261028/streamG15/cam/evaluation_15/camera.npz",
+  "16": "/data1/SRL_V2D/challenge_reconstruction/campaign_v22_20261028/streamG15/cam/evaluation_16/camera.npz",
+  "19": "/data1/SRL_V2D/challenge_reconstruction/campaign_v22_20261028/streamG15/cam/evaluation_19/camera.npz",
+  "20": "/data1/SRL_V2D/challenge_reconstruction/campaign_v22_20261028/streamG15/cam/evaluation_20/camera.npz",
+  "25": "/data1/SRL_V2D/challenge_reconstruction/campaign_v22_20261028/streamG15/cam/evaluation_25/camera.npz",
+  "28": "/data1/SRL_V2D/challenge_reconstruction/campaign_v22_20261028/streamG15/cam/evaluation_28/camera.npz",
+  "30": "/data1/SRL_V2D/challenge_reconstruction/campaign_v22_20261028/streamG15/cam/evaluation_30/camera.npz",
+  "32": "/data1/SRL_V2D/challenge_reconstruction/campaign_v22_20261028/streamG15/cam/evaluation_32/camera.npz",
+  "33": "/data1/SRL_V2D/challenge_reconstruction/campaign_v22_20261028/streamG15/cam/evaluation_33/camera.npz",
+  "35": "/data1/SRL_V2D/challenge_reconstruction/campaign_v22_20261028/streamG15/cam/evaluation_35/camera.npz",
+  "36": "/data1/SRL_V2D/challenge_reconstruction/campaign_v22_20261028/streamG15/cam/evaluation_36/camera.npz",
+  "37": "/data1/SRL_V2D/challenge_reconstruction/campaign_v22_20261028/streamG15/cam/evaluation_37/camera.npz",
+  "38": "/data1/SRL_V2D/challenge_reconstruction/campaign_v22_20261028/streamG15/cam/evaluation_38/camera.npz"
+ }
+}

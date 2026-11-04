@@ -1,0 +1,338 @@
+{
+  "metrics": {
+    "metric": "MP-SR",
+    "reference_proxy_mp_sr": 1.0,
+    "declared_frame_mp_sr": 1.0,
+    "official_style_reference_proxy": {
+      "mp_sr": 1.0,
+      "per_world_success": [
+        true
+      ],
+      "objects": {
+        "blue_cup": {
+          "mean_position_error_m": [
+            0.014268943709390906
+          ],
+          "mean_position_error_cm": [
+            1.4268943709390907
+          ],
+          "mean_orientation_error_degrees": [
+            7.594321519932168
+          ],
+          "success_per_world": [
+            true
+          ],
+          "max_position_error_m": [
+            0.037647213622892174
+          ],
+          "max_orientation_error_degrees": [
+            22.247355571844814
+          ]
+        },
+        "wooden_spoon": {
+          "mean_position_error_m": [
+            0.017445850987835992
+          ],
+          "mean_position_error_cm": [
+            1.7445850987835994
+          ],
+          "mean_orientation_error_degrees": [
+            7.572026248786381
+          ],
+          "success_per_world": [
+            true
+          ],
+          "max_position_error_m": [
+            0.051208645119525324
+          ],
+          "max_orientation_error_degrees": [
+            27.93094601929131
+          ]
+        }
+      }
+    },
+    "declared_frame_reference_proxy": {
+      "mp_sr": 1.0,
+      "per_world_success": [
+        true
+      ],
+      "objects": {
+        "blue_cup": {
+          "mean_position_error_m": [
+            0.013328706498036295
+          ],
+          "mean_position_error_cm": [
+            1.3328706498036296
+          ],
+          "mean_orientation_error_degrees": [
+            7.594321519932172
+          ],
+          "success_per_world": [
+            true
+          ],
+          "max_position_error_m": [
+            0.03696658221219827
+          ],
+          "max_orientation_error_degrees": [
+            22.247355571844817
+          ]
+        },
+        "wooden_spoon": {
+          "mean_position_error_m": [
+            0.016667480224833102
+          ],
+          "mean_position_error_cm": [
+            1.6667480224833102
+          ],
+          "mean_orientation_error_degrees": [
+            7.572026248786364
+          ],
+          "success_per_world": [
+            true
+          ],
+          "max_position_error_m": [
+            0.051117232696377496
+          ],
+          "max_orientation_error_degrees": [
+            27.93094601929131
+          ]
+        }
+      }
+    },
+    "estimated": true,
+    "leaderboard_score": false,
+    "ground_truth": "immutable final_recon reconstructed object poses; confidential ground truth unavailable",
+    "physics_validation": "separate; MP-SR alone does not verify physically valid robot control",
+    "position_threshold_m": 0.03,
+    "orientation_threshold_degrees": 30.0,
+    "strict_thresholds": true,
+    "averaging": "framewise symmetry error, then arithmetic mean over all original frames per object; every object must pass",
+    "episode_aggregation": "mean episode MP-SR; episodes have equal weight regardless of duration",
+    "frames": 348,
+    "worlds": 1,
+    "horizon_seconds": [
+      0.0,
+      17.35
+    ],
+    "full_horizon": true,
+    "temporal_warp": false,
+    "per_object_pose_alignment": false,
+    "recording_to_reference_transform": [
+      [
+        0.9994707317458374,
+        -0.002480602157383174,
+        -0.0324361371987584,
+        -0.007166002773313293
+      ],
+      [
+        -0.0024806021573831726,
+        0.9883737839652739,
+        -0.15202338564544132,
+        -0.033585996891929815
+      ],
+      [
+        0.032436137198758395,
+        0.15202338564544132,
+        0.9878445157111115,
+        0.21824104688579007
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ],
+    "official_initial_scene_transforms": [
+      [
+        [
+          1.0,
+          2.4876942745888646e-17,
+          8.718241968542566e-17,
+          -0.0028143575298061954
+        ],
+        [
+          2.505815656785678e-17,
+          1.0,
+          3.621116833176133e-17,
+          0.001319781187247987
+        ],
+        [
+          -7.893323199668703e-17,
+          -6.06896284828044e-17,
+          0.9999999999999999,
+          0.0005078784488226629
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ]
+    ],
+    "geometry": {
+      "official_symmetry_source": "https://nvidia-isaac.github.io/video_to_data/v2d_challenge/assets/v2d_submission_kit.zip",
+      "official_kit_sha256": "8d2bce64ecab6da4eee938fe2859bd60e767535af30068b386e2dc20a72cf43e",
+      "confidential_geometry_available": false,
+      "objects": {
+        "blue_cup": {
+          "symmetry": "continuous_axial",
+          "anchor_local_m": [
+            0.0017280318777371819,
+            0.00011786628235923117,
+            0.002892568641229766
+          ],
+          "anchor_source": "surface centroid of exact local reconstruction mesh, not confidential scan",
+          "mesh_path": "/data1/SRL_V2D/challenge_reconstruction/campaign_v22_20261028/streamK33_ep33/staging/K33_H5r16_ep33_c3/components/episode_000033/portable/source/episode_000033/assets/blue_cup.obj",
+          "mesh_sha256": "57bb269a06a44f9f56ea59c9eea8b0d704b20d5a8cfd8bbc89f73f5e2f2b1d8f",
+          "axis_local": [
+            -0.0237963577378219,
+            -0.005046973670649213,
+            0.9997040869253169
+          ],
+          "axis_source": "local mesh surface covariance, minimum axis for lid / maximum axis for tall cups; estimated proxy",
+          "axis_eigenvalues_m2": [
+            0.0007441569789454614,
+            0.000746879175962094,
+            0.00337423191295323
+          ],
+          "axis_eigenvalue_gap": 4.517774790824374
+        },
+        "wooden_spoon": {
+          "symmetry": "none",
+          "anchor_local_m": [
+            -0.001095695896808772,
+            -0.0002352949557241332,
+            0.000425572854268195
+          ],
+          "anchor_source": "surface centroid of exact local reconstruction mesh, not confidential scan",
+          "mesh_path": "/data1/SRL_V2D/challenge_reconstruction/campaign_v22_20261028/streamK33_ep33/staging/K33_H5r16_ep33_c3/components/episode_000033/portable/source/episode_000033/assets/wooden_spoon.obj",
+          "mesh_sha256": "c9ab88e33e5c78bfbd5e492d12565effafa8cd2c26d14fe6600e7fb0c1c5d904",
+          "axis_local": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "axis_source": "not applicable: official full orientation"
+        }
+      }
+    },
+    "metric_source": {
+      "url": "https://nvidia-isaac.github.io/video_to_data/v2d_challenge/assets/v2d_submission_kit.zip",
+      "sha256": "8d2bce64ecab6da4eee938fe2859bd60e767535af30068b386e2dc20a72cf43e",
+      "functions": "v2dlb/track3_pose.py:_symmetry_orientation_errors,_align_registered_scene,_registered_pose_metric"
+    },
+    "provenance": {
+      "reference": "/data1/SRL_V2D/challenge_reconstruction/campaign_v22_20261028/streamK33_ep33/staging/K33_H5r16_ep33_c3/components/episode_000033/portable/source/episode_000033/object_poses.npz",
+      "reference_sha256": "242d5144ac4861febf8187fcc1f18d7d9d18260957109816b3bd9d6c22da0544",
+      "trajectory": "/data1/SRL_V2D/challenge_reconstruction/campaign_v16_20261023/common_v2_candidates/K33_K33_H5r16_c3/episode_000033/backend/evaluation/execution/trajectory.npz",
+      "trajectory_sha256": "968e7540003b6f21124090fa5acba3f7147b194fa27f3ee11a18c574cfad1c8f",
+      "adapter_manifest": "/data1/SRL_V2D/challenge_reconstruction/campaign_v16_20261023/common_v2_candidates/K33_K33_H5r16_c3/episode_000033/backend/runtime/episodes/episode_000033/input_manifest.json",
+      "adapter_manifest_sha256": "0900fabe890ccf0dfab60326e80761c1fde9dc46b46c57cd80c15e4a9c58f482",
+      "scene": "/data1/SRL_V2D/challenge_reconstruction/campaign_v16_20261023/common_v2_candidates/K33_K33_H5r16_c3/episode_000033/backend/evaluation/execution/scene_physics.xml",
+      "scene_sha256": "43383ede89308c87f017d67a70c4082e9e904620b2245d6e2f6c941ba97c3d77",
+      "geometry": "/data1/SRL_V2D/challenge_reconstruction/campaign_v16_20261023/common_v2_candidates/K33_K33_H5r16_c3/episode_000033/backend/runtime/episodes/episode_000033/metric_geometry.json",
+      "geometry_sha256": "61ea82ec456ae93024e883c57c83dfc30228dfbcdc0613173b284f522359819b"
+    }
+  },
+  "backend_command": [
+    "/data1/SRL_V2D/challenge_reconstruction/dexagent_final_recon_20261017/.venv/bin/python",
+    "/data1/SRL_V2D/challenge_reconstruction/campaign_v22_20261028/streamK33_ep33/staging/K33_H5r16_ep33_c3/components/episode_000033/portable/code/reproduce_policy_component.py",
+    "replay",
+    "--bundle",
+    "/data1/SRL_V2D/challenge_reconstruction/campaign_v22_20261028/streamK33_ep33/staging/K33_H5r16_ep33_c3/components/episode_000033/portable",
+    "--output",
+    "/data1/SRL_V2D/challenge_reconstruction/campaign_v16_20261023/common_v2_candidates/K33_K33_H5r16_c3/episode_000033/backend"
+  ],
+  "backend_kind": "frozen_mujoco_rbf",
+  "legacy_component": "/data1/SRL_V2D/challenge_reconstruction/campaign_v22_20261028/streamK33_ep33/staging/K33_H5r16_ep33_c3/components/episode_000033",
+  "source_reference_sha256": "48d78862e8b74534bf2f755c78579c4c1602d01baf89a7bfb7eb2d42b746017b",
+  "exact_previous_physical_states_actions": true,
+  "schema": "uniretarget_common_episode_execution_v1",
+  "episode": "episode_000033",
+  "started_utc": "2026-11-02T20:10:46.537420+00:00",
+  "completed_utc": "2026-11-02T20:11:33.380354+00:00",
+  "build_manifest_sha256": "5674b2fea091aeef2b50a6f2b72cc4f8f042b4695b5416addb29e855e948b925",
+  "eval_code_sha256": "fdddb348e3fe30b6786aad8430cd198d536dd50c947b4d12f99394d51d0caa76",
+  "eval_script_sha256": "cbe866f9cd8a8b9038671a25c8386ba38cfd24c4ec853299dc63ce8814a0177c",
+  "code_commit_url": "https://github.com/kyounginbaik/SRL_V2D/commit/5cc5ca516fc791f745449b279620c67e748856cd",
+  "checkpoint": {
+    "path": "/data1/SRL_V2D/challenge_reconstruction/campaign_v22_20261028/streamK33_ep33/staging/K33_H5r16_ep33_c3/components/episode_000033/portable/original/policy.npz",
+    "sha256": "381aa36553286c9d72cabb7f633ea7940e0dcf2d1451b163f5aacf346e386962"
+  },
+  "actions": {
+    "path": "/data1/SRL_V2D/challenge_reconstruction/campaign_v16_20261023/common_v2_candidates/K33_K33_H5r16_c3/episode_000033/backend/evaluation/execution/trajectory.npz",
+    "sha256": "968e7540003b6f21124090fa5acba3f7147b194fa27f3ee11a18c574cfad1c8f"
+  },
+  "backend_export": {
+    "path": "/data1/SRL_V2D/challenge_reconstruction/campaign_v16_20261023/common_v2_candidates/K33_K33_H5r16_c3/episode_000033/backend/fresh_trajectory.parquet",
+    "sha256": "b15fe20af206a255a063e3ce20f421006e9628c7bc1005f52fa165dc1da20d67",
+    "validation": {
+      "rows": 696,
+      "object_names": [
+        "blue_cup",
+        "wooden_spoon"
+      ],
+      "full_public_grid": true,
+      "source_timestamp_grid": true,
+      "finite": true,
+      "provenance": {
+        "eval_script_sha256": "32f7b038ada4bf63e237e4eafebff2c21a726e121170adcb66fd62fb3e73af6e",
+        "eval_code_sha256": "250a9e63e8201b79a1a9c14b54d92eb40b83d3d21733060fe90a4aa51da62a2f",
+        "checkpoint_sha256": "381aa36553286c9d72cabb7f633ea7940e0dcf2d1451b163f5aacf346e386962"
+      },
+      "sha256": "b15fe20af206a255a063e3ce20f421006e9628c7bc1005f52fa165dc1da20d67",
+      "official_runtime_certification": false
+    }
+  },
+  "trajectory": {
+    "path": "/data1/SRL_V2D/challenge_reconstruction/campaign_v16_20261023/common_v2_candidates/K33_K33_H5r16_c3/episode_000033/results/episode_000033.parquet",
+    "sha256": "89b12f5d4efc5ba1b39169a891e29926b643f86956d782cba7b2dfafd9d7bd99",
+    "validation": {
+      "rows": 696,
+      "object_names": [
+        "blue_cup",
+        "wooden_spoon"
+      ],
+      "full_public_grid": true,
+      "source_timestamp_grid": true,
+      "finite": true,
+      "provenance": {
+        "eval_script_sha256": "cbe866f9cd8a8b9038671a25c8386ba38cfd24c4ec853299dc63ce8814a0177c",
+        "eval_code_sha256": "fdddb348e3fe30b6786aad8430cd198d536dd50c947b4d12f99394d51d0caa76",
+        "checkpoint_sha256": "381aa36553286c9d72cabb7f633ea7940e0dcf2d1451b163f5aacf346e386962"
+      },
+      "sha256": "89b12f5d4efc5ba1b39169a891e29926b643f86956d782cba7b2dfafd9d7bd99",
+      "official_runtime_certification": false
+    }
+  },
+  "meshes": {
+    "blue_cup": {
+      "path": "/data1/SRL_V2D/challenge_reconstruction/campaign_v16_20261023/common_v2_candidates/K33_K33_H5r16_c3/episode_000033/meshes/episode_000033/blue_cup.obj",
+      "sha256": "57bb269a06a44f9f56ea59c9eea8b0d704b20d5a8cfd8bbc89f73f5e2f2b1d8f"
+    },
+    "wooden_spoon": {
+      "path": "/data1/SRL_V2D/challenge_reconstruction/campaign_v16_20261023/common_v2_candidates/K33_K33_H5r16_c3/episode_000033/meshes/episode_000033/wooden_spoon.obj",
+      "sha256": "02ecf22f4412f7c8bd8f01effe734054852b2d8d39250c7c3b8aecc7ba27d498"
+    }
+  },
+  "mesh_validation": {
+    "blue_cup": {
+      "vertices": 4096,
+      "faces": 4096,
+      "finite": true
+    },
+    "wooden_spoon": {
+      "vertices": 4096,
+      "faces": 4096,
+      "finite": true
+    }
+  },
+  "fresh_backend_executed": true,
+  "original_backend_evidence_preserved": true,
+  "source_reference_proxy_not_official_gt": true,
+  "official_runtime_certification": false,
+  "complete_official_submission_ready": false,
+  "uploaded": false
+}

@@ -1,0 +1,25 @@
+{
+  "track": "track_3",
+  "file": "/data1/hansol/spoon3537/rt/packages/track3_FINALc_ep36s4/all_20_episodes/track3_submission.parquet",
+  "message": "probe: 8b6fa2b9 + ep36 s4 (RGB-camera recon)",
+  "submissions": {
+    "mppe_cm": {
+      "slug": "v2d-challenge-track3-mppe",
+      "state": "COMPLETE",
+      "file": "/data1/hansol/spoon3537/rt/packages/track3_FINALc_ep36s4/all_20_episodes/track3_submission.parquet",
+      "message": "Successfully submitted to Track 3 - Egocentric - MPPE (cm)",
+      "ref": 57997979,
+      "public_score": "1.38958",
+      "error": ""
+    },
+    "add_auc": {
+      "slug": "v2d-challenge-track3-auc",
+      "state": "COMPLETE",
+      "file": "/data1/hansol/spoon3537/rt/packages/track3_FINALc_ep36s4/all_20_episodes/track3_submission.parquet",
+      "message": "Successfully submitted to Track 3 - Egocentric - AUC",
+      "ref": 57997980,
+      "public_score": "0.92269",
+      "error": ""
+    }
+  }
+}

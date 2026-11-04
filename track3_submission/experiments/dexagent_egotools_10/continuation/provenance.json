@@ -1,0 +1,7 @@
+{
+  "baseline_results": "../results.json",
+  "baseline_unchanged": true,
+  "stage1_origin": "../runs/01_grasp_test_tube/stage1",
+  "same_input_video": true,
+  "intent": "Continue actual source reconstruction and physical robot execution; never weaken acceptance checks."
+}

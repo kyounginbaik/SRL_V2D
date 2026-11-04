@@ -1,0 +1,13 @@
+{
+ "label": "track3_FINAL_ep32T32cb1_ep33R6M2_20261105",
+ "final": "/data1/SRL_V2D/challenge_submissions_SRL/FINAL_20261104/all_20_episodes",
+ "final_sha": "0fca055ba6efd763b979404067a376dfd305a86d54c76d81866565092dd77e60",
+ "ep32_from": "/data1/SRL_V2D/challenge_submissions_SRL/track3_final_ep32_T32c_b1_20261104/all_20_episodes",
+ "ep32_sha": "bd5b3321a8017359449fa7f4abf3c54c1332c73e8a6960b3151383605c8d3b3f",
+ "ep33_from": "/data1/hansol/teacher33/packages/track3_FINAL_ep33T33_R6M2Cf0_r6moved_20261104/all_20_episodes",
+ "ep33_sha": "c96244f0eac93d68014ec0f247d4ac56ff897264319397cd6b3548e357571988",
+ "sha": "8b6fa2b9a0513b8b2f14176f51b92ebf02ecde1eccef932b641b4b6dc9960907",
+ "cdo_sha": "a03230e5d6ecd598c4c6f424b1b8594f0f4f395d11889a84ed4a15f014dd28b9",
+ "uploaded": false,
+ "note": "FINAL_20261104 mesh cells; ep32 = T32c_b1 (MP-SR 0.95 alone), ep33 = R6M2 (MP-SR 0.95 alone)"
+}

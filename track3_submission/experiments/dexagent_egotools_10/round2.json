@@ -1,0 +1,1 @@
+{"02_chopsticks_grape": [{"type": "tool_use", "id": "view_frames", "name": "look", "input": {"paths": ["overview.jpg", "detail.jpg"]}}]}

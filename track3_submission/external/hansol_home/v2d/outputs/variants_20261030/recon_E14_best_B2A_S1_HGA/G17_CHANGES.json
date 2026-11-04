@@ -1,0 +1,8 @@
+{
+ "base": "reconstruction_recovery_20261026/selected20_final_v12b_g15",
+ "ep3": "object_poses.npz taken from selected20_final_v13_g16 (G16 constant spoon roll -13.5 deg; white_pot slot byte-identical to v12b)",
+ "ep32": "kept exactly as v12b (G16 ep32 -15 deg change NOT inherited, per main: contradicted by official v24-v26)",
+ "g17_changes": "none adopted: f0 joint placement refinement (variants A-F) and window-swap rule W worse or mixed on public tuning/held-out",
+ "meshes": "byte-identical to v12b",
+ "ground_truth_used": false
+}

@@ -1,0 +1,864 @@
+{
+ "variant": "final_v6_z9",
+ "policy": "fused_v7 (hand-free) + gap bridge + despike + lost-object rescue from raw trackers (rescue.py) + spoon_roll_v8/joint; same fixed policy validated 10/10 public + 10/10 held-out public (ep0/ep2 with lid_up); no per-episode GT choice + Z9 anchor frame-0 consensus rule (campaign_v22_20261028/streamZ9_anchor_spoon; changes only ep32 wooden_spoon frame 0)",
+ "ground_truth_used": false,
+ "submitted": false,
+ "frame_convention": "world_from_object / camera_from_object 4x4, RGB physical pinhole camera (intrinsics.json), 20 fps",
+ "episodes": [
+  {
+   "episode": 1,
+   "frames": 335,
+   "camera_valid_fraction": 1.0,
+   "objects": {
+    "white_pot": {
+     "source_counts": {
+      "raw": 263,
+      "multimap": 67,
+      "metric_motion_odometry": 5
+     },
+     "observed_fraction": 1.0,
+     "max_center_step_cm": 2.82,
+     "max_rotation_step_deg": 8.5,
+     "large_motion_frames": [],
+     "geometry_reason": "our validated source mesh",
+     "review_median_iou": null,
+     "review_min_iou": null
+    },
+    "white_pot_lid": {
+     "source_counts": {
+      "raw": 183,
+      "multimap": 79,
+      "metric_motion_odometry": 73
+     },
+     "observed_fraction": 1.0,
+     "max_center_step_cm": 2.94,
+     "max_rotation_step_deg": 24.3,
+     "large_motion_frames": [],
+     "geometry_reason": "our validated source mesh",
+     "review_median_iou": null,
+     "review_min_iou": null
+    }
+   }
+  },
+  {
+   "episode": 3,
+   "frames": 313,
+   "camera_valid_fraction": 1.0,
+   "objects": {
+    "white_pot": {
+     "source_counts": {
+      "raw": 155,
+      "pointmap_cotracker": 96,
+      "multimap": 37,
+      "bundle_adjusted": 4,
+      "metric_motion_odometry": 21
+     },
+     "observed_fraction": 1.0,
+     "max_center_step_cm": 1.35,
+     "max_rotation_step_deg": 8.3,
+     "large_motion_frames": [],
+     "geometry_reason": "our validated source mesh",
+     "review_median_iou": null,
+     "review_min_iou": null
+    },
+    "wooden_spoon": {
+     "source_counts": {
+      "raw": 100,
+      "pointmap_cotracker": 8,
+      "multimap": 67,
+      "bundle_adjusted": 51,
+      "raw_principal_twin_2": 87
+     },
+     "observed_fraction": 0.955,
+     "max_center_step_cm": 4.09,
+     "max_rotation_step_deg": 26.8,
+     "large_motion_frames": [],
+     "geometry_reason": "our validated source mesh",
+     "review_median_iou": null,
+     "review_min_iou": null
+    }
+   }
+  },
+  {
+   "episode": 5,
+   "frames": 288,
+   "camera_valid_fraction": 1.0,
+   "objects": {
+    "white_pot": {
+     "source_counts": {
+      "raw": 116,
+      "pointmap_cotracker": 11,
+      "multimap": 82,
+      "bundle_adjusted": 58,
+      "metric_motion_odometry": 21
+     },
+     "observed_fraction": 0.951,
+     "max_center_step_cm": 5.24,
+     "max_rotation_step_deg": 17.0,
+     "large_motion_frames": [],
+     "geometry_reason": "our validated source mesh",
+     "review_median_iou": null,
+     "review_min_iou": null
+    },
+    "wooden_spoon": {
+     "source_counts": {
+      "raw": 1,
+      "pointmap_cotracker": 4,
+      "multimap": 9,
+      "bundle_adjusted": 96,
+      "metric_motion_odometry": 2,
+      "raw_principal_twin_2": 176
+     },
+     "observed_fraction": 0.962,
+     "max_center_step_cm": 5.74,
+     "max_rotation_step_deg": 21.4,
+     "large_motion_frames": [],
+     "geometry_reason": "our validated source mesh",
+     "review_median_iou": null,
+     "review_min_iou": null
+    }
+   }
+  },
+  {
+   "episode": 6,
+   "frames": 243,
+   "camera_valid_fraction": 1.0,
+   "objects": {
+    "white_pot": {
+     "source_counts": {
+      "raw": 206,
+      "pointmap_cotracker": 18,
+      "multimap": 19
+     },
+     "observed_fraction": 0.984,
+     "max_center_step_cm": 5.18,
+     "max_rotation_step_deg": 30.1,
+     "large_motion_frames": [],
+     "geometry_reason": "our validated source mesh",
+     "review_median_iou": null,
+     "review_min_iou": null
+    },
+    "wooden_spoon": {
+     "source_counts": {
+      "raw": 139,
+      "pointmap_cotracker": 33,
+      "multimap": 46,
+      "metric_motion_odometry": 25
+     },
+     "observed_fraction": 0.984,
+     "max_center_step_cm": 5.7,
+     "max_rotation_step_deg": 23.8,
+     "large_motion_frames": [],
+     "geometry_reason": "our validated source mesh",
+     "review_median_iou": null,
+     "review_min_iou": null
+    }
+   }
+  },
+  {
+   "episode": 8,
+   "frames": 219,
+   "camera_valid_fraction": 1.0,
+   "objects": {
+    "beige_cup": {
+     "source_counts": {
+      "raw": 78,
+      "pointmap_cotracker": 34,
+      "multimap": 42,
+      "metric_motion_odometry": 49,
+      "raw_principal_twin_2": 16
+     },
+     "observed_fraction": 0.982,
+     "max_center_step_cm": 3.78,
+     "max_rotation_step_deg": 55.6,
+     "large_motion_frames": [],
+     "geometry_reason": "our validated source mesh",
+     "review_median_iou": null,
+     "review_min_iou": null
+    },
+    "white_pot": {
+     "source_counts": {
+      "raw": 66,
+      "multimap": 50,
+      "bundle_adjusted": 103
+     },
+     "observed_fraction": 1.0,
+     "max_center_step_cm": 2.34,
+     "max_rotation_step_deg": 6.4,
+     "large_motion_frames": [],
+     "geometry_reason": "our validated source mesh",
+     "review_median_iou": null,
+     "review_min_iou": null
+    }
+   }
+  },
+  {
+   "episode": 10,
+   "frames": 161,
+   "camera_valid_fraction": 1.0,
+   "objects": {
+    "blue_cup": {
+     "source_counts": {
+      "raw": 1,
+      "pointmap_cotracker": 22,
+      "multimap": 104,
+      "metric_motion_odometry": 34
+     },
+     "observed_fraction": 1.0,
+     "max_center_step_cm": 0.82,
+     "max_rotation_step_deg": 3.5,
+     "large_motion_frames": [],
+     "geometry_reason": "our validated source mesh",
+     "review_median_iou": null,
+     "review_min_iou": null
+    },
+    "beige_cup": {
+     "source_counts": {
+      "raw": 51,
+      "pointmap_cotracker": 29,
+      "multimap": 36,
+      "metric_motion_odometry": 16,
+      "raw_principal_twin_2": 29
+     },
+     "observed_fraction": 1.0,
+     "max_center_step_cm": 3.77,
+     "max_rotation_step_deg": 48.1,
+     "large_motion_frames": [],
+     "geometry_reason": "our validated source mesh",
+     "review_median_iou": null,
+     "review_min_iou": null
+    }
+   }
+  },
+  {
+   "episode": 14,
+   "frames": 158,
+   "camera_valid_fraction": 1.0,
+   "objects": {
+    "blue_cup": {
+     "source_counts": {
+      "raw": 144,
+      "pointmap_cotracker": 4,
+      "multimap": 10
+     },
+     "observed_fraction": 1.0,
+     "max_center_step_cm": 3.45,
+     "max_rotation_step_deg": 36.5,
+     "large_motion_frames": [],
+     "geometry_reason": "our validated source mesh",
+     "review_median_iou": null,
+     "review_min_iou": null
+    },
+    "plastic_dish_rack": {
+     "source_counts": {
+      "raw": 91,
+      "multimap": 3,
+      "metric_motion_odometry": 64
+     },
+     "observed_fraction": 1.0,
+     "max_center_step_cm": 2.44,
+     "max_rotation_step_deg": 4.5,
+     "large_motion_frames": [],
+     "geometry_reason": "our validated source mesh",
+     "review_median_iou": null,
+     "review_min_iou": null
+    }
+   }
+  },
+  {
+   "episode": 15,
+   "frames": 166,
+   "camera_valid_fraction": 1.0,
+   "objects": {
+    "plastic_dish_rack": {
+     "source_counts": {
+      "raw": 166
+     },
+     "observed_fraction": 1.0,
+     "max_center_step_cm": 0.89,
+     "max_rotation_step_deg": 1.7,
+     "large_motion_frames": [],
+     "geometry_reason": "our validated source mesh",
+     "review_median_iou": null,
+     "review_min_iou": null
+    },
+    "wooden_spoon": {
+     "source_counts": {
+      "raw": 153,
+      "metric_motion_odometry": 13
+     },
+     "observed_fraction": 1.0,
+     "max_center_step_cm": 3.62,
+     "max_rotation_step_deg": 11.7,
+     "large_motion_frames": [],
+     "geometry_reason": "our validated source mesh",
+     "review_median_iou": null,
+     "review_min_iou": null
+    }
+   }
+  },
+  {
+   "episode": 16,
+   "frames": 173,
+   "camera_valid_fraction": 1.0,
+   "objects": {
+    "plastic_dish_rack": {
+     "source_counts": {
+      "raw": 127,
+      "pointmap_cotracker": 5,
+      "multimap": 41
+     },
+     "observed_fraction": 1.0,
+     "max_center_step_cm": 1.13,
+     "max_rotation_step_deg": 5.0,
+     "large_motion_frames": [],
+     "geometry_reason": "our validated source mesh",
+     "review_median_iou": null,
+     "review_min_iou": null
+    },
+    "wooden_spoon": {
+     "source_counts": {
+      "raw": 171,
+      "multimap": 1,
+      "metric_motion_odometry": 1
+     },
+     "observed_fraction": 1.0,
+     "max_center_step_cm": 3.35,
+     "max_rotation_step_deg": 13.5,
+     "large_motion_frames": [],
+     "geometry_reason": "our validated source mesh",
+     "review_median_iou": null,
+     "review_min_iou": null
+    }
+   }
+  },
+  {
+   "episode": 19,
+   "frames": 235,
+   "camera_valid_fraction": 0.996,
+   "objects": {
+    "mini_sweeper": {
+     "source_counts": {
+      "raw": 48,
+      "pointmap_cotracker": 30,
+      "multimap": 121,
+      "raw_principal_twin_2": 36
+     },
+     "observed_fraction": 0.894,
+     "max_center_step_cm": 3.21,
+     "max_rotation_step_deg": 38.9,
+     "large_motion_frames": [],
+     "geometry_reason": "two or more round gray markers with stereo MAD below3mm; unsupported seed asymmetry removed",
+     "review_median_iou": null,
+     "review_min_iou": null
+    },
+    "mini_dust_pan": {
+     "source_counts": {
+      "raw": 222,
+      "pointmap_cotracker": 4,
+      "multimap": 7,
+      "metric_motion_odometry": 2
+     },
+     "observed_fraction": 0.966,
+     "max_center_step_cm": 3.89,
+     "max_rotation_step_deg": 16.1,
+     "large_motion_frames": [],
+     "geometry_reason": "our validated source mesh",
+     "review_median_iou": null,
+     "review_min_iou": null
+    }
+   }
+  },
+  {
+   "episode": 20,
+   "frames": 202,
+   "camera_valid_fraction": 1.0,
+   "objects": {
+    "blue_cup": {
+     "source_counts": {
+      "raw": 202
+     },
+     "observed_fraction": 1.0,
+     "max_center_step_cm": 1.19,
+     "max_rotation_step_deg": 27.8,
+     "large_motion_frames": [],
+     "geometry_reason": "our validated source mesh",
+     "review_median_iou": null,
+     "review_min_iou": null
+    },
+    "water_pitcher": {
+     "source_counts": {
+      "raw": 169,
+      "pointmap_cotracker": 21,
+      "multimap": 4,
+      "metric_motion_odometry": 8
+     },
+     "observed_fraction": 0.995,
+     "max_center_step_cm": 7.99,
+     "max_rotation_step_deg": 20.5,
+     "large_motion_frames": [],
+     "geometry_reason": "our validated source mesh",
+     "review_median_iou": null,
+     "review_min_iou": null
+    }
+   }
+  },
+  {
+   "episode": 25,
+   "frames": 356,
+   "camera_valid_fraction": 1.0,
+   "objects": {
+    "wooden_piece_1": {
+     "source_counts": {
+      "raw": 356
+     },
+     "observed_fraction": 0.997,
+     "max_center_step_cm": 2.17,
+     "max_rotation_step_deg": 12.2,
+     "large_motion_frames": [],
+     "geometry_reason": "image circles and stereo support-plane marker reconstruction",
+     "review_median_iou": null,
+     "review_min_iou": null
+    },
+    "wooden_piece_2": {
+     "source_counts": {
+      "raw": 261,
+      "multimap": 7,
+      "metric_motion_odometry": 88
+     },
+     "observed_fraction": 0.989,
+     "max_center_step_cm": 2.91,
+     "max_rotation_step_deg": 9.1,
+     "large_motion_frames": [],
+     "geometry_reason": "image circles and stereo support-plane marker reconstruction",
+     "review_median_iou": null,
+     "review_min_iou": null
+    }
+   }
+  },
+  {
+   "episode": 28,
+   "frames": 220,
+   "camera_valid_fraction": 1.0,
+   "objects": {
+    "plastic_dish_rack": {
+     "source_counts": {
+      "raw": 211,
+      "pointmap_cotracker": 6,
+      "multimap": 3
+     },
+     "observed_fraction": 1.0,
+     "max_center_step_cm": 1.16,
+     "max_rotation_step_deg": 2.9,
+     "large_motion_frames": [],
+     "geometry_reason": "our validated source mesh",
+     "review_median_iou": null,
+     "review_min_iou": null
+    },
+    "white_pot": {
+     "source_counts": {
+      "raw": 214,
+      "pointmap_cotracker": 6
+     },
+     "observed_fraction": 0.941,
+     "max_center_step_cm": 3.02,
+     "max_rotation_step_deg": 14.8,
+     "large_motion_frames": [],
+     "geometry_reason": "our validated source mesh",
+     "review_median_iou": null,
+     "review_min_iou": null
+    }
+   }
+  },
+  {
+   "episode": 30,
+   "frames": 263,
+   "camera_valid_fraction": 1.0,
+   "objects": {
+    "mini_sweeper": {
+     "source_counts": {
+      "raw": 221,
+      "pointmap_cotracker": 28,
+      "multimap": 8,
+      "metric_motion_odometry": 6
+     },
+     "observed_fraction": 1.0,
+     "max_center_step_cm": 2.61,
+     "max_rotation_step_deg": 17.7,
+     "large_motion_frames": [],
+     "geometry_reason": "our validated source mesh",
+     "review_median_iou": null,
+     "review_min_iou": null
+    },
+    "plastic_dish_rack": {
+     "source_counts": {
+      "raw": 191,
+      "metric_motion_odometry": 72
+     },
+     "observed_fraction": 1.0,
+     "max_center_step_cm": 0.62,
+     "max_rotation_step_deg": 3.9,
+     "large_motion_frames": [],
+     "geometry_reason": "our validated source mesh",
+     "review_median_iou": null,
+     "review_min_iou": null
+    }
+   }
+  },
+  {
+   "episode": 32,
+   "frames": 259,
+   "camera_valid_fraction": 1.0,
+   "objects": {
+    "blue_cup": {
+     "source_counts": {
+      "raw": 155,
+      "pointmap_cotracker": 36,
+      "multimap": 68
+     },
+     "observed_fraction": 0.996,
+     "max_center_step_cm": 3.61,
+     "max_rotation_step_deg": 32.9,
+     "large_motion_frames": [],
+     "geometry_reason": "our validated source mesh",
+     "review_median_iou": null,
+     "review_min_iou": null
+    },
+    "wooden_spoon": {
+     "source_counts": {
+      "raw": 95,
+      "pointmap_cotracker": 38,
+      "multimap": 52,
+      "raw_principal_twin_2": 74
+     },
+     "observed_fraction": 0.988,
+     "max_center_step_cm": 5.36,
+     "max_rotation_step_deg": 46.0,
+     "large_motion_frames": [],
+     "geometry_reason": "our validated source mesh",
+     "review_median_iou": null,
+     "review_min_iou": null
+    }
+   }
+  },
+  {
+   "episode": 33,
+   "frames": 348,
+   "camera_valid_fraction": 0.991,
+   "objects": {
+    "blue_cup": {
+     "source_counts": {
+      "raw": 335,
+      "pointmap_cotracker": 2,
+      "multimap": 3,
+      "metric_motion_odometry": 8
+     },
+     "observed_fraction": 0.983,
+     "max_center_step_cm": 5.24,
+     "max_rotation_step_deg": 40.0,
+     "large_motion_frames": [],
+     "geometry_reason": "our validated source mesh",
+     "review_median_iou": null,
+     "review_min_iou": null
+    },
+    "wooden_spoon": {
+     "source_counts": {
+      "raw": 60,
+      "pointmap_cotracker": 5,
+      "multimap": 46,
+      "bundle_adjusted": 23,
+      "metric_motion_odometry": 55,
+      "raw_principal_twin_2": 159
+     },
+     "observed_fraction": 0.966,
+     "max_center_step_cm": 6.55,
+     "max_rotation_step_deg": 25.6,
+     "large_motion_frames": [],
+     "geometry_reason": "our validated source mesh",
+     "review_median_iou": null,
+     "review_min_iou": null
+    }
+   }
+  },
+  {
+   "episode": 35,
+   "frames": 421,
+   "camera_valid_fraction": 1.0,
+   "objects": {
+    "wooden_spoon": {
+     "source_counts": {
+      "raw": 380,
+      "pointmap_cotracker": 13,
+      "metric_motion_odometry": 28
+     },
+     "observed_fraction": 0.998,
+     "max_center_step_cm": 2.56,
+     "max_rotation_step_deg": 27.0,
+     "large_motion_frames": [],
+     "geometry_reason": "our validated source mesh",
+     "review_median_iou": null,
+     "review_min_iou": null
+    }
+   }
+  },
+  {
+   "episode": 36,
+   "frames": 407,
+   "camera_valid_fraction": 1.0,
+   "objects": {
+    "wooden_spoon": {
+     "source_counts": {
+      "raw": 200,
+      "multimap": 11,
+      "bundle_adjusted": 89,
+      "metric_motion_odometry": 7,
+      "raw_principal_twin_2": 100
+     },
+     "observed_fraction": 0.956,
+     "max_center_step_cm": 2.99,
+     "max_rotation_step_deg": 28.7,
+     "large_motion_frames": [],
+     "geometry_reason": "our validated source mesh",
+     "review_median_iou": null,
+     "review_min_iou": null
+    }
+   }
+  },
+  {
+   "episode": 37,
+   "frames": 151,
+   "camera_valid_fraction": 1.0,
+   "objects": {
+    "wooden_spoon": {
+     "source_counts": {
+      "raw": 76,
+      "pointmap_cotracker": 39,
+      "multimap": 33,
+      "metric_motion_odometry": 3
+     },
+     "observed_fraction": 0.954,
+     "max_center_step_cm": 2.73,
+     "max_rotation_step_deg": 14.0,
+     "large_motion_frames": [],
+     "geometry_reason": "our validated source mesh",
+     "review_median_iou": null,
+     "review_min_iou": null
+    }
+   }
+  },
+  {
+   "episode": 38,
+   "frames": 263,
+   "camera_valid_fraction": 1.0,
+   "objects": {
+    "mini_dust_pan": {
+     "source_counts": {
+      "raw": 263
+     },
+     "observed_fraction": 1.0,
+     "max_center_step_cm": 2.27,
+     "max_rotation_step_deg": 18.1,
+     "large_motion_frames": [],
+     "geometry_reason": "our validated source mesh",
+     "review_median_iou": null,
+     "review_min_iou": null
+    }
+   }
+  }
+ ],
+ "sha256": {
+  "episode_000001/camera.npz": "8e45748e24d84d778e7257115dfbcae394c58258f72e472f302efc679c16f77c",
+  "episode_000001/camera_report.json": "6ea4638bf030a20d4797f1ba2cfbae57e867e9b7f5b23fea3514394497f2a93c",
+  "episode_000001/intrinsics.json": "abf46ba3ceafec82b07b7a0710f89f8051e1f3ace8685e2dc39f875194a768ea",
+  "episode_000001/meshes/white_pot.obj": "a55317043909ef4e2e299fd786e4b5121cc896dabeaa8af980210b514a4f182d",
+  "episode_000001/meshes/white_pot_lid.obj": "bc1443c51ad9634ab73582c2bef132307d00d1f0a9e76e18a9b2032eaedfeba2",
+  "episode_000001/meshes.json": "f3ee059d955b08e3b6e190488d216b5a6df0aa238a059d7010af430cba0b9800",
+  "episode_000001/object_poses.npz": "f75b82fdf91ec6566d584a686ceeae0af3e93748f807a04db24a663eff18aab5",
+  "episode_000001/prepared.json": "b16a4319d1b64c19306b519d80ad323678eb55fe6ace92204cec7bc591b9a9be",
+  "episode_000001/selection.json": "3dc98e0c75f8080f4acaef692a9a259ae36f889fac48905320cb134ad11158df",
+  "episode_000003/camera.npz": "6effe48534165dcfde99bec24ad3ee46baa93e736b7fe301cbc951c0f556c05b",
+  "episode_000003/camera_report.json": "ea20e8726ca9fe896159670cd9d3bd9159818d2cb753d8ef8779a8ad739d5fd4",
+  "episode_000003/intrinsics.json": "abf46ba3ceafec82b07b7a0710f89f8051e1f3ace8685e2dc39f875194a768ea",
+  "episode_000003/meshes/white_pot.obj": "a55317043909ef4e2e299fd786e4b5121cc896dabeaa8af980210b514a4f182d",
+  "episode_000003/meshes/wooden_spoon.obj": "c9ab88e33e5c78bfbd5e492d12565effafa8cd2c26d14fe6600e7fb0c1c5d904",
+  "episode_000003/meshes.json": "572ae30e27e29934d8edb9ac491a78ad03bccbad5dc75deb8e6ef52626fb35c5",
+  "episode_000003/object_poses.npz": "97bce296c9ddd13d20482b40419d18c76d70ba77308257863fa1657ece70a667",
+  "episode_000003/prepared.json": "21cb3d89fc85b90e44bb05ae7169d10ca46987c58b57b9aa1b64db1336a360bb",
+  "episode_000003/selection.json": "f4ff977a519a5feec53a0a875cf1c52d7aa6a5f75cd96635131789fc0d98108c",
+  "episode_000005/camera.npz": "b32ffb83cda5a240cfa1760dc166b542d23df1bda5fccced71792fde84a6173f",
+  "episode_000005/camera_report.json": "a4b9b90e2e110288920c277d1b83a3aed196fdc4df870178b8d1f0bf1ea068ce",
+  "episode_000005/intrinsics.json": "abf46ba3ceafec82b07b7a0710f89f8051e1f3ace8685e2dc39f875194a768ea",
+  "episode_000005/meshes/white_pot.obj": "a55317043909ef4e2e299fd786e4b5121cc896dabeaa8af980210b514a4f182d",
+  "episode_000005/meshes/wooden_spoon.obj": "c9ab88e33e5c78bfbd5e492d12565effafa8cd2c26d14fe6600e7fb0c1c5d904",
+  "episode_000005/meshes.json": "c28223e51e8c5767a0154cc38501f1b03cb0128e0d5e46eadc7b2628d14b2793",
+  "episode_000005/object_poses.npz": "6529087e094f3fd225d3eb817e7aac30beffcaa2b65d4948ce562387f9b03e69",
+  "episode_000005/prepared.json": "037779d2f9a8b1b837d874838dca05cc93201966d9f2ea2aeedebd01b5cbbb1e",
+  "episode_000005/selection.json": "6106424a14231adaf37d8617508324429b7e27c4ed6319941ca75b4cdc3256e4",
+  "episode_000006/camera.npz": "cfd3aa81cf3a87126572b8ea6acc1b7fc5f28fc5b730b59429e236b29f0baa0e",
+  "episode_000006/camera_report.json": "3e1b1f9c7b9bbedf9ae26ba0af1deda89755c32873d3d3ac168d8a7d17feeea4",
+  "episode_000006/intrinsics.json": "abf46ba3ceafec82b07b7a0710f89f8051e1f3ace8685e2dc39f875194a768ea",
+  "episode_000006/meshes/white_pot.obj": "a55317043909ef4e2e299fd786e4b5121cc896dabeaa8af980210b514a4f182d",
+  "episode_000006/meshes/wooden_spoon.obj": "c9ab88e33e5c78bfbd5e492d12565effafa8cd2c26d14fe6600e7fb0c1c5d904",
+  "episode_000006/meshes.json": "3dec20efd48f7821c6312737597bfcb4866871f1d116993dce8ddcf78650e4ce",
+  "episode_000006/object_poses.npz": "c6514967ddd3071d8fdd2dbf9d392adc6f255c157207d2ed0cd1503a2de799d7",
+  "episode_000006/prepared.json": "b38a9c7ec31e086d348d7e826dcfefe5b724ca65150a9a25a249c89f2a7adc29",
+  "episode_000006/selection.json": "b6e719079218ee42b8ab573fe9078f84ff8dd78db5911a9e597a0770ca01462c",
+  "episode_000008/camera.npz": "a38a602dc597dd0d529357df75bc89497be50d254124aa90ff676167e9d26cbe",
+  "episode_000008/camera_report.json": "6acdcb545e0af4239a31254a13a67812aadbf1529727f464691a31ddcea21fd6",
+  "episode_000008/intrinsics.json": "abf46ba3ceafec82b07b7a0710f89f8051e1f3ace8685e2dc39f875194a768ea",
+  "episode_000008/meshes/beige_cup.obj": "2c041e69fbd3be79fa953609276ffc4a54a513ec2ca7e7f31020a78ab6871431",
+  "episode_000008/meshes/white_pot.obj": "a55317043909ef4e2e299fd786e4b5121cc896dabeaa8af980210b514a4f182d",
+  "episode_000008/meshes.json": "79fa5bc89c3287d538c10bdd804d8e9a2b5bcef98a0e57a8febf8f49bcdbd429",
+  "episode_000008/object_poses.npz": "f7ced20bf4026309f96c2386204b041960352590d55dc97542a9cf34e86312f8",
+  "episode_000008/prepared.json": "b88ebf41a4e8dd631eb7212d8aaf62e5f61727f15cb4dbce81cf8e00ab166eb8",
+  "episode_000008/selection.json": "11890bb2f203d4d7fae3c59f38385bfd80f390dc414fd689c384e8910b07c9c1",
+  "episode_000010/camera.npz": "5b6f460509f437fa4c24356a36bf93c40910140618388f75106b8763e6a4a4b7",
+  "episode_000010/camera_report.json": "b46ad666606bbb626542b06bc29aa307b2fbf092d09b564d06f25bdb61dc6592",
+  "episode_000010/intrinsics.json": "abf46ba3ceafec82b07b7a0710f89f8051e1f3ace8685e2dc39f875194a768ea",
+  "episode_000010/meshes/beige_cup.obj": "2c041e69fbd3be79fa953609276ffc4a54a513ec2ca7e7f31020a78ab6871431",
+  "episode_000010/meshes/blue_cup.obj": "57bb269a06a44f9f56ea59c9eea8b0d704b20d5a8cfd8bbc89f73f5e2f2b1d8f",
+  "episode_000010/meshes.json": "bc2b36ece12f40afd23ccc20add501aa717e8801f0e807ec0a17310ff3b2bbe9",
+  "episode_000010/object_poses.npz": "8e225f80840d15450f877b7acb4e39d5dbae85381639c02af989f46044d6b986",
+  "episode_000010/prepared.json": "3c4e008589661f3c42f72b4a3a63b9c572391b6723ae6bbad16715efb281b263",
+  "episode_000010/selection.json": "1953b6f518d57fcb7b1ba42202b2cf132c7bd8fd8d1e1f2ad166debe49b0277e",
+  "episode_000014/camera.npz": "0b472aee8ea668f69275ac1954f21874de2ebf3d28991c0efa226b48dd097def",
+  "episode_000014/camera_report.json": "6d08cce930de4a2c66dfc4f612f50fed604cd402113fd64f37e5881d73376ec6",
+  "episode_000014/intrinsics.json": "abf46ba3ceafec82b07b7a0710f89f8051e1f3ace8685e2dc39f875194a768ea",
+  "episode_000014/meshes/blue_cup.obj": "57bb269a06a44f9f56ea59c9eea8b0d704b20d5a8cfd8bbc89f73f5e2f2b1d8f",
+  "episode_000014/meshes/plastic_dish_rack.obj": "090b7d17790ef35fb1c1364488cdec5adc7232f208dfb430494b752b1ab69289",
+  "episode_000014/meshes.json": "ca38aded2bbfcd7e3c70a949a9822641006a110a467e74e13ab7ffd86897c136",
+  "episode_000014/object_poses.npz": "0db435c985bc62381a72cdbb44cefa85c608325356021e0b9ff9db8af211d9e3",
+  "episode_000014/prepared.json": "f6b799f345b57eafadba6bcce375afb49cbda7b0848cf9d5ae3ba0789b8e0550",
+  "episode_000014/selection.json": "bdc5e1deeee6a3f28568d5ea6968e3d98a0bbde5805fca8eecd81d8e3738b16e",
+  "episode_000015/camera.npz": "f77ae15768347498c2336ff4f0926a269915f177320cef0892476fd32e7c682d",
+  "episode_000015/camera_report.json": "0a123fe2331b30acbcb22a17fa1f2b8091b57ed61719789d2a04cb49c7fb11d5",
+  "episode_000015/intrinsics.json": "abf46ba3ceafec82b07b7a0710f89f8051e1f3ace8685e2dc39f875194a768ea",
+  "episode_000015/meshes/plastic_dish_rack.obj": "090b7d17790ef35fb1c1364488cdec5adc7232f208dfb430494b752b1ab69289",
+  "episode_000015/meshes/wooden_spoon.obj": "c9ab88e33e5c78bfbd5e492d12565effafa8cd2c26d14fe6600e7fb0c1c5d904",
+  "episode_000015/meshes.json": "333df1c61635432015f9c1260c6d943f5751ef9f8376a7e4a993871da6a5f184",
+  "episode_000015/object_poses.npz": "41a98de9839541d94dbe6681e64b55eae41dead39eef1c78b36480631c7d588e",
+  "episode_000015/prepared.json": "dc9a7caf9c8d7c4cb9e208962521c13061ba42175ba0cc8db581aff085ae278a",
+  "episode_000015/selection.json": "fb4edad105a04c5d202f7084e6af601f6e9eaa67c581667aab9d4957e1246a06",
+  "episode_000016/camera.npz": "2a8d44c12cf5707f60fbc6298077ea14bf5b03b5672d8d6511393a4a002211f1",
+  "episode_000016/camera_report.json": "0708f5ee4d6cd174c5956fcee70ccaaebcb8ad3c1682c8ab4d1c6697ce358c61",
+  "episode_000016/intrinsics.json": "abf46ba3ceafec82b07b7a0710f89f8051e1f3ace8685e2dc39f875194a768ea",
+  "episode_000016/meshes/plastic_dish_rack.obj": "090b7d17790ef35fb1c1364488cdec5adc7232f208dfb430494b752b1ab69289",
+  "episode_000016/meshes/wooden_spoon.obj": "c9ab88e33e5c78bfbd5e492d12565effafa8cd2c26d14fe6600e7fb0c1c5d904",
+  "episode_000016/meshes.json": "390f841a5c4eec349ab7a93892842784638d9e9a2e04170825159ffc2388b2cc",
+  "episode_000016/object_poses.npz": "9754f59c0db6b5dfad2c1973ee9d40586c8ff68804b432bdbdcd555e0667e817",
+  "episode_000016/prepared.json": "6e4110f4c908ff41f1d7d08d38c9743878b5ce17b25902626eef2c1ca95eb430",
+  "episode_000016/selection.json": "a42965a5053c47f19ac077399bcd7f7ca684570d85377b436f63361d4161b0a2",
+  "episode_000019/camera.npz": "89157f78ca7077ee796e2e5ebe16f09a54a9956b2c9df118e1d353be2f686f61",
+  "episode_000019/camera_report.json": "98bdc3e692ec0596ad57954ff30a151f939ccb6e7f42574362a7103eec8c7efe",
+  "episode_000019/intrinsics.json": "abf46ba3ceafec82b07b7a0710f89f8051e1f3ace8685e2dc39f875194a768ea",
+  "episode_000019/meshes/mini_dust_pan.obj": "1d298c012d68712ce49ff3b73a36f1b8f76e6cdb6bba3ee1357c467c3e61075f",
+  "episode_000019/meshes/mini_sweeper.obj": "26bc3aa1275707d2609754317959eb8daead3463bcbb2d5f397ee3fee03db47e",
+  "episode_000019/meshes.json": "13f3e21cc06448aa2e25cf920cfe812b3cdc2232d35b3cff4c1196e3a53c69ad",
+  "episode_000019/object_poses.npz": "f6d27a9d7fc1712b7faeb0cb6efb1ec688a5b297b76ed96e075c9e0a20b3b6c5",
+  "episode_000019/prepared.json": "2ae4b30e6e0d3b739cdf4d2b3cb39a44688857de45e7804007dfdd392a672271",
+  "episode_000019/selection.json": "29afc63be41db58e7734ac44c142a9bedd43cd065135a031c5d97f38216dfbb0",
+  "episode_000020/camera.npz": "a0e40faa3ce2820df06841651f8d9d6890d5fa95f7a23bc0adfc094262eb6ba2",
+  "episode_000020/camera_report.json": "777b3fd2b09626ab1c990ed8ef3ebf5f09c1a55fd42d62b0e056e0520043cf43",
+  "episode_000020/intrinsics.json": "abf46ba3ceafec82b07b7a0710f89f8051e1f3ace8685e2dc39f875194a768ea",
+  "episode_000020/meshes/blue_cup.obj": "57bb269a06a44f9f56ea59c9eea8b0d704b20d5a8cfd8bbc89f73f5e2f2b1d8f",
+  "episode_000020/meshes/water_pitcher.obj": "08e6ab820cf67665b9e5879e33c352fc680c35297631b5d3431bae23c8d9b9b7",
+  "episode_000020/meshes.json": "a9beb1ab3d131cc12c4d04c1870e79d29e2543ff69d18e8036724e6a10a32d92",
+  "episode_000020/object_poses.npz": "586d5605c09b8bb97b98e3ea4267a207594e900a4349f3b92df59cb8d6e6a5e2",
+  "episode_000020/prepared.json": "223bbe1f7a5b66723f93ec27ade135276270b85ef3a7171cd150fc39fea55b3e",
+  "episode_000020/selection.json": "ef41d5a069f8b57742d416ad076e65f5ebf103bbfd6705b021eb6f44b017bf71",
+  "episode_000025/camera.npz": "ea38e126ba6d85d66c290aae8ff1a91c8f27a860e2c6425f8d9bb8605058b13d",
+  "episode_000025/camera_report.json": "5b6775775def37b50f9c98c61da791d0b9c95c4828e216a0864c304fbd361e47",
+  "episode_000025/intrinsics.json": "abf46ba3ceafec82b07b7a0710f89f8051e1f3ace8685e2dc39f875194a768ea",
+  "episode_000025/meshes/wooden_piece_1.obj": "535151e6e30b7f418cf59752675defdcf518e8544f7631fa93f7be0744dad98e",
+  "episode_000025/meshes/wooden_piece_2.obj": "07228eb8f638998d8268872b8c3b9fbd1cac218249f907cbaf06ba6aab72e33e",
+  "episode_000025/meshes.json": "a498dde7975532e1c41a47a097370d1160fae63df96bbb57ff64f5f2e309a94f",
+  "episode_000025/object_poses.npz": "25605cd01a5150e9ddeb4ec34b0584e9654b9de197bbe517bd4a36fbe996f9ff",
+  "episode_000025/prepared.json": "a3eb890288a44175c678257da1a95d0de2f0ab20ef6dfcfb24672e1cf76212e1",
+  "episode_000025/selection.json": "9fcb46875098425b18cc12b3b9ef0266164f1fcf411d2b176b152398166a6b01",
+  "episode_000028/camera.npz": "bab83c9097045407d18368803b81f87d51153260041d5f177dc47bd6f8b7d7d0",
+  "episode_000028/camera_report.json": "368db6f2713c55c22dcb22e3944e791a79651acbb82acd8b3f04482d79adb6f1",
+  "episode_000028/intrinsics.json": "abf46ba3ceafec82b07b7a0710f89f8051e1f3ace8685e2dc39f875194a768ea",
+  "episode_000028/meshes/plastic_dish_rack.obj": "090b7d17790ef35fb1c1364488cdec5adc7232f208dfb430494b752b1ab69289",
+  "episode_000028/meshes/white_pot.obj": "a55317043909ef4e2e299fd786e4b5121cc896dabeaa8af980210b514a4f182d",
+  "episode_000028/meshes.json": "348bb6a9a7f99414493b556404e32dd783196429f4af4f41db9b1cd59e8565d5",
+  "episode_000028/object_poses.npz": "ea9882e929b1e91eebb149e336955d2ae906beb7bc750f84d3a4a4c1f438a0d2",
+  "episode_000028/prepared.json": "1f8ee3f77f3e8d65baae157bce8d607f3ec84679aa4faafe91b2002743642aed",
+  "episode_000028/selection.json": "d3cbf685a031ad108c7886261204e1da7e163a483c8c5fe1550f042b6e310707",
+  "episode_000030/camera.npz": "451338dc8af5c0d3f6119c382f73fe257fbb50a7b2600fa08e4ade6f62391478",
+  "episode_000030/camera_report.json": "1d83725b5f81a8f46ddac9e9f5f282f0417e914151b4065477a9dfc895de6541",
+  "episode_000030/intrinsics.json": "abf46ba3ceafec82b07b7a0710f89f8051e1f3ace8685e2dc39f875194a768ea",
+  "episode_000030/meshes/mini_sweeper.obj": "cf7bf340cfaddef30fa4c9b2d33ffc64959a7299487c9f49999ae7ed7843b9cb",
+  "episode_000030/meshes/plastic_dish_rack.obj": "090b7d17790ef35fb1c1364488cdec5adc7232f208dfb430494b752b1ab69289",
+  "episode_000030/meshes.json": "374e51028c92d3ecb9e5016be55a538ef34b113ac6d7efdcfd4b0c7797c79ebd",
+  "episode_000030/object_poses.npz": "9570228383545dd32d6b5ba12425e72fbe44236ee04fb6c4c35f2f30df5cbcf6",
+  "episode_000030/prepared.json": "61eb9c513986067b22784f356328d5779923d5993b12b933228b426835a87f4b",
+  "episode_000030/selection.json": "4a63c38aa2fac26e2117c84c61c18bb64d98e1018db3bcb5ba9d0abc39d49ab7",
+  "episode_000032/camera.npz": "601efa6af8f3be3f9df41929a0483e7226879ed52607ff999ac8b4a36873ccac",
+  "episode_000032/camera_report.json": "8e12d7e1ce8c096c4cc8f89b9828cf5d5e9ac15d1571747fe5a57b7b9d708f88",
+  "episode_000032/intrinsics.json": "abf46ba3ceafec82b07b7a0710f89f8051e1f3ace8685e2dc39f875194a768ea",
+  "episode_000032/meshes/blue_cup.obj": "57bb269a06a44f9f56ea59c9eea8b0d704b20d5a8cfd8bbc89f73f5e2f2b1d8f",
+  "episode_000032/meshes/wooden_spoon.obj": "c9ab88e33e5c78bfbd5e492d12565effafa8cd2c26d14fe6600e7fb0c1c5d904",
+  "episode_000032/meshes.json": "3053e1524d15ddd943a2d234ac2589984a5874d13ae471be405a19f1e419fd5b",
+  "episode_000032/object_poses.npz": "bb5bd0cc500c665f1333923a052da389601853d06513279e70fa30aa282b7125",
+  "episode_000032/prepared.json": "75ef48b157a8fdbb132e1ea51c65fbfd9c5f2e769e1675f9cf75a2bf13d1c018",
+  "episode_000032/selection.json": "b43f69841c4690816b9d99cbfe8ea0cd7540168b78592bb508c07c4ec9337d0c",
+  "episode_000033/camera.npz": "6fd7f84a96ba6a7e39b9b84708c0bf988eb72a316ce095536840d87044ef4ae7",
+  "episode_000033/camera_report.json": "0113d4e5714371453d7e6e13af5c44d7b596bc8e3ba24011ea06c1ad0e682ee7",
+  "episode_000033/intrinsics.json": "abf46ba3ceafec82b07b7a0710f89f8051e1f3ace8685e2dc39f875194a768ea",
+  "episode_000033/meshes/blue_cup.obj": "57bb269a06a44f9f56ea59c9eea8b0d704b20d5a8cfd8bbc89f73f5e2f2b1d8f",
+  "episode_000033/meshes/wooden_spoon.obj": "c9ab88e33e5c78bfbd5e492d12565effafa8cd2c26d14fe6600e7fb0c1c5d904",
+  "episode_000033/meshes.json": "8068accbd3724d856e99e2712d1081cd9a222c7a5d14f0eb872e3da2b1ce57bf",
+  "episode_000033/object_poses.npz": "f51caa417a14f72c50f2ad422b613ce519c05afe9090613fac63b94ef591e2ed",
+  "episode_000033/prepared.json": "1da17675530400f6e259970d052d1bef8052590f0cae3b6542095c29a76194ab",
+  "episode_000033/selection.json": "62140c2f88976a92423c4f70ea3d8b475c4b7d045f85904770d88546b281ba4d",
+  "episode_000035/camera.npz": "934e6bd4d519c2adcb9a75cc501f82c6e3a504c123941bf70e7e041efa779c51",
+  "episode_000035/camera_report.json": "3dbc43e577d49a9fa9dc71e7400e4632c902354eb0280c0573fabe6a7ebb371a",
+  "episode_000035/intrinsics.json": "abf46ba3ceafec82b07b7a0710f89f8051e1f3ace8685e2dc39f875194a768ea",
+  "episode_000035/meshes/wooden_spoon.obj": "c9ab88e33e5c78bfbd5e492d12565effafa8cd2c26d14fe6600e7fb0c1c5d904",
+  "episode_000035/meshes.json": "3310057a9918beb337d0022e3b6f4366a8d7787328560ca62c71a505564cad72",
+  "episode_000035/object_poses.npz": "4cb6da3ba8e4b490597db1c809088fb3a5fcf128b409ae0d31d97256ad491461",
+  "episode_000035/prepared.json": "d1c6e8607f701c6d49bdd0f381e57427b7b3d4f3ce35d3697b60efb745941857",
+  "episode_000035/selection.json": "b74a266123036ba095d319cb89d261390ce4f1b1797be2501b0a70d953b2e1da",
+  "episode_000036/camera.npz": "53c33908f552533ee5ac28c80ab678ecc5ecf150353e6be7d03c3e52c34931e5",
+  "episode_000036/camera_report.json": "5b49f9940eb2355cc81ec7397dc9f4d9b3f5eef7510b9e5c535d500a0a5121b8",
+  "episode_000036/intrinsics.json": "abf46ba3ceafec82b07b7a0710f89f8051e1f3ace8685e2dc39f875194a768ea",
+  "episode_000036/meshes/wooden_spoon.obj": "c9ab88e33e5c78bfbd5e492d12565effafa8cd2c26d14fe6600e7fb0c1c5d904",
+  "episode_000036/meshes.json": "18f1eb4638e238c2a164249d39de623b5781b8c2d6f97a0193bd77a00de652e2",
+  "episode_000036/object_poses.npz": "0dac84b4559a443fd3f27938be7cc6548f4d562c81a5b179e5a65aeaa2ed35a6",
+  "episode_000036/prepared.json": "590eba2b60a4fce263aae3d298f3b9cbe8a3768caf100ea28aeed94e3595fb54",
+  "episode_000036/selection.json": "d14425e0e843876b5f7d28718945f08ffd6058348b7003d78ef169b4ab2ddbb5",
+  "episode_000037/camera.npz": "5439cd05bf9a763e6fc2b4727abdd62b2313014c8a4a5bdeb549b93fb9e28c48",
+  "episode_000037/camera_report.json": "9bb4a62575b9179999003b1cd3971e2c6a69fff9658eaa844c34629c1a139bdb",
+  "episode_000037/intrinsics.json": "abf46ba3ceafec82b07b7a0710f89f8051e1f3ace8685e2dc39f875194a768ea",
+  "episode_000037/meshes/wooden_spoon.obj": "c9ab88e33e5c78bfbd5e492d12565effafa8cd2c26d14fe6600e7fb0c1c5d904",
+  "episode_000037/meshes.json": "0025cfcf86594e988f4877315cc04f27c92b1fdd1c1496af97442a73467f21e8",
+  "episode_000037/object_poses.npz": "aca7760be1cf1613241a3858e9cf11ce435988a61ea142867c24b87e72adad20",
+  "episode_000037/prepared.json": "55ef6b954a39ffa260a5c656b7f4903442ccedf9ec3d771bb17dfecbafcd1ee0",
+  "episode_000037/selection.json": "1b7e35341395b65cf30f1498db89f5b3c4e740eddd7cedbcde95d3ff8cbd569a",
+  "episode_000038/camera.npz": "55b4519219234af327a0788d0f95f2ef63d8ca1609aafa71cac8dffe6813d4be",
+  "episode_000038/camera_report.json": "92a8cd113f41aee4d169022b81bfa5b06e60ebe25fc341ad8bd35dd0f446de42",
+  "episode_000038/intrinsics.json": "abf46ba3ceafec82b07b7a0710f89f8051e1f3ace8685e2dc39f875194a768ea",
+  "episode_000038/meshes/mini_dust_pan.obj": "1d298c012d68712ce49ff3b73a36f1b8f76e6cdb6bba3ee1357c467c3e61075f",
+  "episode_000038/meshes.json": "6632c2146bf733288256660edc318cff11d2e5eb1f789e251a28cd345363556a",
+  "episode_000038/object_poses.npz": "f2a3aada317211540b2d41ac41647fd371a7a6ce15e91926e28e4959e16604f5",
+  "episode_000038/prepared.json": "19ccd28a09a9c976815dc9e3136fb8643674cd646e65bc8ce2dfc3d00ae5ed54",
+  "episode_000038/selection.json": "ac86312f6f121e2d799a44ec10a94cc2f97e6d3b93721e0462c6d497b15fee74"
+ },
+ "z9": {
+  "base": "selected20_final_v5",
+  "changed": [
+   {
+    "episode": 32,
+    "object": "wooden_spoon",
+    "frames": [
+     0
+    ],
+    "rot_deg": 5.89,
+    "pos_mm": 4.5,
+    "scored_shift_vs_v5": "see streamZ9 README"
+   }
+  ],
+  "ground_truth_used": false,
+  "meshes_changed": false
+ }
+}

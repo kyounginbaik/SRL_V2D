@@ -1,0 +1,82 @@
+[
+  {
+    "split": "public",
+    "episode": 0,
+    "name": "white_pot"
+  },
+  {
+    "split": "public",
+    "episode": 0,
+    "name": "white_pot_lid"
+  },
+  {
+    "split": "public",
+    "episode": 2,
+    "name": "white_pot"
+  },
+  {
+    "split": "public",
+    "episode": 2,
+    "name": "white_pot_lid"
+  },
+  {
+    "split": "public",
+    "episode": 13,
+    "name": "blue_cup"
+  },
+  {
+    "split": "public",
+    "episode": 13,
+    "name": "plastic_dish_rack"
+  },
+  {
+    "split": "public",
+    "episode": 22,
+    "name": "blue_cup"
+  },
+  {
+    "split": "public",
+    "episode": 22,
+    "name": "water_pitcher"
+  },
+  {
+    "split": "public",
+    "episode": 26,
+    "name": "white_pot"
+  },
+  {
+    "split": "public",
+    "episode": 26,
+    "name": "plastic_dish_rack"
+  },
+  {
+    "split": "public",
+    "episode": 27,
+    "name": "white_pot"
+  },
+  {
+    "split": "public",
+    "episode": 27,
+    "name": "plastic_dish_rack"
+  },
+  {
+    "split": "public",
+    "episode": 40,
+    "name": "mini_dust_pan"
+  },
+  {
+    "split": "public",
+    "episode": 42,
+    "name": "white_pot"
+  },
+  {
+    "split": "public",
+    "episode": 43,
+    "name": "white_pot"
+  },
+  {
+    "split": "public",
+    "episode": 45,
+    "name": "white_pot"
+  }
+]

@@ -1,0 +1,2 @@
+{"s32": {"lam_r": 32, "lam_p": 32, "d_iou": 0.1, "d_z": 6.0, "d_ball": 6.0, "rounds": 12},
+ "s128": {"lam_r": 128, "lam_p": 128, "d_iou": 0.1, "d_z": 6.0, "d_ball": 6.0, "rounds": 12}}

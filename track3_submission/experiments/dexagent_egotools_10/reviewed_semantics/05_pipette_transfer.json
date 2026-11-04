@@ -1,0 +1,135 @@
+{
+  "task_prompt": "Use the pipette to transfer liquid from the clear cup to the pink solution container.",
+  "task_summary": "The right hand repeatedly moves the pipette between the clear cup and the pink solution while the left hand rests.",
+  "environment": {
+    "support_surface": "tabletop",
+    "camera": "Moving head-mounted rectified stereo-left camera."
+  },
+  "hands": {
+    "used": [
+      "right"
+    ]
+  },
+  "objects": [
+    {
+      "id": "pipette",
+      "name": "clear plastic pipette",
+      "type": "deformable",
+      "role": "tool",
+      "properties": [
+        "A slender tube with a squeezable bulb and narrow dispensing tip.",
+        "Bulb compression and release control liquid aspiration and dispensing.",
+        "Liquid transfer requires more than positioning the tip over a cup."
+      ],
+      "evidence": "The right hand holds the pipette and alternates between the cups at 0-13 s.",
+      "deformation": {
+        "kind": "compliant bulb",
+        "how_the_task_deforms_it": "The fingers squeeze and release the bulb during transfer."
+      }
+    },
+    {
+      "id": "clear_cup",
+      "name": "clear source cup",
+      "type": "rigid",
+      "role": "container",
+      "properties": [
+        "Open container supports liquid and permits pipette insertion.",
+        "Stays on the tabletop beside the pink cup.",
+        "The pipette tip is lowered into its interior."
+      ],
+      "evidence": "Small clear cup is to the right of the pink cup at 0-13 s."
+    },
+    {
+      "id": "pink_cup",
+      "name": "pink solution container",
+      "type": "rigid",
+      "role": "container",
+      "properties": [
+        "Open container receiving dispensed liquid.",
+        "Its rim must not be treated as a closed solid top.",
+        "Rests on the white paper below the hands."
+      ],
+      "evidence": "The pink solution container remains on the white sheet at 0-13 s."
+    },
+    {
+      "id": "liquid",
+      "name": "clear liquid",
+      "type": "other",
+      "role": "manipulated",
+      "properties": [
+        "Liquid is aspirated from the source cup and dispensed into the pink solution.",
+        "Successful transfer requires an actual amount to leave the source and enter the destination.",
+        "The amount transferred is not resolved from the overview images."
+      ],
+      "evidence": "Pipette is inserted and moved between the source and destination at 0-13 s."
+    }
+  ],
+  "subgoals": [
+    {
+      "acting_hand": "right",
+      "motion": "hold",
+      "action": "Hold the pipette.",
+      "object_refs": [
+        "pipette"
+      ],
+      "goal": "The pipette is held in the right hand.",
+      "time_window_s": [
+        0,
+        0.6
+      ],
+      "hand_roles": {
+        "left": "Rests beside the torso.",
+        "right": "Holds the pipette bulb."
+      },
+      "index": 1
+    },
+    {
+      "acting_hand": "right",
+      "motion": "other",
+      "action": "Draw liquid from the clear cup.",
+      "object_refs": [
+        "pipette",
+        "clear_cup",
+        "liquid"
+      ],
+      "goal": "The pipette contains liquid drawn from the clear source cup.",
+      "time_window_s": [
+        0.6,
+        4.8
+      ],
+      "hand_roles": {
+        "left": "Remains resting.",
+        "right": "Lowers the tip and operates the bulb."
+      },
+      "observed_outcome": "Insertion and movement are visible; liquid volume in the pipette is not resolved.",
+      "index": 2
+    },
+    {
+      "acting_hand": "right",
+      "motion": "other",
+      "action": "Dispense into the pink solution container and repeat the transfer.",
+      "object_refs": [
+        "pipette",
+        "pink_cup",
+        "clear_cup",
+        "liquid"
+      ],
+      "goal": "Clear liquid has been transferred into the pink solution container.",
+      "time_window_s": [
+        4.8,
+        13
+      ],
+      "hand_roles": {
+        "left": "Remains resting.",
+        "right": "Alternates the pipette between the cups and squeezes the bulb."
+      },
+      "observed_outcome": "Tip movement between cups is visible, but the transferred liquid volume cannot be measured from these frames.",
+      "index": 3
+    }
+  ],
+  "task_success": "Clear liquid has been transferred into the pink solution container, the pipette is held in the right hand.",
+  "notes": [
+    "Current-session Codex visual review; fixed upstream library; no example reuse.",
+    "Unsupported functional/material outcomes must remain explicit and must not be replaced with pose-only success."
+  ]
+}

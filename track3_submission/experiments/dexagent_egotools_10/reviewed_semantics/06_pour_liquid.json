@@ -1,0 +1,116 @@
+{
+  "task_prompt": "Pour liquid from the cup into the small clear container.",
+  "task_summary": "The left hand holds a small clear container while the right hand tips a white plastic cup toward its opening to pour.",
+  "environment": {
+    "support_surface": "tabletop",
+    "camera": "Moving head-mounted rectified stereo-left camera."
+  },
+  "hands": {
+    "used": [
+      "left",
+      "right"
+    ]
+  },
+  "objects": [
+    {
+      "id": "source_cup",
+      "name": "white plastic cup",
+      "type": "rigid",
+      "role": "manipulated",
+      "properties": [
+        "Open vessel that can retain and pour liquid.",
+        "The right hand tilts its rim above the receiving opening.",
+        "The cup itself remains a rigid object."
+      ],
+      "evidence": "Right hand holds and tilts the white cup throughout 0-11 s."
+    },
+    {
+      "id": "receiver",
+      "name": "small transparent container",
+      "type": "rigid",
+      "role": "container",
+      "properties": [
+        "Small open container held by the left hand.",
+        "Its opening receives poured liquid.",
+        "Liquid must remain inside rather than only pass near its opening."
+      ],
+      "evidence": "Left hand holds the transparent receiver below the source cup at 0-11 s."
+    },
+    {
+      "id": "liquid",
+      "name": "liquid",
+      "type": "other",
+      "role": "manipulated",
+      "properties": [
+        "Fluid moves under gravity when the cup is tilted.",
+        "A successful pour requires actual transfer into the receiver.",
+        "Liquid volume cannot be established from cup orientation alone."
+      ],
+      "evidence": "Cup is tipped over the receiver at 0-11 s; a small clear stream is difficult to resolve at this resolution."
+    }
+  ],
+  "subgoals": [
+    {
+      "acting_hand": "left",
+      "motion": "hold",
+      "action": "Hold the receiving container.",
+      "object_refs": [
+        "receiver"
+      ],
+      "goal": "The small transparent container is held in the left hand.",
+      "time_window_s": [
+        0,
+        0.6
+      ],
+      "hand_roles": {
+        "left": "Holds the receiver below the source cup.",
+        "right": "Holds the source cup."
+      },
+      "index": 1
+    },
+    {
+      "acting_hand": "right",
+      "motion": "hold",
+      "action": "Hold the pouring cup.",
+      "object_refs": [
+        "source_cup"
+      ],
+      "goal": "The white plastic cup is held in the right hand.",
+      "time_window_s": [
+        0,
+        0.6
+      ],
+      "hand_roles": {
+        "left": "Steadies the receiver.",
+        "right": "Holds the white cup."
+      },
+      "index": 2
+    },
+    {
+      "acting_hand": "both",
+      "motion": "pour",
+      "action": "Tilt the cup and pour liquid into the receiver.",
+      "object_refs": [
+        "source_cup",
+        "receiver",
+        "liquid"
+      ],
+      "goal": "Liquid has transferred from the white plastic cup into the small transparent container.",
+      "time_window_s": [
+        0.6,
+        11
+      ],
+      "hand_roles": {
+        "left": "Keeps the receiver under the pouring rim.",
+        "right": "Tilts the white cup toward the receiver."
+      },
+      "observed_outcome": "The pouring alignment and tilt are visible; transferred liquid volume is not quantitatively resolved.",
+      "index": 3
+    }
+  ],
+  "task_success": "Liquid has transferred into the small transparent container, the small transparent container is held in the left hand, the white plastic cup is held in the right hand.",
+  "notes": [
+    "Current-session Codex visual review; fixed upstream library; no example reuse.",
+    "Unsupported functional/material outcomes must remain explicit and must not be replaced with pose-only success."
+  ]
+}

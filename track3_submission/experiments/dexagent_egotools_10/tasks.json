@@ -1,0 +1,12 @@
+[
+  {"id":"01_grasp_test_tube","uuid":"02430554-623d-4a36-936e-b1ae200b43af","start_s":0,"end_s":18.1,"task":"Grasp and lift a test tube from the rack.","category":"grasping"},
+  {"id":"02_chopsticks_grape","uuid":"8183ff10-49e4-49c8-bdd2-ac0164c1916f","start_s":9,"end_s":23,"task":"Use chopsticks to pick up a green grape and place it on the bread.","category":"chopsticks"},
+  {"id":"03_cut_paper","uuid":"3571faff-0099-447d-8eac-c31b4d2908b9","start_s":17,"end_s":40,"task":"Hold the folded paper and cut it with the handheld shears.","category":"cutting"},
+  {"id":"04_stir_liquid","uuid":"2294a413-aee4-4378-8bd7-b767dfb243ec","start_s":25,"end_s":37.5,"task":"Insert the stirring rod into the mug and stir the liquid.","category":"stirring"},
+  {"id":"05_pipette_transfer","uuid":"e32e6e74-eaf7-4f28-b9ed-71c86ba4c41c","start_s":99,"end_s":112,"task":"Use the pipette to transfer liquid from the clear cup to the pink solution container.","category":"pipetting"},
+  {"id":"06_pour_liquid","uuid":"5b329e73-fe32-4a01-aab3-c681acb06386","start_s":39,"end_s":50,"task":"Pour liquid from the cup into the small clear container.","category":"pouring"},
+  {"id":"07_fold_paper","uuid":"11680759-1775-4b97-9f70-81e7c030ecbb","start_s":5,"end_s":20.55,"task":"Fold and crease the paper sheet using both hands.","category":"folding"},
+  {"id":"08_wipe_counter","uuid":"95b74d85-f2cf-4053-94b7-64ae7767f72e","start_s":0,"end_s":17.5,"task":"Wipe the kitchen counter with the paper towel.","category":"wiping"},
+  {"id":"09_slice_banana","uuid":"32a7a34c-f698-4053-aeda-e7ae5fa18bed","start_s":32.5,"end_s":50,"task":"Steady the banana and slice it with the kitchen knife.","category":"slicing"},
+  {"id":"10_crack_walnut","uuid":"d66517c1-ec51-4c7d-b7b3-5024e4076fc0","start_s":77,"end_s":86,"task":"Place the walnut in the nutcracker and squeeze the handles to crack its shell.","category":"cracking"}
+]

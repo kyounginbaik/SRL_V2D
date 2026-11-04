@@ -1,0 +1,282 @@
+[
+  {
+    "split": "public",
+    "heldout": true,
+    "task": "Pot_with_lid",
+    "episode": 0,
+    "frames": 373,
+    "names": [
+      "white_pot",
+      "white_pot_lid"
+    ],
+    "raw_video": "/data1/video_to_data_challenge/track_3/public/videos/chunk-000/observation.images.ego_cam_a/episode_000000.mp4",
+    "stereo": "/data1/SRL_V2D/challenge_reconstruction/public_heldout_20261027/stereo/episode_000000",
+    "source": "/data1/SRL_V2D/challenge_reconstruction/public_heldout_20261027/outputs/episode_000000",
+    "output": "/data1/SRL_V2D/challenge_reconstruction/reconstruction_recovery_20261026/canonical/public_heldout/episode_000000",
+    "objects": {
+      "white_pot": {
+        "masks": "/data1/SRL_V2D/challenge_reconstruction/reconstruction_recovery_20261026/canonical/public_heldout/episode_000000/objects/white_pot/masks",
+        "object_mask": "/data1/SRL_V2D/challenge_reconstruction/reconstruction_recovery_20261026/canonical/public_heldout/episode_000000/objects/white_pot/masks/1",
+        "anycalib": "/data1/SRL_V2D/challenge_reconstruction/public_heldout_20261027/outputs/episode_000000/white_pot/anycalib",
+        "mesh": "/data1/SRL_V2D/challenge_submissions_SRL/track3_v21C_20261024/all_20_episodes/meshes/episode_000001/white_pot.obj",
+        "mask_frame": "canonical",
+        "reference_frame": 200
+      },
+      "white_pot_lid": {
+        "masks": "/data1/SRL_V2D/challenge_reconstruction/reconstruction_recovery_20261026/canonical/public_heldout/episode_000000/objects/white_pot_lid/masks",
+        "object_mask": "/data1/SRL_V2D/challenge_reconstruction/reconstruction_recovery_20261026/canonical/public_heldout/episode_000000/objects/white_pot_lid/masks/1",
+        "anycalib": "/data1/SRL_V2D/challenge_reconstruction/public_heldout_20261027/outputs/episode_000000/white_pot_lid/anycalib",
+        "mesh": "/data1/SRL_V2D/challenge_submissions_SRL/track3_v21C_20261024/all_20_episodes/meshes/episode_000001/white_pot_lid.obj",
+        "mask_frame": "canonical",
+        "reference_frame": 200
+      }
+    },
+    "missing_inputs": []
+  },
+  {
+    "split": "public",
+    "heldout": true,
+    "task": "Pot_with_lid",
+    "episode": 2,
+    "frames": 343,
+    "names": [
+      "white_pot",
+      "white_pot_lid"
+    ],
+    "raw_video": "/data1/video_to_data_challenge/track_3/public/videos/chunk-000/observation.images.ego_cam_a/episode_000002.mp4",
+    "stereo": "/data1/SRL_V2D/challenge_reconstruction/public_heldout_20261027/stereo/episode_000002",
+    "source": "/data1/SRL_V2D/challenge_reconstruction/public_heldout_20261027/outputs/episode_000002",
+    "output": "/data1/SRL_V2D/challenge_reconstruction/reconstruction_recovery_20261026/canonical/public_heldout/episode_000002",
+    "objects": {
+      "white_pot": {
+        "masks": "/data1/SRL_V2D/challenge_reconstruction/reconstruction_recovery_20261026/canonical/public_heldout/episode_000002/objects/white_pot/masks",
+        "object_mask": "/data1/SRL_V2D/challenge_reconstruction/reconstruction_recovery_20261026/canonical/public_heldout/episode_000002/objects/white_pot/masks/1",
+        "anycalib": "/data1/SRL_V2D/challenge_reconstruction/public_heldout_20261027/outputs/episode_000002/white_pot/anycalib",
+        "mesh": "/data1/SRL_V2D/challenge_submissions_SRL/track3_v21C_20261024/all_20_episodes/meshes/episode_000001/white_pot.obj",
+        "mask_frame": "canonical",
+        "reference_frame": 200
+      },
+      "white_pot_lid": {
+        "masks": "/data1/SRL_V2D/challenge_reconstruction/reconstruction_recovery_20261026/canonical/public_heldout/episode_000002/objects/white_pot_lid/masks",
+        "object_mask": "/data1/SRL_V2D/challenge_reconstruction/reconstruction_recovery_20261026/canonical/public_heldout/episode_000002/objects/white_pot_lid/masks/1",
+        "anycalib": "/data1/SRL_V2D/challenge_reconstruction/public_heldout_20261027/outputs/episode_000002/white_pot_lid/anycalib",
+        "mesh": "/data1/SRL_V2D/challenge_submissions_SRL/track3_v21C_20261024/all_20_episodes/meshes/episode_000001/white_pot_lid.obj",
+        "mask_frame": "canonical",
+        "reference_frame": 200
+      }
+    },
+    "missing_inputs": []
+  },
+  {
+    "split": "public",
+    "heldout": true,
+    "task": "Cup_In_Dish_Rack",
+    "episode": 13,
+    "frames": 190,
+    "names": [
+      "blue_cup",
+      "plastic_dish_rack"
+    ],
+    "raw_video": "/data1/video_to_data_challenge/track_3/public/videos/chunk-000/observation.images.ego_cam_a/episode_000013.mp4",
+    "stereo": "/data1/SRL_V2D/challenge_reconstruction/public_heldout_20261027/stereo/episode_000013",
+    "source": "/data1/SRL_V2D/challenge_reconstruction/public_heldout_20261027/outputs/episode_000013",
+    "output": "/data1/SRL_V2D/challenge_reconstruction/reconstruction_recovery_20261026/canonical/public_heldout/episode_000013",
+    "objects": {
+      "blue_cup": {
+        "masks": "/data1/SRL_V2D/challenge_reconstruction/public_heldout_20261027/outputs/episode_000013/blue_cup/masks",
+        "object_mask": "/data1/SRL_V2D/challenge_reconstruction/public_heldout_20261027/outputs/episode_000013/blue_cup/masks/1",
+        "anycalib": "/data1/SRL_V2D/challenge_reconstruction/public_heldout_20261027/outputs/episode_000013/blue_cup/anycalib",
+        "mesh": "/data1/SRL_V2D/challenge_submissions_SRL/track3_v21C_20261024/all_20_episodes/meshes/episode_000010/blue_cup.obj"
+      },
+      "plastic_dish_rack": {
+        "masks": "/data1/SRL_V2D/challenge_reconstruction/public_heldout_20261027/outputs/episode_000013/plastic_dish_rack/masks",
+        "object_mask": "/data1/SRL_V2D/challenge_reconstruction/public_heldout_20261027/outputs/episode_000013/plastic_dish_rack/masks/1",
+        "anycalib": "/data1/SRL_V2D/challenge_reconstruction/public_heldout_20261027/outputs/episode_000013/plastic_dish_rack/anycalib",
+        "mesh": "/data1/SRL_V2D/challenge_submissions_SRL/track3_v21C_20261024/all_20_episodes/meshes/episode_000014/plastic_dish_rack.obj"
+      }
+    },
+    "missing_inputs": []
+  },
+  {
+    "split": "public",
+    "heldout": true,
+    "task": "Water_Can_Blue_Cup",
+    "episode": 22,
+    "frames": 189,
+    "names": [
+      "blue_cup",
+      "water_pitcher"
+    ],
+    "raw_video": "/data1/video_to_data_challenge/track_3/public/videos/chunk-000/observation.images.ego_cam_a/episode_000022.mp4",
+    "stereo": "/data1/SRL_V2D/challenge_reconstruction/public_heldout_20261027/stereo/episode_000022",
+    "source": "/data1/SRL_V2D/challenge_reconstruction/public_heldout_20261027/outputs/episode_000022",
+    "output": "/data1/SRL_V2D/challenge_reconstruction/reconstruction_recovery_20261026/canonical/public_heldout/episode_000022",
+    "objects": {
+      "blue_cup": {
+        "masks": "/data1/SRL_V2D/challenge_reconstruction/public_heldout_20261027/outputs/episode_000022/blue_cup/masks",
+        "object_mask": "/data1/SRL_V2D/challenge_reconstruction/public_heldout_20261027/outputs/episode_000022/blue_cup/masks/1",
+        "anycalib": "/data1/SRL_V2D/challenge_reconstruction/public_heldout_20261027/outputs/episode_000022/blue_cup/anycalib",
+        "mesh": "/data1/SRL_V2D/challenge_submissions_SRL/track3_v21C_20261024/all_20_episodes/meshes/episode_000010/blue_cup.obj"
+      },
+      "water_pitcher": {
+        "masks": "/data1/SRL_V2D/challenge_reconstruction/public_heldout_20261027/outputs/episode_000022/water_pitcher/masks",
+        "object_mask": "/data1/SRL_V2D/challenge_reconstruction/public_heldout_20261027/outputs/episode_000022/water_pitcher/masks/1",
+        "anycalib": "/data1/SRL_V2D/challenge_reconstruction/public_heldout_20261027/outputs/episode_000022/water_pitcher/anycalib",
+        "mesh": "/data1/SRL_V2D/challenge_submissions_SRL/track3_v21C_20261024/all_20_episodes/meshes/episode_000020/water_pitcher.obj"
+      }
+    },
+    "missing_inputs": []
+  },
+  {
+    "split": "public",
+    "heldout": true,
+    "task": "Pan_In_Dishrack",
+    "episode": 26,
+    "frames": 158,
+    "names": [
+      "white_pot",
+      "plastic_dish_rack"
+    ],
+    "raw_video": "/data1/video_to_data_challenge/track_3/public/videos/chunk-000/observation.images.ego_cam_a/episode_000026.mp4",
+    "stereo": "/data1/SRL_V2D/challenge_reconstruction/public_heldout_20261027/stereo/episode_000026",
+    "source": "/data1/SRL_V2D/challenge_reconstruction/public_heldout_20261027/outputs/episode_000026",
+    "output": "/data1/SRL_V2D/challenge_reconstruction/reconstruction_recovery_20261026/canonical/public_heldout/episode_000026",
+    "objects": {
+      "white_pot": {
+        "masks": "/data1/SRL_V2D/challenge_reconstruction/public_heldout_20261027/outputs/episode_000026/white_pot/masks",
+        "object_mask": "/data1/SRL_V2D/challenge_reconstruction/public_heldout_20261027/outputs/episode_000026/white_pot/masks/1",
+        "anycalib": "/data1/SRL_V2D/challenge_reconstruction/public_heldout_20261027/outputs/episode_000026/white_pot/anycalib",
+        "mesh": "/data1/SRL_V2D/challenge_submissions_SRL/track3_v21C_20261024/all_20_episodes/meshes/episode_000001/white_pot.obj"
+      },
+      "plastic_dish_rack": {
+        "masks": "/data1/SRL_V2D/challenge_reconstruction/public_heldout_20261027/outputs/episode_000026/plastic_dish_rack/masks",
+        "object_mask": "/data1/SRL_V2D/challenge_reconstruction/public_heldout_20261027/outputs/episode_000026/plastic_dish_rack/masks/1",
+        "anycalib": "/data1/SRL_V2D/challenge_reconstruction/public_heldout_20261027/outputs/episode_000026/plastic_dish_rack/anycalib",
+        "mesh": "/data1/SRL_V2D/challenge_submissions_SRL/track3_v21C_20261024/all_20_episodes/meshes/episode_000014/plastic_dish_rack.obj"
+      }
+    },
+    "missing_inputs": []
+  },
+  {
+    "split": "public",
+    "heldout": true,
+    "task": "Pan_In_Dishrack",
+    "episode": 27,
+    "frames": 246,
+    "names": [
+      "white_pot",
+      "plastic_dish_rack"
+    ],
+    "raw_video": "/data1/video_to_data_challenge/track_3/public/videos/chunk-000/observation.images.ego_cam_a/episode_000027.mp4",
+    "stereo": "/data1/SRL_V2D/challenge_reconstruction/public_heldout_20261027/stereo/episode_000027",
+    "source": "/data1/SRL_V2D/challenge_reconstruction/public_heldout_20261027/outputs/episode_000027",
+    "output": "/data1/SRL_V2D/challenge_reconstruction/reconstruction_recovery_20261026/canonical/public_heldout/episode_000027",
+    "objects": {
+      "white_pot": {
+        "masks": "/data1/SRL_V2D/challenge_reconstruction/public_heldout_20261027/outputs/episode_000027/white_pot/masks",
+        "object_mask": "/data1/SRL_V2D/challenge_reconstruction/public_heldout_20261027/outputs/episode_000027/white_pot/masks/1",
+        "anycalib": "/data1/SRL_V2D/challenge_reconstruction/public_heldout_20261027/outputs/episode_000027/white_pot/anycalib",
+        "mesh": "/data1/SRL_V2D/challenge_submissions_SRL/track3_v21C_20261024/all_20_episodes/meshes/episode_000001/white_pot.obj"
+      },
+      "plastic_dish_rack": {
+        "masks": "/data1/SRL_V2D/challenge_reconstruction/public_heldout_20261027/outputs/episode_000027/plastic_dish_rack/masks",
+        "object_mask": "/data1/SRL_V2D/challenge_reconstruction/public_heldout_20261027/outputs/episode_000027/plastic_dish_rack/masks/1",
+        "anycalib": "/data1/SRL_V2D/challenge_reconstruction/public_heldout_20261027/outputs/episode_000027/plastic_dish_rack/anycalib",
+        "mesh": "/data1/SRL_V2D/challenge_submissions_SRL/track3_v21C_20261024/all_20_episodes/meshes/episode_000014/plastic_dish_rack.obj"
+      }
+    },
+    "missing_inputs": []
+  },
+  {
+    "split": "public",
+    "heldout": true,
+    "task": "Dustpan_Solo",
+    "episode": 40,
+    "frames": 260,
+    "names": [
+      "mini_dust_pan"
+    ],
+    "raw_video": "/data1/video_to_data_challenge/track_3/public/videos/chunk-000/observation.images.ego_cam_a/episode_000040.mp4",
+    "stereo": "/data1/SRL_V2D/challenge_reconstruction/public_heldout_20261027/stereo/episode_000040",
+    "source": "/data1/SRL_V2D/challenge_reconstruction/public_heldout_20261027/outputs/episode_000040",
+    "output": "/data1/SRL_V2D/challenge_reconstruction/reconstruction_recovery_20261026/canonical/public_heldout/episode_000040",
+    "objects": {
+      "mini_dust_pan": {
+        "masks": "/data1/SRL_V2D/challenge_reconstruction/public_heldout_20261027/outputs/episode_000040/mini_dust_pan/masks",
+        "object_mask": "/data1/SRL_V2D/challenge_reconstruction/public_heldout_20261027/outputs/episode_000040/mini_dust_pan/masks/1",
+        "anycalib": "/data1/SRL_V2D/challenge_reconstruction/public_heldout_20261027/outputs/episode_000040/mini_dust_pan/anycalib",
+        "mesh": "/data1/SRL_V2D/challenge_submissions_SRL/track3_v21C_20261024/all_20_episodes/meshes/episode_000019/mini_dust_pan.obj"
+      }
+    },
+    "missing_inputs": []
+  },
+  {
+    "split": "public",
+    "heldout": true,
+    "task": "Pan_Solo",
+    "episode": 42,
+    "frames": 257,
+    "names": [
+      "white_pot"
+    ],
+    "raw_video": "/data1/video_to_data_challenge/track_3/public/videos/chunk-000/observation.images.ego_cam_a/episode_000042.mp4",
+    "stereo": "/data1/SRL_V2D/challenge_reconstruction/public_heldout_20261027/stereo/episode_000042",
+    "source": "/data1/SRL_V2D/challenge_reconstruction/public_heldout_20261027/outputs/episode_000042",
+    "output": "/data1/SRL_V2D/challenge_reconstruction/reconstruction_recovery_20261026/canonical/public_heldout/episode_000042",
+    "objects": {
+      "white_pot": {
+        "masks": "/data1/SRL_V2D/challenge_reconstruction/public_heldout_20261027/outputs/episode_000042/white_pot/masks",
+        "object_mask": "/data1/SRL_V2D/challenge_reconstruction/public_heldout_20261027/outputs/episode_000042/white_pot/masks/1",
+        "anycalib": "/data1/SRL_V2D/challenge_reconstruction/public_heldout_20261027/outputs/episode_000042/white_pot/anycalib",
+        "mesh": "/data1/SRL_V2D/challenge_submissions_SRL/track3_v21C_20261024/all_20_episodes/meshes/episode_000001/white_pot.obj"
+      }
+    },
+    "missing_inputs": []
+  },
+  {
+    "split": "public",
+    "heldout": true,
+    "task": "Pan_Solo",
+    "episode": 43,
+    "frames": 326,
+    "names": [
+      "white_pot"
+    ],
+    "raw_video": "/data1/video_to_data_challenge/track_3/public/videos/chunk-000/observation.images.ego_cam_a/episode_000043.mp4",
+    "stereo": "/data1/SRL_V2D/challenge_reconstruction/public_heldout_20261027/stereo/episode_000043",
+    "source": "/data1/SRL_V2D/challenge_reconstruction/public_heldout_20261027/outputs/episode_000043",
+    "output": "/data1/SRL_V2D/challenge_reconstruction/reconstruction_recovery_20261026/canonical/public_heldout/episode_000043",
+    "objects": {
+      "white_pot": {
+        "masks": "/data1/SRL_V2D/challenge_reconstruction/public_heldout_20261027/outputs/episode_000043/white_pot/masks",
+        "object_mask": "/data1/SRL_V2D/challenge_reconstruction/public_heldout_20261027/outputs/episode_000043/white_pot/masks/1",
+        "anycalib": "/data1/SRL_V2D/challenge_reconstruction/public_heldout_20261027/outputs/episode_000043/white_pot/anycalib",
+        "mesh": "/data1/SRL_V2D/challenge_submissions_SRL/track3_v21C_20261024/all_20_episodes/meshes/episode_000001/white_pot.obj"
+      }
+    },
+    "missing_inputs": []
+  },
+  {
+    "split": "public",
+    "heldout": true,
+    "task": "Pan_Solo",
+    "episode": 45,
+    "frames": 290,
+    "names": [
+      "white_pot"
+    ],
+    "raw_video": "/data1/video_to_data_challenge/track_3/public/videos/chunk-000/observation.images.ego_cam_a/episode_000045.mp4",
+    "stereo": "/data1/SRL_V2D/challenge_reconstruction/public_heldout_20261027/stereo/episode_000045",
+    "source": "/data1/SRL_V2D/challenge_reconstruction/public_heldout_20261027/outputs/episode_000045",
+    "output": "/data1/SRL_V2D/challenge_reconstruction/reconstruction_recovery_20261026/canonical/public_heldout/episode_000045",
+    "objects": {
+      "white_pot": {
+        "masks": "/data1/SRL_V2D/challenge_reconstruction/public_heldout_20261027/outputs/episode_000045/white_pot/masks",
+        "object_mask": "/data1/SRL_V2D/challenge_reconstruction/public_heldout_20261027/outputs/episode_000045/white_pot/masks/1",
+        "anycalib": "/data1/SRL_V2D/challenge_reconstruction/public_heldout_20261027/outputs/episode_000045/white_pot/anycalib",
+        "mesh": "/data1/SRL_V2D/challenge_submissions_SRL/track3_v21C_20261024/all_20_episodes/meshes/episode_000001/white_pot.obj"
+      }
+    },
+    "missing_inputs": []
+  }
+]

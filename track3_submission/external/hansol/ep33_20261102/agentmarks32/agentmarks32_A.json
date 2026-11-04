@@ -1,0 +1,223 @@
+{
+    "1":  {
+              "mark":  "out",
+              "conf":  "medium",
+              "why":  "Resting on table; rim lip and inner shading visible from above"
+          },
+    "4":  {
+              "mark":  "out",
+              "conf":  "medium",
+              "why":  "Resting on table; rim lip and inner shading visible from above"
+          },
+    "7":  {
+              "mark":  "out",
+              "conf":  "medium",
+              "why":  "Resting on table; rim lip and inner shading visible from above"
+          },
+    "10":  {
+               "mark":  "out",
+               "conf":  "medium",
+               "why":  "Resting on table; rim lip and inner shading visible from above"
+           },
+    "13":  {
+               "mark":  "out",
+               "conf":  "medium",
+               "why":  "Resting on table; rim lip and inner shading visible from above"
+           },
+    "16":  {
+               "mark":  "out",
+               "conf":  "medium",
+               "why":  "Resting on table; rim lip and inner shading visible from above"
+           },
+    "19":  {
+               "mark":  "out",
+               "conf":  "medium",
+               "why":  "Resting on table; rim lip and inner shading visible from above"
+           },
+    "22":  {
+               "mark":  "out",
+               "conf":  "medium",
+               "why":  "Resting on table; rim lip and inner shading visible from above"
+           },
+    "25":  {
+               "mark":  "out",
+               "conf":  "medium",
+               "why":  "Same resting pose as neighbours; slight blur, inner shading"
+           },
+    "28":  {
+               "mark":  "out",
+               "conf":  "medium",
+               "why":  "Same resting pose as neighbours; slight blur, inner shading"
+           },
+    "31":  {
+               "mark":  "out",
+               "conf":  "medium",
+               "why":  "Same resting pose as neighbours; slight blur, inner shading"
+           },
+    "34":  {
+               "mark":  "out",
+               "conf":  "medium",
+               "why":  "Resting on table, hand on handle; bowl interior faces camera"
+           },
+    "37":  {
+               "mark":  "out",
+               "conf":  "medium",
+               "why":  "Resting on table, hand on handle; bowl interior faces camera"
+           },
+    "40":  {
+               "mark":  "out",
+               "conf":  "medium",
+               "why":  "Resting on table, hand on handle; bowl interior faces camera"
+           },
+    "43":  {
+               "mark":  "out",
+               "conf":  "medium",
+               "why":  "Resting on table, hand on handle; bowl interior faces camera"
+           },
+    "46":  {
+               "mark":  "out",
+               "conf":  "medium",
+               "why":  "Resting on table, hand on handle; bowl interior faces camera"
+           },
+    "49":  {
+               "mark":  "out",
+               "conf":  "medium",
+               "why":  "Resting on table, hand on handle; bowl interior faces camera"
+           },
+    "52":  {
+               "mark":  "out",
+               "conf":  "low",
+               "why":  "Lifting, motion blur; marker layout unchanged from resting pose"
+           },
+    "55":  {
+               "mark":  "out",
+               "conf":  "low",
+               "why":  "Blurred; broad bowl face visible, same marker layout"
+           },
+    "58":  {
+               "mark":  "out",
+               "conf":  "medium",
+               "why":  "Held upright; inner rim line and interior shading visible"
+           },
+    "61":  {
+               "mark":  "out",
+               "conf":  "medium",
+               "why":  "Held upright; inner rim line and interior shading visible"
+           },
+    "64":  {
+               "mark":  "out",
+               "conf":  "medium",
+               "why":  "Held upright; inner rim line and interior shading visible"
+           },
+    "67":  {
+               "mark":  "out",
+               "conf":  "low",
+               "why":  "Strong motion blur; broad face, darker interior lower-left"
+           },
+    "70":  {
+               "mark":  "out",
+               "conf":  "low",
+               "why":  "Motion blur; broad face visible, interior shading faint"
+           },
+    "73":  {
+               "mark":  "unsure",
+               "conf":  "high",
+               "why":  "Bowl inside the cup, not visible"
+           },
+    "76":  {
+               "mark":  "unsure",
+               "conf":  "high",
+               "why":  "Bowl inside the cup, not visible"
+           },
+    "79":  {
+               "mark":  "unsure",
+               "conf":  "high",
+               "why":  "Bowl inside the cup, not visible"
+           },
+    "82":  {
+               "mark":  "unsure",
+               "conf":  "high",
+               "why":  "Bowl inside the cup, not visible"
+           },
+    "85":  {
+               "mark":  "unsure",
+               "conf":  "high",
+               "why":  "Bowl inside the cup, not visible"
+           },
+    "88":  {
+               "mark":  "unsure",
+               "conf":  "high",
+               "why":  "Bowl inside the cup, not visible"
+           },
+    "91":  {
+               "mark":  "unsure",
+               "conf":  "high",
+               "why":  "Bowl inside the cup, not visible"
+           },
+    "94":  {
+               "mark":  "out",
+               "conf":  "low",
+               "why":  "Bowl tip in cup, blurred; broad face visible"
+           },
+    "97":  {
+               "mark":  "out",
+               "conf":  "low",
+               "why":  "Motion blur; broad face visible, rim unclear"
+           },
+    "100":  {
+                "mark":  "out",
+                "conf":  "medium",
+                "why":  "Near rim lip and interior shading visible"
+            },
+    "103":  {
+                "mark":  "out",
+                "conf":  "medium",
+                "why":  "Bright near rim lip with shaded interior above"
+            },
+    "106":  {
+                "mark":  "out",
+                "conf":  "medium",
+                "why":  "Same view as 103; rim lip visible"
+            },
+    "109":  {
+                "mark":  "out",
+                "conf":  "low",
+                "why":  "Blurred; faint lower rim lip suggests interior visible"
+            },
+    "112":  {
+                "mark":  "out",
+                "conf":  "low",
+                "why":  "Similar to 109, mild blur; interior shading"
+            },
+    "115":  {
+                "mark":  "out",
+                "conf":  "low",
+                "why":  "Motion blur; broad bowl face, interior darker"
+            },
+    "118":  {
+                "mark":  [
+                             0.33,
+                             -0.94
+                         ],
+                "conf":  "medium",
+                "why":  "Foreshortened bowl, top rim lip; concave opens upward"
+            },
+    "121":  {
+                "mark":  [
+                             0.33,
+                             -0.94
+                         ],
+                "conf":  "medium",
+                "why":  "Near edge-on, rim on top edge; concave opens upward"
+            },
+    "124":  {
+                "mark":  "out",
+                "conf":  "medium",
+                "why":  "Rim visible on top, shaded interior visible"
+            },
+    "127":  {
+                "mark":  "out",
+                "conf":  "high",
+                "why":  "Clearly looking into bowl; rim and inner wall shading"
+            }
+}

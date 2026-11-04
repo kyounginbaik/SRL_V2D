@@ -1,0 +1,26 @@
+{
+ "label": "track3_FINALc_ep3fix",
+ "episode": 3,
+ "base": "/data1/hansol/teacher33/packages/track3_FINAL_ep32T32cb1_ep33R6M2_20261105/all_20_episodes/track3_submission.parquet",
+ "base_sha": "8b6fa2b9a0513b8b2f14176f51b92ebf02ecde1eccef932b641b4b6dc9960907",
+ "candidate": "/data1/hansol/spoon3537/rt/candidates/S3_ep3_fix/episode_000003",
+ "checkpoint_sha256": "b39c62be31e5eeeb501cbce96a31f2ba63c55ba72b832b5d1969b896629dedd9",
+ "rows_replaced": 626,
+ "mesh": {
+  "0": "base cell (mesh byte-identical to the v29 selection)",
+  "1": "base cell (mesh byte-identical to the v29 selection)"
+ },
+ "columns_changed": [
+  "pos_x",
+  "pos_y",
+  "pos_z",
+  "quat_x",
+  "quat_y",
+  "quat_z",
+  "quat_w",
+  "checkpoint_sha256"
+ ],
+ "sha": "2591ab1da62ad81d0911e52fa24493c3ec8ca5320071a7d73d7f69cc56685b8d",
+ "cdo_sha": "a03230e5d6ecd598c4c6f424b1b8594f0f4f395d11889a84ed4a15f014dd28b9",
+ "uploaded": false
+}

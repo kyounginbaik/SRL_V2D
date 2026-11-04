@@ -1,0 +1,38 @@
+agent:
+  model: codex-current-session
+  provider: external
+  response_timeout_s: 90
+  transport_dir: /data1/SRL_V2D/experiments/dexagent_egotools_10/delivery_transport/04_stir_liquid
+camera:
+  height: 512
+  intrinsics:
+    cx: 256.0
+    cy: 256.0
+    fx: 200.00000000000006
+    fy: 200.00000000000006
+  source: estimate
+  width: 512
+compute:
+  workers: 2
+examples:
+  reuse: false
+  save_assets: false
+inputs:
+  library: /data1/SRL_V2D/third_party/DexAgent/tool_library
+  setup: /data1/SRL_V2D/third_party/DexAgent/setup
+  task: Insert the stirring rod into the mug and stir the liquid.
+  video: /data1/SRL_V2D/experiments/dexagent_egotools_10/clips/04_stir_liquid.mp4
+run:
+  name: 04_stir_liquid
+  output_dir: /data1/SRL_V2D/experiments/dexagent_egotools_10/runs
+stage1:
+  examples: []
+  max_rounds: 3
+  max_wall_minutes: 60
+stage2:
+  max_rounds: 12
+  max_wall_minutes: 30
+stage3:
+  max_rounds: 12
+  max_wall_minutes: 30
+  methods: []

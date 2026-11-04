@@ -1,0 +1,9 @@
+{
+ "base": "selected20_final_v8_g10b",
+ "change": "ep20 water_pitcher: constant body-frame translation t (m) learned scorer-side on public 21/22 (same mesh 88458e8f), LOO-validated; meshes unchanged",
+ "t_body_m": [
+  -0.007937816718897754,
+  0.0008908854536184398,
+  -0.004255491267086797
+ ]
+}

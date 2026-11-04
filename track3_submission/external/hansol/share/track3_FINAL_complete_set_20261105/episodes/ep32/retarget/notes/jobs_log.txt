@@ -1,0 +1,37 @@
+2026-11-04T06:09:41Z T32 acem_RP2_lk3.0_s2 job=69255 node100
+2026-11-04T06:28:18Z W_RP2 built; ports a3_rg0/rg1; fcemW array 69269 (node200); acemW 69270 (node100)
+2026-11-04T06:29:45Z port p06_rg0 in W_RP2; fcemP array 69277
+2026-11-04T06:29:53Z fcemP 69277 cancelled: p06 port drops the spoon (925 cm) in W_RP2
+2026-11-04T06:43:25Z fcemV array 69297: t_lock 2.5/3.5/2.0, knots 12
+2026-11-04T06:45:23Z fcem2 (two-hand follow, strict 1.2/15 cost) array 69301
+2026-11-04T06:50:18Z fcemV cancelled; fcem2 resubmitted 69307 without node pin
+2026-11-04T06:54:32Z fcem2 big (128 samples, 64 workers) array 69312
+2026-11-04T07:07:31Z fcem2 resume (lk3.0_s2, lk2.5_s4; 128 samples, 64 workers, to 60 iters) array 69324
+2026-11-04T07:10:20Z fcem2 more seeds (lk2.75/3.25/k6, 128x64, 50 it) array 69328
+2026-11-04T07:37:19Z exported best teacher fcem2_best_s2 (from lk3.0_s2 progress, cost 2.46); distill job 69340 node01
+2026-11-04T07:37:48Z login-node export was invalid (CPU-dependent physics: spoon 4.8 vs 2.0); re-export on node01 job 69341, distill 69342
+2026-11-04T07:40:17Z distill of fcem2_best_s2: all 13 actors fail (best spoon 5.2/63). acem2 (two-hand actor-level CEM, init from best teacher) job 69347 node01
+2026-11-04T07:51:25Z best teacher so far fcem2_lk3.25_s11 cup 1.14/14.6 spoon 1.92/18.7 (node?); export on node01 69354, distill 69355
+2026-11-04T07:51:25Z acem2 from s11 teacher job 69356 node01
+2026-11-04T07:51:38Z resume s11 teacher CEM to 90 it, 96x48, node01: 69357
+2026-11-04T08:04:22Z s11 at 90 it: cup 1.00/13.7 spoon 1.56/14.3 (cost 1.85). export3 69370, resume to 160 it 69371, acem2c from it90 69372 (all node01)
+2026-11-04T08:06:41Z fcem2_best_s11b exported on node01 (cup 1.00/13.7 spoon 1.56/14.2); distill3 69375
+2026-11-04T08:12:28Z stage A (acem2_s11 actor cup 1.41/17.3 spoon 2.33/18.5) job 69381 node01
+2026-11-04T08:12:58Z stage B (distill_s11b/actor_c1024_p0.01_v0.0005 cup 1.79/21.3 spoon 1.93/17.0) job 69382 node01
+2026-11-04T08:15:17Z run_one (canonical build-v2) for A: job 69387 tag T32_A_acem2_s11
+2026-11-04T08:15:35Z run_one for B: job 69388 tag T32_B_distill_s11b
+2026-11-04T08:24:45Z acem2c (s11b) actor spoon 1.92/16.7 cup 4.41/40.1 after 12 it (cost falling 8.6->5.7); resumed to 32 it job 69399
+2026-11-04T08:27:26Z teacher plateau cost 1.85 (cup 1.15/13.7 spoon 1.55/14.9). Residual spoon error at 2.5-3.0 s (before lock) and 10.0-10.5 s (near t_off): fcem2 --t-on added; variants ton2.0/off12, ton3.25/off12, ton2.0/off10.8 job 69400 node01
+2026-11-04T08:42:29Z user: video A misses the second scoop (7-8 s) and spoon tilted 8-9 s -> scoop-weighted cost (x3 on f65-100,f130-170): teacher 69415, acem2 69416
+2026-11-04T08:52:19Z TEACHER fcem2_ton3.25_off12: cup 1.06/12.4 spoon 1.25/12.7 (node01). distill4 69419, acem2_ton1 (scoop-w 2) 69420, resume to 90 it 69421
+2026-11-04T08:57:08Z acem2c2 resume hit FileExistsError at export (best cost 3.73); re-export job 69428 -> acem2_s11b_best
+2026-11-04T09:06:17Z BEAM T32c_b1 (both-hands on distilled actor B): cup 0.73/8.6 spoon 0.76/9.3 -> finish chain job 69447
+2026-11-04T09:06:32Z backup finish chain for T32b_b1 (cup 0.80/12.0 spoon 1.22/17.7) job 69448
+2026-11-04T09:15:51Z finish chain T32a_b2 (cup 1.07/11.3 spoon 0.99/15.2) job 69454; T32a_b3 0.93/10.3 1.12/15.3 not chained
+2026-11-04T09:34:50Z acem2_ton1 actor 1.30/15.0 1.41/11.9; acem2_scoop3 actor 1.27/15.4 1.65/14.3 - neither beats T32c_b1; reston1 cancelled (not needed)
+2026-11-04T09:47:14Z T32d_b1 beam: cup 1.09/9.7 spoon 1.09/11.3 (under bar; T32c_b1 better, not chained)
+2026-11-04T10:18:55Z ep33: user approved recon K33_RP; t33_pipeline (world W_RP33, port, fixed-point scene, fcem2 x4: lk3.6/off14, lk3.6/off17 k12, lk3.2/off15, lk3.6/off17 scoop-w2) job 69506
+2026-11-04T10:47:11Z fcem2_33 cancelled: W_RP33 port base broken (cup 24878 cm = flung at start; f0 cup residual 2.86 cm, cup is in-hand at f0)
+2026-11-04T10:49:17Z build_world_b safety lift patch; W_RP33b pipeline job 69539
+2026-11-04T11:30:27Z ep33 teacher round 2: resume lk3.2_s3 & lk3.6_s2 to 120 it (128x64); ton2.5/off17 and scoop3 from lk3.2 progress; array 69562
+2026-11-04T11:54:44Z fcem3 (3 squeeze groups/hand); porting coworker FN_base teacher into W_RP33b (rg0/rg1) + fcem3 x4: job 69589

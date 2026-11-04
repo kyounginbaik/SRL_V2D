@@ -1,0 +1,11 @@
+{
+ "diagnostic_only": true,
+ "label": "K35_H2joint_b1",
+ "episode": 35,
+ "base": "track3_v29_20261030",
+ "base_sha": "7f44ef5e5728a59ee91a0026ac9582ef79f7314dcc1d42c7ba9aa4c37f44e21b",
+ "candidate": "K35_K35_H2joint_b1",
+ "candidate_checkpoint_sha256": "f0ce94aa956e1218e6c82e8fd390d556c2f3496df2e36762e47b1858cf5cfd2a",
+ "sha": "7e469bd0fad3b7f6db4b0357663f4c8421df0b882d418e668d22550fe09ce25c",
+ "rows_replaced": 421
+}

@@ -1,0 +1,23 @@
+{
+ "wooden_spoon": {
+  "frames_changed": 238,
+  "first_changed": 21,
+  "rot_deg_mean": 30.947360710606297,
+  "rot_deg_max": 169.38694463835284,
+  "cm_mean": 0.6804963312989157,
+  "cm_max": 3.2614639402427774
+ },
+ "blue_cup": {
+  "frames_changed": 253,
+  "first_changed": 6,
+  "rot_deg_mean": 28.738138753489423,
+  "rot_deg_max": 113.89654771694462,
+  "cm_mean": 0.9656964089679022,
+  "cm_max": 3.63966314076782
+ },
+ "label": "K32_RP2",
+ "source": "/data1/SRL_V2D/challenge_reconstruction/campaign_v22_20261028/streamK32_ep32/bundles/K32_R10/episode_000032",
+ "ground_truth_used": false,
+ "method": "recon_perfect merge.py (masks+stereo+spikes+user marks+temporal; spoon MW=4) + merge_cup2.py (cotracker tracks, LAM 0.4) + SG smooth rot9/pos7",
+ "sha": "8da7353b6a1774ad"
+}

@@ -1,0 +1,29 @@
+{
+  "review": "Both original test-tube prompts return empty masks. The revealed tube is visibly present; an empty result cannot certify it as hidden in the initial frame. No object mask is accepted for reconstruction.",
+  "results": [
+    {
+      "view": "sam3_tube_initial",
+      "prompts": [
+        "test tube"
+      ],
+      "min_score": 0.3,
+      "n_instances": {
+        "test tube": [
+          0
+        ]
+      }
+    },
+    {
+      "view": "sam3_tube_reveal",
+      "prompts": [
+        "test tube"
+      ],
+      "min_score": 0.3,
+      "n_instances": {
+        "test tube": [
+          0
+        ]
+      }
+    }
+  ]
+}

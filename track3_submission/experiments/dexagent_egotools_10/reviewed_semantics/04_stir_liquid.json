@@ -1,0 +1,155 @@
+{
+  "task_prompt": "Insert the stirring rod into the mug and stir the liquid.",
+  "task_summary": "The left hand steadies and lifts a glass mug while the right hand inserts a green stirring rod, makes repeated circular strokes, and withdraws it.",
+  "environment": {
+    "support_surface": "tabletop",
+    "camera": "Moving head-mounted rectified stereo-left camera."
+  },
+  "hands": {
+    "used": [
+      "left",
+      "right"
+    ]
+  },
+  "objects": [
+    {
+      "id": "stirring_rod",
+      "name": "green stirring rod",
+      "type": "rigid",
+      "role": "tool",
+      "properties": [
+        "Slender shape-preserving rod held at its upper end.",
+        "Its lower tip must enter the liquid inside the mug.",
+        "Stirring requires a repeated path through the liquid, rather than a stationary inserted rod."
+      ],
+      "evidence": "Right hand holds the green rod at 0-12.5 s and moves it inside the mug near 2-8 s.",
+      "parts": [
+        "tip"
+      ]
+    },
+    {
+      "id": "mug",
+      "name": "transparent glass mug",
+      "type": "rigid",
+      "role": "container",
+      "properties": [
+        "Open cylindrical vessel with a handle.",
+        "Contains liquid that is stirred by the rod.",
+        "Left hand supports the mug while the right hand stirs."
+      ],
+      "evidence": "Left hand lifts the mug near 1-2 s, holds it at 2-11 s and lowers it near 11-12.5 s."
+    },
+    {
+      "id": "liquid",
+      "name": "liquid",
+      "type": "other",
+      "role": "manipulated",
+      "properties": [
+        "Fluid inside the mug must be contacted and agitated by the rod.",
+        "Rod motion should be measured over time, not just at the final frame.",
+        "No chemical reaction or quantitative homogeneity is established by the video."
+      ],
+      "evidence": "The interior of the mug is visible while the rod moves in it at 2-8 s."
+    }
+  ],
+  "subgoals": [
+    {
+      "acting_hand": "left",
+      "motion": "grasp_lift",
+      "action": "Lift and steady the mug.",
+      "object_refs": [
+        "mug"
+      ],
+      "goal": "The mug is held in the left hand.",
+      "time_window_s": [
+        0.8,
+        2.3
+      ],
+      "hand_roles": {
+        "left": "Supports the mug near its rim.",
+        "right": "Holds the green rod."
+      },
+      "index": 1
+    },
+    {
+      "acting_hand": "right",
+      "motion": "insert",
+      "action": "Insert the rod tip into the mug.",
+      "object_refs": [
+        "stirring_rod:tip",
+        "mug"
+      ],
+      "goal": "The stirring rod tip is inside the mug.",
+      "time_window_s": [
+        1.5,
+        2.8
+      ],
+      "hand_roles": {
+        "left": "Steadies the mug.",
+        "right": "Lowers the rod tip."
+      },
+      "index": 2
+    },
+    {
+      "acting_hand": "right",
+      "motion": "other",
+      "action": "Stir with repeated circular strokes.",
+      "object_refs": [
+        "stirring_rod",
+        "mug",
+        "liquid"
+      ],
+      "goal": "The stirring rod tip traces repeated circular strokes through the liquid.",
+      "time_window_s": [
+        2.8,
+        8.2
+      ],
+      "hand_roles": {
+        "left": "Continues holding the mug.",
+        "right": "Moves the green rod repeatedly around the mug interior."
+      },
+      "index": 3
+    },
+    {
+      "acting_hand": "right",
+      "motion": "hold",
+      "action": "Withdraw and hold the stirring rod.",
+      "object_refs": [
+        "stirring_rod"
+      ],
+      "goal": "The stirring rod is held in the right hand.",
+      "time_window_s": [
+        8.2,
+        11.6
+      ],
+      "hand_roles": {
+        "left": "Supports the mug.",
+        "right": "Lifts the rod tip out of the mug."
+      },
+      "index": 4
+    },
+    {
+      "acting_hand": "left",
+      "motion": "place",
+      "action": "Lower the mug to the table.",
+      "object_refs": [
+        "mug"
+      ],
+      "goal": "The mug rests on the table.",
+      "time_window_s": [
+        11.6,
+        12.5
+      ],
+      "hand_roles": {
+        "left": "Lowers the mug.",
+        "right": "Keeps holding the rod."
+      },
+      "index": 5
+    }
+  ],
+  "task_success": "The liquid has been stirred with the stirring rod, the stirring rod is held in the right hand, the mug rests on the table.",
+  "notes": [
+    "Current-session Codex visual review; fixed upstream library; no example reuse.",
+    "Unsupported functional/material outcomes must remain explicit and must not be replaced with pose-only success."
+  ]
+}

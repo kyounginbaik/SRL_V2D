@@ -1,0 +1,11 @@
+{
+ "diagnostic_only": true,
+ "label": "K32_R10_R10_c1",
+ "episode": 32,
+ "base": "ep35_fix_20261102/K35_H2joint_b1 (v29 + ep35 fix)",
+ "base_sha": "7e469bd0fad3b7f6db4b0357663f4c8421df0b882d418e668d22550fe09ce25c",
+ "candidate": "K32_K32_R10_R10_c1",
+ "candidate_checkpoint_sha256": "dd904268d818b1bff83a698012c6d071c8c5666d4c81c482846982658c637905",
+ "sha": "b3126beed8b1ff28f424a498cb93ae48cf838683914aa92eaf80c85c3b493703",
+ "rows_replaced": 518
+}

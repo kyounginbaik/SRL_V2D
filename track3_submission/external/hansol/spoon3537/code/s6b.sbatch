@@ -1,0 +1,15 @@
+#!/bin/bash
+#SBATCH -p debug
+#SBATCH --exclude=node200
+#SBATCH -c 8
+#SBATCH --mem=32G
+#SBATCH --time=00:45:00
+#SBATCH -o /data1/hansol/spoon3537/logs/s6b-%j.log
+set -e
+export PYTHONPATH=/data1/SRL_V2D/challenge_reconstruction/dexagent_final_recon_20261017/.venv/lib/python3.11/site-packages OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1
+PY="/home/hansol/v2d/.venvs/v2d-host/bin/python -B"; W=/data1/hansol/spoon3537/work/s6b; C=/data1/hansol/spoon3537/code
+cd /data1/hansol/spoon3537
+$PY $C/s6b.py prep
+$PY $C/spoon_annot_roll3.py $W/roll 36 $W/marks36_s6.json 250 350 --face-thr 0.25 --ball-w 6 --iou 250,350,1 --free-end --base $W/bundle > $W/roll.txt 2>&1
+tail -1 $W/roll.txt | cut -c1-600
+$PY $C/s6b.py final

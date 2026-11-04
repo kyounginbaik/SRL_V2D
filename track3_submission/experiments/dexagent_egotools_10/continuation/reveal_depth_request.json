@@ -1,0 +1,9 @@
+{
+  "source": "/data1/SRL_V2D/experiments/dexagent_egotools_10/data/raw/02430554-623d-4a36-936e-b1ae200b43af/ep1/depth.hdf5",
+  "bytes": 487584800,
+  "source_frame_indices": [
+    0,
+    329
+  ],
+  "assumed_depth_focal_px": 100.0
+}

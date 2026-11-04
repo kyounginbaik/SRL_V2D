@@ -1,0 +1,10 @@
+# Python 3.11. Exact versions used for the episode 8 learned-policy rollout.
+numpy==1.26.4
+scipy==1.17.1
+mujoco==3.10.0
+pyarrow==19.0.1
+pandas==2.3.3
+trimesh==5.1.1
+fast-simplification==0.2.0
+Pillow==13.0.0
+opencv-python==4.11.0.86

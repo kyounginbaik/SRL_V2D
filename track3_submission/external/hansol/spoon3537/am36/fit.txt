@@ -1,0 +1,156 @@
+ep36: 76 marks; base selected20_final_v14_g17; annotated frame: base (facing, arrow error deg, ok)
+200 out {'facing': 0.76, 'arrow_err': None, 'ok': True}
+202 out {'facing': 0.7, 'arrow_err': None, 'ok': True}
+204 out {'facing': 0.7, 'arrow_err': None, 'ok': True}
+206 out {'facing': 0.74, 'arrow_err': None, 'ok': True}
+208 out {'facing': 0.69, 'arrow_err': None, 'ok': True}
+210 out {'facing': 0.69, 'arrow_err': None, 'ok': True}
+212 out {'facing': 0.67, 'arrow_err': None, 'ok': True}
+214 out {'facing': 0.7, 'arrow_err': None, 'ok': True}
+216 out {'facing': 0.74, 'arrow_err': None, 'ok': True}
+218 out {'facing': 0.8, 'arrow_err': None, 'ok': True}
+220 out {'facing': 0.72, 'arrow_err': None, 'ok': True}
+222 out {'facing': 0.7, 'arrow_err': None, 'ok': True}
+224 out {'facing': 0.66, 'arrow_err': None, 'ok': True}
+226 out {'facing': 0.63, 'arrow_err': None, 'ok': True}
+228 out {'facing': 0.6, 'arrow_err': None, 'ok': True}
+230 out {'facing': 0.65, 'arrow_err': None, 'ok': True}
+232 out {'facing': 0.67, 'arrow_err': None, 'ok': True}
+234 out {'facing': 0.72, 'arrow_err': None, 'ok': True}
+236 out {'facing': 0.73, 'arrow_err': None, 'ok': True}
+238 out {'facing': 0.69, 'arrow_err': None, 'ok': True}
+240 out {'facing': 0.59, 'arrow_err': None, 'ok': True}
+242 out {'facing': 0.49, 'arrow_err': None, 'ok': True}
+244 out {'facing': 0.34, 'arrow_err': None, 'ok': True}
+246 (0.97, -0.22) {'facing': -0.1, 'arrow_err': 7.0, 'ok': True}
+248 in {'facing': -0.39, 'arrow_err': None, 'ok': True}
+250 in {'facing': -0.48, 'arrow_err': None, 'ok': True}
+252 in {'facing': -0.76, 'arrow_err': None, 'ok': True}
+254 in {'facing': -0.85, 'arrow_err': None, 'ok': True}
+256 in {'facing': -0.85, 'arrow_err': None, 'ok': True}
+258 in {'facing': -0.87, 'arrow_err': None, 'ok': True}
+260 in {'facing': -0.86, 'arrow_err': None, 'ok': True}
+262 in {'facing': -0.85, 'arrow_err': None, 'ok': True}
+264 in {'facing': -0.83, 'arrow_err': None, 'ok': True}
+266 in {'facing': -0.84, 'arrow_err': None, 'ok': True}
+268 in {'facing': -0.83, 'arrow_err': None, 'ok': True}
+270 in {'facing': -0.83, 'arrow_err': None, 'ok': True}
+272 in {'facing': -0.84, 'arrow_err': None, 'ok': True}
+274 in {'facing': -0.9, 'arrow_err': None, 'ok': True}
+276 in {'facing': -0.9, 'arrow_err': None, 'ok': True}
+278 in {'facing': -0.91, 'arrow_err': None, 'ok': True}
+280 in {'facing': -0.89, 'arrow_err': None, 'ok': True}
+282 in {'facing': -0.88, 'arrow_err': None, 'ok': True}
+284 in {'facing': -0.91, 'arrow_err': None, 'ok': True}
+286 in {'facing': -0.9, 'arrow_err': None, 'ok': True}
+288 in {'facing': -0.89, 'arrow_err': None, 'ok': True}
+290 in {'facing': -0.86, 'arrow_err': None, 'ok': True}
+292 in {'facing': -0.81, 'arrow_err': None, 'ok': True}
+294 in {'facing': -0.81, 'arrow_err': None, 'ok': True}
+296 in {'facing': -0.8, 'arrow_err': None, 'ok': True}
+298 in {'facing': -0.69, 'arrow_err': None, 'ok': True}
+300 in {'facing': -0.47, 'arrow_err': None, 'ok': True}
+302 (-0.95, 0.3) {'facing': -0.27, 'arrow_err': 163.0, 'ok': False}
+304 (-0.95, 0.3) {'facing': -0.19, 'arrow_err': 169.0, 'ok': False}
+306 (-0.96, 0.28) {'facing': -0.18, 'arrow_err': 174.0, 'ok': False}
+308 (-0.97, 0.25) {'facing': -0.21, 'arrow_err': 176.0, 'ok': False}
+310 out {'facing': -0.31, 'arrow_err': None, 'ok': False}
+312 out {'facing': -0.4, 'arrow_err': None, 'ok': False}
+314 out {'facing': -0.45, 'arrow_err': None, 'ok': False}
+316 out {'facing': -0.28, 'arrow_err': None, 'ok': False}
+318 out {'facing': 0.11, 'arrow_err': None, 'ok': False}
+320 out {'facing': 0.51, 'arrow_err': None, 'ok': True}
+322 out {'facing': 0.66, 'arrow_err': None, 'ok': True}
+324 out {'facing': 0.76, 'arrow_err': None, 'ok': True}
+326 out {'facing': 0.82, 'arrow_err': None, 'ok': True}
+328 out {'facing': 0.79, 'arrow_err': None, 'ok': True}
+330 out {'facing': 0.72, 'arrow_err': None, 'ok': True}
+332 out {'facing': 0.79, 'arrow_err': None, 'ok': True}
+334 out {'facing': 0.79, 'arrow_err': None, 'ok': True}
+336 out {'facing': 0.59, 'arrow_err': None, 'ok': True}
+338 out {'facing': 0.57, 'arrow_err': None, 'ok': True}
+340 out {'facing': 0.53, 'arrow_err': None, 'ok': True}
+342 out {'facing': 0.62, 'arrow_err': None, 'ok': True}
+344 out {'facing': 0.73, 'arrow_err': None, 'ok': True}
+346 out {'facing': 0.78, 'arrow_err': None, 'ok': True}
+348 out {'facing': 0.76, 'arrow_err': None, 'ok': True}
+350 out {'facing': 0.82, 'arrow_err': None, 'ok': True}
+
+new track at annotated frames
+200 out {'facing': 0.76, 'arrow_err': None, 'ok': True} phi 0.0
+202 out {'facing': 0.7, 'arrow_err': None, 'ok': True} phi 0.0
+204 out {'facing': 0.71, 'arrow_err': None, 'ok': True} phi 10.0
+206 out {'facing': 0.74, 'arrow_err': None, 'ok': True} phi 0.0
+208 out {'facing': 0.68, 'arrow_err': None, 'ok': True} phi -10.0
+210 out {'facing': 0.69, 'arrow_err': None, 'ok': True} phi -10.0
+212 out {'facing': 0.67, 'arrow_err': None, 'ok': True} phi -10.0
+214 out {'facing': 0.69, 'arrow_err': None, 'ok': True} phi -10.0
+216 out {'facing': 0.7, 'arrow_err': None, 'ok': True} phi -20.0
+218 out {'facing': 0.77, 'arrow_err': None, 'ok': True} phi -10.0
+220 out {'facing': 0.79, 'arrow_err': None, 'ok': True} phi 10.0
+222 out {'facing': 0.79, 'arrow_err': None, 'ok': True} phi 10.0
+224 out {'facing': 0.76, 'arrow_err': None, 'ok': True} phi 10.0
+226 out {'facing': 0.74, 'arrow_err': None, 'ok': True} phi 10.0
+228 out {'facing': 0.71, 'arrow_err': None, 'ok': True} phi 10.0
+230 out {'facing': 0.65, 'arrow_err': None, 'ok': True} phi 0.0
+232 out {'facing': 0.58, 'arrow_err': None, 'ok': True} phi -10.0
+234 out {'facing': 0.64, 'arrow_err': None, 'ok': True} phi -10.0
+236 out {'facing': 0.66, 'arrow_err': None, 'ok': True} phi -10.0
+238 out {'facing': 0.62, 'arrow_err': None, 'ok': True} phi -10.0
+240 out {'facing': 0.5, 'arrow_err': None, 'ok': True} phi -10.0
+242 out {'facing': 0.39, 'arrow_err': None, 'ok': True} phi -10.0
+244 out {'facing': 0.32, 'arrow_err': None, 'ok': True} phi 0.0
+246 (0.97, -0.22) {'facing': 0.05, 'arrow_err': 2.0, 'ok': True} phi 10.0
+248 in {'facing': -0.24, 'arrow_err': None, 'ok': False} phi 10.0
+250 in {'facing': -0.36, 'arrow_err': None, 'ok': True} phi 10.0
+252 in {'facing': -0.58, 'arrow_err': None, 'ok': True} phi 20.0
+254 in {'facing': -0.7, 'arrow_err': None, 'ok': True} phi 20.0
+256 in {'facing': -0.73, 'arrow_err': None, 'ok': True} phi 20.0
+258 in {'facing': -0.8, 'arrow_err': None, 'ok': True} phi 20.0
+260 in {'facing': -0.83, 'arrow_err': None, 'ok': True} phi 10.0
+262 in {'facing': -0.85, 'arrow_err': None, 'ok': True} phi 0.0
+264 in {'facing': -0.83, 'arrow_err': None, 'ok': True} phi 0.0
+266 in {'facing': -0.84, 'arrow_err': None, 'ok': True} phi 0.0
+268 in {'facing': -0.83, 'arrow_err': None, 'ok': True} phi 0.0
+270 in {'facing': -0.83, 'arrow_err': None, 'ok': True} phi 0.0
+272 in {'facing': -0.84, 'arrow_err': None, 'ok': True} phi 0.0
+274 in {'facing': -0.9, 'arrow_err': None, 'ok': True} phi 0.0
+276 in {'facing': -0.9, 'arrow_err': None, 'ok': True} phi 0.0
+278 in {'facing': -0.87, 'arrow_err': None, 'ok': True} phi -10.0
+280 in {'facing': -0.84, 'arrow_err': None, 'ok': True} phi -10.0
+282 in {'facing': -0.83, 'arrow_err': None, 'ok': True} phi -10.0
+284 in {'facing': -0.79, 'arrow_err': None, 'ok': True} phi -20.0
+286 in {'facing': -0.79, 'arrow_err': None, 'ok': True} phi -20.0
+288 in {'facing': -0.72, 'arrow_err': None, 'ok': True} phi -30.0
+290 in {'facing': -0.61, 'arrow_err': None, 'ok': True} phi -40.0
+292 in {'facing': -0.54, 'arrow_err': None, 'ok': True} phi -50.0
+294 in {'facing': -0.46, 'arrow_err': None, 'ok': True} phi -60.0
+296 in {'facing': -0.38, 'arrow_err': None, 'ok': True} phi -80.0
+298 in {'facing': -0.29, 'arrow_err': None, 'ok': True} phi -110.0
+300 in {'facing': -0.25, 'arrow_err': None, 'ok': True} phi -130.0
+302 (-0.95, 0.3) {'facing': -0.11, 'arrow_err': 4.0, 'ok': True} phi -150.0
+304 (-0.95, 0.3) {'facing': 0.05, 'arrow_err': 4.0, 'ok': True} phi -170.0
+306 (-0.96, 0.28) {'facing': 0.17, 'arrow_err': 6.0, 'ok': True} phi -180.0
+308 (-0.97, 0.25) {'facing': 0.2, 'arrow_err': 4.0, 'ok': True} phi -180.0
+310 out {'facing': 0.3, 'arrow_err': None, 'ok': True} phi -180.0
+312 out {'facing': 0.39, 'arrow_err': None, 'ok': True} phi -180.0
+314 out {'facing': 0.43, 'arrow_err': None, 'ok': True} phi -180.0
+316 out {'facing': 0.51, 'arrow_err': None, 'ok': True} phi -200.0
+318 out {'facing': 0.63, 'arrow_err': None, 'ok': True} phi -240.0
+320 out {'facing': 0.68, 'arrow_err': None, 'ok': True} phi -280.0
+322 out {'facing': 0.8, 'arrow_err': None, 'ok': True} phi -300.0
+324 out {'facing': 0.9, 'arrow_err': None, 'ok': True} phi -310.0
+326 out {'facing': 0.92, 'arrow_err': None, 'ok': True} phi -320.0
+328 out {'facing': 0.94, 'arrow_err': None, 'ok': True} phi -320.0
+330 out {'facing': 0.92, 'arrow_err': None, 'ok': True} phi -320.0
+332 out {'facing': 0.92, 'arrow_err': None, 'ok': True} phi -340.0
+334 out {'facing': 0.93, 'arrow_err': None, 'ok': True} phi -340.0
+336 out {'facing': 0.88, 'arrow_err': None, 'ok': True} phi -330.0
+338 out {'facing': 0.88, 'arrow_err': None, 'ok': True} phi -330.0
+340 out {'facing': 0.86, 'arrow_err': None, 'ok': True} phi -330.0
+342 out {'facing': 0.84, 'arrow_err': None, 'ok': True} phi -340.0
+344 out {'facing': 0.82, 'arrow_err': None, 'ok': True} phi -350.0
+346 out {'facing': 0.86, 'arrow_err': None, 'ok': True} phi -350.0
+348 out {'facing': 0.85, 'arrow_err': None, 'ok': True} phi -350.0
+350 out {'facing': 0.89, 'arrow_err': None, 'ok': True} phi -350.0
+{"episode": 36, "window_rgb": [200, 350], "frames_changed_stored": 187, "annotations_ok": {"base": 67, "new": 75, "total": 76}, "iou_mean": [0.7066031294723252, 0.7061152127877538], "ball_median": [6.512366735532995, 6.9281818109842375], "ball_frames": 126, "ball_worse_3px": 10, "ball_better_3px": 7, "max_step": [19.050378922412587, 15.987121858359883], "steps_gt30": [0, 0]}

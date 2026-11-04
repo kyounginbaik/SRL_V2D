@@ -1,0 +1,45 @@
+agent:
+  provider: external
+  model: codex-current-session
+  transport_dir: /data1/SRL_V2D/experiments/dexagent_egotools_10/continuation/transport/grasp/stage2
+  response_timeout_s: 7200
+  tool_discovery: all
+run:
+  name: grasp
+  output_dir: /data1/SRL_V2D/experiments/dexagent_egotools_10/continuation/runs
+examples:
+  reuse: false
+  save_assets: false
+inputs:
+  video: /data1/SRL_V2D/experiments/dexagent_egotools_10/clips/01_grasp_test_tube.mp4
+  task: Grasp and lift a test tube from the rack.
+  setup: /data1/SRL_V2D/experiments/dexagent_egotools_10/deps/DexAgent-adapted/setup
+  library: /data1/SRL_V2D/experiments/dexagent_egotools_10/deps/DexAgent-adapted/tool_library
+camera:
+  source: estimate
+  width: 512
+  height: 512
+  intrinsics:
+    fx: 200.00000000000006
+    fy: 200.00000000000006
+    cx: 256.0
+    cy: 256.0
+stage1:
+  examples: []
+  max_rounds: 12
+  max_wall_minutes: 60
+stage2:
+  max_rounds: 60
+  max_wall_minutes: 120
+stage3:
+  max_rounds: 60
+  max_wall_minutes: 120
+  methods: []
+  stage4_draws: 3
+  strict_quality: true
+compute:
+  workers: 2
+environments:
+  sam3: /data1/SRL_V2D/experiments/dexagent_egotools_10/.perception/bin/python
+models:
+  hf_home: /data1/SRL_V2D/experiments/dexagent_egotools_10/models/hf

@@ -1,0 +1,20 @@
+{
+  "python": "3.12.14 (main, Sep  2 2026, 23:27:36) [GCC 15.3.0]",
+  "prefix": "/data1/SRL_V2D/experiments/dexagent_egotools_10/.perception",
+  "cuda_visible_devices": "",
+  "packages": {
+    "torch": "2.8.0+cu128",
+    "torchvision": "0.23.0+cu128",
+    "sam3": "0.1.0",
+    "numpy": "1.26.0",
+    "opencv-python": "4.11.0.86",
+    "timm": "1.0.29",
+    "einops": "0.8.2",
+    "huggingface-hub": "1.30.0",
+    "setuptools": "80.10.2",
+    "h5py": "3.16.0",
+    "pillow": "12.3.0",
+    "ftfy": "6.1.1",
+    "iopath": "0.1.10"
+  }
+}

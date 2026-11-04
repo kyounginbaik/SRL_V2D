@@ -1,0 +1,292 @@
+{
+    "232":  {
+                "mark":  "out",
+                "conf":  "low",
+                "why":  "bowl mostly inside cup; marker layout matches out frames"
+            },
+    "234":  {
+                "mark":  "out",
+                "conf":  "low",
+                "why":  "bowl inside cup, shadowed; marker layout matches out frames"
+            },
+    "236":  {
+                "mark":  "out",
+                "conf":  "low",
+                "why":  "bowl leaving cup, blurred face view, marker layout as out"
+            },
+    "238":  {
+                "mark":  "out",
+                "conf":  "low",
+                "why":  "blurred face view, faint lower rim band"
+            },
+    "240":  {
+                "mark":  "out",
+                "conf":  "medium",
+                "why":  "face view, lower rim lip and inner shading visible"
+            },
+    "242":  {
+                "mark":  "out",
+                "conf":  "medium",
+                "why":  "face view, rim band along lower edge"
+            },
+    "244":  {
+                "mark":  "out",
+                "conf":  "medium",
+                "why":  "inner surface with visible lower rim lip"
+            },
+    "246":  {
+                "mark":  "out",
+                "conf":  "medium",
+                "why":  "face view, same shading and marker layout as 244"
+            },
+    "248":  {
+                "mark":  "out",
+                "conf":  "low",
+                "why":  "motion-blurred face view, continuity with 246"
+            },
+    "250":  {
+                "mark":  "out",
+                "conf":  "medium",
+                "why":  "face view, inner shading near neck, markers consistent"
+            },
+    "252":  {
+                "mark": [0.32,-0.95],
+                "conf":  "low",
+                "why":  "edge-on, flatter top edge, bulge below"
+            },
+    "254":  {
+                "mark": [0.13,-0.99],
+                "conf":  "low",
+                "why":  "edge-on, convex bulge on lower side"
+            },
+    "256":  {
+                "mark": [0.13,-0.99],
+                "conf":  "medium",
+                "why":  "edge-on, flat top rim, rounded convex underside"
+            },
+    "258":  {
+                "mark": [0.16,-0.99],
+                "conf":  "low",
+                "why":  "edge-on, convex bulge on lower side"
+            },
+    "260":  {
+                "mark": [0.17,-0.99],
+                "conf":  "low",
+                "why":  "edge-on, convex bulge on lower side"
+            },
+    "262":  {
+                "mark": [0.2,-0.98],
+                "conf":  "low",
+                "why":  "near edge-on, opening toward top, blurred"
+            },
+    "264":  {
+                "mark":  "out",
+                "conf":  "low",
+                "why":  "blurred face view, marker layout as out"
+            },
+    "266":  {
+                "mark":  "out",
+                "conf":  "medium",
+                "why":  "looking into bowl, right rim lip visible"
+            },
+    "268":  {
+                "mark":  "out",
+                "conf":  "medium",
+                "why":  "inner depression with rim along right edge"
+            },
+    "270":  {
+                "mark":  "out",
+                "conf":  "medium",
+                "why":  "inner depression with rim along right edge"
+            },
+    "272":  {
+                "mark":  "out",
+                "conf":  "medium",
+                "why":  "inner depression with rim along right edge"
+            },
+    "274":  {
+                "mark":  "out",
+                "conf":  "medium",
+                "why":  "oblique face, inner shading, lower rim visible"
+            },
+    "276":  {
+                "mark":  "out",
+                "conf":  "medium",
+                "why":  "oblique face, inner shading, lower rim visible"
+            },
+    "278":  {
+                "mark":  "out",
+                "conf":  "medium",
+                "why":  "oblique face, inner shading, lower rim visible"
+            },
+    "280":  {
+                "mark":  "out",
+                "conf":  "medium",
+                "why":  "oblique face, inner shading, lower rim visible"
+            },
+    "282":  {
+                "mark":  "out",
+                "conf":  "medium",
+                "why":  "oblique face, lower rim band, same as rest pose"
+            },
+    "284":  {
+                "mark":  "out",
+                "conf":  "medium",
+                "why":  "oblique face, lower rim band, same as rest pose"
+            },
+    "286":  {
+                "mark":  "out",
+                "conf":  "medium",
+                "why":  "oblique face, lower rim band, same as rest pose"
+            },
+    "288":  {
+                "mark":  "out",
+                "conf":  "medium",
+                "why":  "oblique face, lower rim band, same as rest pose"
+            },
+    "290":  {
+                "mark":  "out",
+                "conf":  "medium",
+                "why":  "lower rim lip and shaded interior visible"
+            },
+    "292":  {
+                "mark":  "out",
+                "conf":  "medium",
+                "why":  "held over table, inner shading and rim visible"
+            },
+    "294":  {
+                "mark":  "out",
+                "conf":  "medium",
+                "why":  "held over table, inner shading and rim visible"
+            },
+    "296":  {
+                "mark":  "out",
+                "conf":  "medium",
+                "why":  "held over table, inner shading and rim visible"
+            },
+    "298":  {
+                "mark":  "out",
+                "conf":  "medium",
+                "why":  "lower rim band and shaded inner surface"
+            },
+    "300":  {
+                "mark":  "out",
+                "conf":  "medium",
+                "why":  "on table, inner shading and rim visible"
+            },
+    "302":  {
+                "mark":  "out",
+                "conf":  "low",
+                "why":  "motion blur; continuity with resting pose"
+            },
+    "304":  {
+                "mark":  "out",
+                "conf":  "low",
+                "why":  "strong motion blur; continuity with resting pose"
+            },
+    "306":  {
+                "mark":  "out",
+                "conf":  "low",
+                "why":  "strong motion blur; continuity with resting pose"
+            },
+    "308":  {
+                "mark":  "out",
+                "conf":  "medium",
+                "why":  "on table, shaded interior with lower rim"
+            },
+    "310":  {
+                "mark":  "out",
+                "conf":  "medium",
+                "why":  "on table, shaded interior with lower rim"
+            },
+    "312":  {
+                "mark":  "out",
+                "conf":  "medium",
+                "why":  "on table, shaded interior with lower rim"
+            },
+    "314":  {
+                "mark":  "out",
+                "conf":  "medium",
+                "why":  "on table, shaded interior with lower rim"
+            },
+    "316":  {
+                "mark":  "out",
+                "conf":  "medium",
+                "why":  "on table, shaded interior with lower rim"
+            },
+    "318":  {
+                "mark":  "out",
+                "conf":  "medium",
+                "why":  "on table, shaded interior with lower rim"
+            },
+    "320":  {
+                "mark":  "out",
+                "conf":  "medium",
+                "why":  "on table, shaded interior with lower rim"
+            },
+    "322":  {
+                "mark":  "out",
+                "conf":  "medium",
+                "why":  "on table, shaded interior with lower rim"
+            },
+    "324":  {
+                "mark":  "out",
+                "conf":  "medium",
+                "why":  "on table, shaded interior with lower rim"
+            },
+    "326":  {
+                "mark":  "out",
+                "conf":  "medium",
+                "why":  "on table, shaded interior with lower rim"
+            },
+    "328":  {
+                "mark":  "out",
+                "conf":  "medium",
+                "why":  "on table, shaded interior with lower rim"
+            },
+    "330":  {
+                "mark":  "out",
+                "conf":  "medium",
+                "why":  "on table, shaded interior with lower rim"
+            },
+    "332":  {
+                "mark":  "out",
+                "conf":  "low",
+                "why":  "motion blur; bowl shape and markers as resting"
+            },
+    "334":  {
+                "mark":  "out",
+                "conf":  "medium",
+                "why":  "resting on table, inner shading visible, slight blur"
+            },
+    "336":  {
+                "mark":  "out",
+                "conf":  "high",
+                "why":  "released on table, clear inner shading and rim"
+            },
+    "338":  {
+                "mark":  "out",
+                "conf":  "high",
+                "why":  "released on table, clear inner shading and rim"
+            },
+    "340":  {
+                "mark":  "out",
+                "conf":  "high",
+                "why":  "released on table, clear inner shading and rim"
+            },
+    "342":  {
+                "mark":  "out",
+                "conf":  "high",
+                "why":  "released on table, clear inner shading and rim"
+            },
+    "344":  {
+                "mark":  "out",
+                "conf":  "high",
+                "why":  "released on table, clear inner shading and rim"
+            },
+    "346":  {
+                "mark":  "out",
+                "conf":  "high",
+                "why":  "released on table, clear inner shading and rim"
+            }
+}

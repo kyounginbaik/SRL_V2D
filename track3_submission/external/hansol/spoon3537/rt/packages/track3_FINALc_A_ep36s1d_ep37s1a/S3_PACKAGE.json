@@ -1,0 +1,25 @@
+{
+ "label": "track3_FINALc_A_ep36s1d_ep37s1a",
+ "episode": 36,
+ "base": "/data1/hansol/spoon3537/rt/packages/track3_FINALc_ep37s1a_tgt_s1/all_20_episodes/track3_submission.parquet",
+ "base_sha": "7d5055df38525c19134a97bd73c85027b65d7a76b1c454118b3d4ec8f1d54b54",
+ "candidate": "/data1/hansol/spoon3537/rt/candidates/S3_ep36_s1d/episode_000036",
+ "checkpoint_sha256": "475d33f1148a60e3943d5d2d25a1458f9c5743649b8276178e7d216ad9e5e55b",
+ "rows_replaced": 407,
+ "mesh": {
+  "0": "base cell (mesh byte-identical to the v29 selection)"
+ },
+ "columns_changed": [
+  "pos_x",
+  "pos_y",
+  "pos_z",
+  "quat_x",
+  "quat_y",
+  "quat_z",
+  "quat_w",
+  "checkpoint_sha256"
+ ],
+ "sha": "01c66734694625bc93d76d346e4435c1272f111c8c7af50ef6e4aeec016d05d6",
+ "cdo_sha": "a03230e5d6ecd598c4c6f424b1b8594f0f4f395d11889a84ed4a15f014dd28b9",
+ "uploaded": false
+}

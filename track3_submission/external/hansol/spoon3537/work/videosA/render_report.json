@@ -1,0 +1,29 @@
+{
+  "video": "/data1/hansol/spoon3537/work/videosA/ep36_s5_vs_FINAL.mp4",
+  "frames_rendered": 407,
+  "fps": 20.0,
+  "source_frames": 407,
+  "duration_s": 20.3,
+  "moving_camera": true,
+  "time_warping": false,
+  "panels": [
+    "original human video",
+    "kinematic reference",
+    "baseline physics",
+    "refined physics"
+  ],
+  "baseline_scene": "/data1/SRL_V2D/challenge_reconstruction/campaign_v22_20261028/streamALL20K/staging/tgt_v32_ep36_b2/components/episode_000036/portable/original/scene_physics.xml",
+  "refined_scene": "/data1/hansol/spoon3537/rt/runs/save_tgt_s5_ep36_s5/actor/evaluation/execution/scene_physics.xml",
+  "reference_scene": "/data1/SRL_V2D/challenge_reconstruction/campaign_v22_20261028/streamALL20K/staging/tgt_v32_ep36_b2/components/episode_000036/portable/original/scene_physics.xml",
+  "baseline_trajectory": "/data1/hansol/spoon3537/work/videosA/ep36_FINAL_trajectory.npz",
+  "refined_trajectory": "/data1/hansol/spoon3537/work/videosA/ep36_s5_trajectory.npz",
+  "screenshots": [
+    "/data1/hansol/spoon3537/work/videosA/comparison_00000.jpg",
+    "/data1/hansol/spoon3537/work/videosA/comparison_00050.jpg",
+    "/data1/hansol/spoon3537/work/videosA/comparison_00100.jpg",
+    "/data1/hansol/spoon3537/work/videosA/comparison_00135.jpg",
+    "/data1/hansol/spoon3537/work/videosA/comparison_00150.jpg",
+    "/data1/hansol/spoon3537/work/videosA/comparison_00271.jpg",
+    "/data1/hansol/spoon3537/work/videosA/comparison_00406.jpg"
+  ]
+}

@@ -1,0 +1,11 @@
+{
+ "diagnostic_only": true,
+ "label": "A20_ep16_anc1",
+ "episode": 16,
+ "base": "track3_v29_20261030 (donor package: only this episode differs)",
+ "base_sha": "7f44ef5e5728a59ee91a0026ac9582ef79f7314dcc1d42c7ba9aa4c37f44e21b",
+ "candidate": "A20_ep16_anc1",
+ "candidate_checkpoint_sha256": "d5c108d6309840b830caa4b91b039897d8960028f7592a25d8725bdcd6af1506",
+ "sha": "80e0d9727fbb6774972c1610be28b6b5cb782c4dfccd50a587347dd2781eb972",
+ "rows_replaced": 346
+}

@@ -1,0 +1,1540 @@
+{
+  "created_utc": "2026-10-19T09:09:28.961648+00:00",
+  "scope": "Operator-assisted continuation using an isolated adapted DexAgent checkout. Source reconstruction, nominal interaction tests, and mounted-arm diagnostics are reported separately.",
+  "upstream_commit": "e29bdad8ed3e95b2c9ee2eea9044a6b4115ec633",
+  "verified_complete_robot_episodes": 0,
+  "benchmark_accuracy_measured": false,
+  "baseline": {
+    "task_count": 10,
+    "goal_language_accepted": 1,
+    "functional_failures": {
+      "02_chopsticks_grape": [
+        "$.subgoals[1].goal: clause 'the @0 is clamped between the chopstick tips' of \"The first green grape is clamped between the chopstick tips and held clear of the table.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')",
+        "$.subgoals[2].goal: clause 'the @0 is held over the @1' of \"The first green grape is held over the bread.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')",
+        "$.subgoals[4].goal: clause 'the @0 is clamped between the chopstick tips' of \"The second green grape is clamped between the chopstick tips and held clear of the table.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')",
+        "$.subgoals[5].goal: clause 'the @0 is held over the @1' of \"The second green grape is held over the bread.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')"
+      ],
+      "03_cut_paper": [
+        "$.subgoals[2].goal: clause 'the @0 has a slit cut from its edge by the @1' of \"The paper has a slit cut from its edge by the shears.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')",
+        "$.task_success: clause 'the @0 has a slit cut from its edge by the @1' of \"The paper has a slit cut from its edge by the shears, the paper is held in the left hand.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')"
+      ],
+      "04_stir_liquid": [
+        "$.subgoals[1].goal: clause 'the @0 @1 is inside the @2' of \"The stirring rod tip is inside the mug.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')",
+        "$.subgoals[2].goal: clause 'the @0 @1 traces repeated circular strokes through the @2' of \"The stirring rod tip traces repeated circular strokes through the liquid.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')",
+        "$.task_success: clause 'the @0 has been stirred' of \"The liquid has been stirred with the stirring rod, the stirring rod is held in the right hand, the mug rests on the table.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')",
+        "$.task_success: clause 'the @1' of \"The liquid has been stirred with the stirring rod, the stirring rod is held in the right hand, the mug rests on the table.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')"
+      ],
+      "05_pipette_transfer": [
+        "$.subgoals[1].goal: clause 'the @0 contains @1 drawn from the @2' of \"The pipette contains liquid drawn from the clear source cup.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')",
+        "$.subgoals[2].goal: clause '@0 has been transferred into the @1' of \"Clear liquid has been transferred into the pink solution container.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')",
+        "$.task_success: clause '@0 has been transferred into the @1' of \"Clear liquid has been transferred into the pink solution container, the pipette is held in the right hand.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')"
+      ],
+      "06_pour_liquid": [
+        "$.subgoals[2].goal: clause '@0 has transferred from the @1 into the @2' of \"Liquid has transferred from the white plastic cup into the small transparent container.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')",
+        "$.task_success: clause '@0 has transferred into the @1' of \"Liquid has transferred into the small transparent container, the small transparent container is held in the left hand, the white plastic cup is held in the righ\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')"
+      ],
+      "07_fold_paper": [
+        "$.subgoals[0].goal: clause 'the @0 is held in both hands' of \"The paper is held in both hands.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')",
+        "$.subgoals[1].goal: clause 'the @0 is folded along a crease' of \"The paper is folded along a crease.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')",
+        "$.subgoals[2].goal: clause 'the @0 is folded twice with the creases retained' of \"The paper is folded twice with the creases retained.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')",
+        "$.task_success: clause 'the @0 is folded twice with the creases retained' of \"The paper is folded twice with the creases retained, the paper is held in the left hand.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')"
+      ],
+      "08_wipe_counter": [
+        "$.subgoals[1].goal: clause 'the @0 traverses the counter @1 while pressed against it' of \"The paper towel traverses the counter surface while pressed against it.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')",
+        "$.task_success: clause 'the counter @0 has been wiped by the @1' of \"The counter surface has been wiped by the paper towel.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')"
+      ],
+      "09_slice_banana": [
+        "$.subgoals[2].goal: clause 'the @0 is cut into separate slices' of \"The banana is cut into separate slices.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')",
+        "$.task_success: clause 'the @0 is cut into separate slices' of \"The banana is cut into separate slices, the knife is held in the right hand.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')"
+      ],
+      "10_crack_walnut": [
+        "$.subgoals[1].goal: clause 'the @0 is between the @1 jaws' of \"The walnut is between the nutcracker jaws.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')",
+        "$.subgoals[2].goal: clause 'the @0 shell is cracked by the @1' of \"The walnut shell is cracked by the nutcracker.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')",
+        "$.task_success: clause 'the @0 shell is cracked by the @1' of \"The walnut shell is cracked by the nutcracker, the nutcracker rests on the table.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')"
+      ]
+    }
+  },
+  "camera_plane": {
+    "gravity_cam": [
+      -0.06333096952782882,
+      0.22346522272252833,
+      0.9726522927183363
+    ],
+    "up": [
+      0.06333096952782882,
+      -0.22346522272252833,
+      -0.9726522927183363
+    ],
+    "pitch_deg": 76.569,
+    "roll_deg": 15.823,
+    "camera_height_m": 0.6888,
+    "inlier_frac": 0.971,
+    "n_frames": 1,
+    "normal_spread_deg": 0.0,
+    "mode": "object_ring",
+    "original_angle_diagnostics": {
+      "pitch_deg": -76.569,
+      "roll_deg": -15.823
+    },
+    "angle_convention": "common.rigcam.R_cv_from_angles: positive pitch below horizon"
+  },
+  "rack_placement": {
+    "pose": {
+      "x": 0.1056752784766378,
+      "y": 0.3635510400794194,
+      "z": 0.0,
+      "yaw_deg": 178.02544486945226,
+      "pitch_deg": 0.0,
+      "roll_deg": 0.0,
+      "scale": 1.0
+    },
+    "iou": 0.7838,
+    "iou_start": 0.5573,
+    "centroid_offset_px": [
+      -1.5,
+      1.0
+    ],
+    "body": "rack_rack",
+    "params": [
+      "x",
+      "y",
+      "yaw"
+    ],
+    "evaluations": 73,
+    "out_xml": "scene_rack.xml",
+    "overlay_png": "rack_fit.png"
+  },
+  "rack_visual_checks": {
+    "silhouette_iou_check": {
+      "ok": true,
+      "iou": {
+        "rack_rack": 0.751
+      },
+      "plain_iou": {
+        "rack_rack": 0.751
+      },
+      "thin": {},
+      "hidden": {},
+      "failures": [],
+      "warnings": [],
+      "camera_suspect": false,
+      "bodies_used": {
+        "rack_rack": [
+          "rack_rack"
+        ]
+      },
+      "render_size": [
+        512,
+        512
+      ],
+      "robot_covered_fraction": {
+        "rack_rack": 0.0
+      }
+    },
+    "object_scale_vs_footprint_check": {
+      "ok": true,
+      "issues": [],
+      "objects": [
+        {
+          "id": "rack_rack",
+          "ratios": {
+            "width": 0.955,
+            "height": 0.81,
+            "sqrt_area": 0.876
+          },
+          "scale": 0.876,
+          "interval": [
+            0.758,
+            1.011
+          ],
+          "model_width_m": 0.1487,
+          "verdict": "ok"
+        }
+      ],
+      "worst": 1.0,
+      "image": [
+        512,
+        512
+      ],
+      "unmatched_masks": []
+    }
+  },
+  "rack_rest_checks": {
+    "settle_stability_check": {
+      "ok": true,
+      "diverged": false,
+      "drift": {
+        "rack_rack": {
+          "pos_m": 0.0,
+          "rot_deg": 0.0,
+          "verdict": "at rest"
+        }
+      },
+      "failures": [],
+      "warnings": [],
+      "seconds": 2.0
+    },
+    "support_check": {
+      "ok": true,
+      "floating": [],
+      "static": {},
+      "unsupported_static": [],
+      "free_object_contacts": {
+        "rack_rack": [
+          [
+            "table",
+            "rack_rack"
+          ],
+          [
+            "table",
+            "rack_rack"
+          ],
+          [
+            "table",
+            "rack_rack"
+          ],
+          [
+            "table",
+            "rack_rack"
+          ],
+          [
+            "table",
+            "rack_rack"
+          ],
+          [
+            "table",
+            "rack_rack"
+          ],
+          [
+            "table",
+            "rack_rack"
+          ],
+          [
+            "table",
+            "rack_rack"
+          ],
+          [
+            "table",
+            "rack_rack"
+          ],
+          [
+            "table",
+            "rack_rack"
+          ],
+          [
+            "table",
+            "rack_rack"
+          ],
+          [
+            "table",
+            "rack_rack"
+          ],
+          [
+            "table",
+            "rack_rack"
+          ],
+          [
+            "table",
+            "rack_rack"
+          ],
+          [
+            "table",
+            "rack_rack"
+          ],
+          [
+            "table",
+            "rack_rack"
+          ],
+          [
+            "table",
+            "rack_rack"
+          ],
+          [
+            "table",
+            "rack_rack"
+          ],
+          [
+            "table",
+            "rack_rack"
+          ],
+          [
+            "table",
+            "rack_rack"
+          ],
+          [
+            "table",
+            "rack_rack"
+          ],
+          [
+            "table",
+            "rack_rack"
+          ],
+          [
+            "table",
+            "rack_rack"
+          ],
+          [
+            "table",
+            "rack_rack"
+          ],
+          [
+            "table",
+            "rack_rack"
+          ],
+          [
+            "table",
+            "rack_rack"
+          ],
+          [
+            "table",
+            "rack_rack"
+          ],
+          [
+            "table",
+            "rack_rack"
+          ]
+        ]
+      }
+    }
+  },
+  "nominal_hand_diagnostic": {
+    "scope": "Nominal asset interaction diagnostic; dimensions and placement are not yet fitted to the source video.",
+    "elapsed_s": 160.89096058066934,
+    "search": {
+      "n_candidates": 28,
+      "n_feasible": 8,
+      "n_arm_feasible": 2,
+      "object_extent": {
+        "lo": [
+          0.03525000092487169,
+          0.33087976691212573,
+          0.003981438702671779
+        ],
+        "hi": [
+          0.04729106415227533,
+          0.34299998938892945,
+          0.08900197536999833
+        ]
+      },
+      "object_axis": {
+        "axis": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "tilt_deg": 0.09
+      },
+      "out_json": "/data1/SRL_V2D/experiments/dexagent_egotools_10/continuation/physics_probe/grasps.json"
+    },
+    "n_trials": 1,
+    "lift_test_pass": true
+  },
+  "nominal_hand_lift_verdict": {
+    "ok": true,
+    "lifts": [
+      {
+        "commanded_mm": 60.0,
+        "achieved_mm": 59.9
+      },
+      {
+        "commanded_mm": 100.0,
+        "achieved_mm": 99.9
+      },
+      {
+        "commanded_mm": 150.0,
+        "achieved_mm": 149.9
+      }
+    ],
+    "first_fail": null,
+    "penetration": {
+      "name": "penetration",
+      "ok": true,
+      "max_contact_mm": 0.466,
+      "max_visual_floor_mm": 0.0,
+      "limit_mm": 3.0,
+      "steps": 2525,
+      "worst_pair": [
+        "hand_right_ring_elastomer_visual",
+        "hand_right_pinky_DP_visual"
+      ],
+      "first_bad": null
+    },
+    "grip": {
+      "fingers": [
+        "index",
+        "thumb"
+      ],
+      "force_N": 18.8
+    },
+    "phases": [
+      {
+        "name": "approach_open",
+        "object_nudged_mm": 0.1,
+        "penetration_mm": 0.0,
+        "ok": true
+      },
+      {
+        "name": "seated",
+        "held_before_full_press": true,
+        "finger_contacts": 2,
+        "fingers": [
+          "index",
+          "thumb"
+        ],
+        "contact_force_N": 18.8,
+        "ok": true
+      },
+      {
+        "name": "lift_0.06",
+        "commanded_mm": 60.0,
+        "achieved_mm": 59.9,
+        "drift_mm": 0.1,
+        "ok": true
+      },
+      {
+        "name": "lift_0.10",
+        "commanded_mm": 100.0,
+        "achieved_mm": 99.9,
+        "drift_mm": 0.1,
+        "ok": true
+      },
+      {
+        "name": "lift_0.15",
+        "commanded_mm": 150.0,
+        "achieved_mm": 149.9,
+        "drift_mm": 0.1,
+        "ok": true
+      },
+      {
+        "name": "servo_reserve",
+        "judged": 30,
+        "saturated_frac": 0.0,
+        "median_s": 0.013,
+        "peak_s": 0.014,
+        "limiting_joint": "thumb_CMC_AA",
+        "ok": true
+      },
+      {
+        "name": "penetration",
+        "ok": true,
+        "max_contact_mm": 0.466,
+        "max_visual_floor_mm": 0.0,
+        "limit_mm": 3.0,
+        "steps": 2525,
+        "worst_pair": [
+          "hand_right_ring_elastomer_visual",
+          "hand_right_pinky_DP_visual"
+        ],
+        "first_bad": null
+      }
+    ]
+  },
+  "mounted_arm_diagnostics": {
+    "initial": {
+      "ok": false,
+      "first_failure": {
+        "index": 1,
+        "step": null,
+        "motion": "grasp_lift",
+        "side": "right",
+        "object": "tube_tube",
+        "failed": [
+          "rise",
+          "in_hand",
+          "no_slip",
+          "untouched:rack_rack"
+        ],
+        "measured": {
+          "object_start": [
+            0.0412,
+            0.337,
+            0.004
+          ],
+          "object_end": [
+            0.0359,
+            0.3438,
+            0.0045
+          ],
+          "object_moved_m": 0.0087,
+          "object_rotated_deg": 86.77,
+          "object_tilt_end_deg": 23.03,
+          "rise_m": 0.0005,
+          "peak_rise_m": 0.0242,
+          "hand_links_touching": [],
+          "slip_in_hand_m": 0.0997,
+          "slip_peak_frame": 148,
+          "slip_in_hand_deg": 91.877,
+          "slip_rotation_peak_frame": 143,
+          "slip_held_body": "tube_tube",
+          "slip_contact_point_local": null,
+          "slip_turn_judged": true,
+          "untouched": {
+            "rack_rack": {
+              "moved_m": 0.0192,
+              "rotated_deg": 5.7
+            }
+          },
+          "max_hand_pen_mm": 0.58,
+          "max_object_pen_mm": 0.58,
+          "max_track_pos_mm": 2.5,
+          "max_track_rot_deg": 1.3,
+          "arm": {
+            "plan": {
+              "left": {
+                "mount": "home keyframe",
+                "frames": 158,
+                "free_leg_frames": 0,
+                "ik_residual_mm_max": 0.0,
+                "ik_residual_deg_max": 0.0,
+                "projected_frames": 0,
+                "projected_mm_max": 0.0,
+                "infeasible_frames": 0,
+                "branch_jumps": [],
+                "branch_jump_labels": [],
+                "peak_speed_deg_s": 0.0
+              },
+              "right": {
+                "mount": "home keyframe",
+                "frames": 158,
+                "free_leg_frames": 61,
+                "ik_residual_mm_max": 0.01,
+                "ik_residual_deg_max": 0.0,
+                "projected_frames": 0,
+                "projected_mm_max": 0.0,
+                "infeasible_frames": 0,
+                "branch_jumps": [],
+                "branch_jump_labels": [],
+                "peak_speed_deg_s": 84.6
+              },
+              "plan": {
+                "planned_legs": [],
+                "failed_legs": [],
+                "parked": [],
+                "checked_legs": 1,
+                "seconds": 0.07
+              }
+            },
+            "retimed_s": 0.0,
+            "runtime": {
+              "left": {
+                "residual_mm_max": 4.771789511519341e-10,
+                "residual_deg_max": 7.131056249837137e-05,
+                "peak_speed_deg_s": 0.020325026733539663,
+                "speed_source": "substep_qvel",
+                "speed_sample": 0,
+                "speed_time_s": 0.002,
+                "speed_frame": 1,
+                "mount": "fixed runtime flange"
+              },
+              "right": {
+                "residual_mm_max": 2.352743471561159e-10,
+                "residual_deg_max": 4.6719923816170335e-05,
+                "peak_speed_deg_s": 86.07858367239392,
+                "speed_source": "substep_qvel",
+                "speed_sample": 490,
+                "speed_time_s": 0.9820000000000008,
+                "speed_frame": 30,
+                "mount": "fixed runtime flange"
+              }
+            },
+            "timing_retries": []
+          }
+        },
+        "expect": {
+          "rise_m": 0.05,
+          "in_hand": true,
+          "no_slip": true,
+          "hand": "right",
+          "object": "tube_tube",
+          "involved": [
+            "tube_tube"
+          ],
+          "untouched": [
+            "rack_rack"
+          ],
+          "_motion_no_slip": true,
+          "slip_from_rel": 126
+        }
+      }
+    },
+    "alternate": {
+      "ok": false,
+      "first_failure": {
+        "index": 1,
+        "step": null,
+        "motion": "grasp_lift",
+        "side": "right",
+        "object": "tube_tube",
+        "failed": [
+          "reach_turn_too_large"
+        ],
+        "error": "the reachable turn of the pose (60 deg, {'primary': -60.0}) exceeds max_reach_turn_deg 15: turn it with optimize_pose_for_reach and stress-test the turned pose",
+        "measured": {}
+      }
+    },
+    "optimized": {
+      "ok": false,
+      "first_failure": {
+        "index": 1,
+        "step": null,
+        "motion": "grasp_lift",
+        "side": "right",
+        "object": "tube_tube",
+        "failed": [
+          "rise",
+          "in_hand",
+          "no_slip",
+          "untouched:rack_rack"
+        ],
+        "measured": {
+          "object_start": [
+            0.0412,
+            0.337,
+            0.004
+          ],
+          "object_end": [
+            0.0587,
+            0.3615,
+            0.0043
+          ],
+          "object_moved_m": 0.0301,
+          "object_rotated_deg": 17.51,
+          "object_tilt_end_deg": 17.46,
+          "rise_m": 0.0003,
+          "peak_rise_m": 0.0073,
+          "hand_links_touching": [],
+          "slip_in_hand_m": 0.0988,
+          "slip_peak_frame": 148,
+          "slip_in_hand_deg": 38.28,
+          "slip_rotation_peak_frame": 136,
+          "slip_held_body": "tube_tube",
+          "slip_contact_point_local": null,
+          "slip_turn_judged": true,
+          "untouched": {
+            "rack_rack": {
+              "moved_m": 0.0165,
+              "rotated_deg": 9.68
+            }
+          },
+          "max_hand_pen_mm": 0.41,
+          "max_object_pen_mm": 0.46,
+          "max_track_pos_mm": 0.9,
+          "max_track_rot_deg": 0.6,
+          "arm": {
+            "plan": {
+              "left": {
+                "mount": "home keyframe",
+                "frames": 158,
+                "free_leg_frames": 0,
+                "ik_residual_mm_max": 0.0,
+                "ik_residual_deg_max": 0.0,
+                "projected_frames": 0,
+                "projected_mm_max": 0.0,
+                "infeasible_frames": 0,
+                "branch_jumps": [],
+                "branch_jump_labels": [],
+                "peak_speed_deg_s": 0.0
+              },
+              "right": {
+                "mount": "home keyframe",
+                "frames": 158,
+                "free_leg_frames": 61,
+                "ik_residual_mm_max": 0.01,
+                "ik_residual_deg_max": 0.0,
+                "projected_frames": 0,
+                "projected_mm_max": 0.0,
+                "infeasible_frames": 0,
+                "branch_jumps": [],
+                "branch_jump_labels": [],
+                "peak_speed_deg_s": 84.2
+              },
+              "plan": {
+                "planned_legs": [],
+                "failed_legs": [],
+                "parked": [],
+                "checked_legs": 1,
+                "seconds": 0.05
+              }
+            },
+            "retimed_s": 0.0,
+            "runtime": {
+              "left": {
+                "residual_mm_max": 4.771789511519341e-10,
+                "residual_deg_max": 7.131056249837137e-05,
+                "peak_speed_deg_s": 0.020325026733539663,
+                "speed_source": "substep_qvel",
+                "speed_sample": 0,
+                "speed_time_s": 0.002,
+                "speed_frame": 1,
+                "mount": "fixed runtime flange"
+              },
+              "right": {
+                "residual_mm_max": 2.3526788348852114e-10,
+                "residual_deg_max": 4.671992382032815e-05,
+                "peak_speed_deg_s": 85.67943573192247,
+                "speed_source": "substep_qvel",
+                "speed_sample": 490,
+                "speed_time_s": 0.9820000000000008,
+                "speed_frame": 30,
+                "mount": "fixed runtime flange"
+              }
+            },
+            "timing_retries": []
+          }
+        },
+        "expect": {
+          "rise_m": 0.05,
+          "in_hand": true,
+          "no_slip": true,
+          "hand": "right",
+          "object": "tube_tube",
+          "involved": [
+            "tube_tube"
+          ],
+          "untouched": [
+            "rack_rack"
+          ],
+          "_motion_no_slip": true,
+          "slip_from_rel": 126
+        }
+      }
+    }
+  },
+  "six_candidate_search": {
+    "ok": false,
+    "evaluations": 6,
+    "best_subgoals_passed": 0,
+    "failures": {
+      "reach_turn_too_large": 1,
+      "arm_unreachable": 2,
+      "rise, in_hand, no_slip, untouched:rack_rack": 3
+    },
+    "note": "The search tool reported improved=true by its shortfall ranking while every candidate passed zero subgoals. This report does not count that flag as task progress."
+  },
+  "contact_optimization": {
+    "ok": true,
+    "status": "passed",
+    "n_evals": 6,
+    "n_tested": 1,
+    "failure_classes": {
+      "screen:overlap": 2,
+      "arm:arm_unreachable": 2,
+      "screen:pads_off": 1
+    }
+  },
+  "chopsticks_measurements": {
+    "scope": "Measurements only. CPU masks were computed from the source but not certified by a Stage 2 harness.",
+    "source_clip_frame": 0,
+    "recorded_depth_source_frame": 180,
+    "source_recording_start_s": 9.0,
+    "plane": {
+      "gravity_cam": [
+        -0.058109279714198415,
+        -0.056058988762417515,
+        0.9967350206489347
+      ],
+      "up": [
+        0.058109279714198415,
+        0.056058988762417515,
+        -0.9967350206489347
+      ],
+      "pitch_deg": 85.369,
+      "roll_deg": 133.971,
+      "camera_height_m": 0.4881,
+      "inlier_frac": 0.667,
+      "n_frames": 1,
+      "normal_spread_deg": 0.0,
+      "mode": "object_ring",
+      "original_angle_diagnostics": {
+        "pitch_deg": -85.369,
+        "roll_deg": -133.971
+      },
+      "angle_convention": "common.rigcam.R_cv_from_angles: positive pitch below horizon"
+    },
+    "measurements": {
+      "plate": {
+        "contact": {
+          "center_xy": [
+            0.0346,
+            -0.0683
+          ],
+          "left_xy": [
+            0.0973,
+            -0.1256
+          ],
+          "right_xy": [
+            -0.0212,
+            -0.0004
+          ],
+          "width_m": 0.1735,
+          "depth_m": 0.4958,
+          "n_pixels": 145
+        },
+        "apparent_height_m": 0.2157,
+        "footprint": {
+          "centroid_xy": [
+            -0.0379,
+            -0.1382
+          ],
+          "length_m": 0.1948,
+          "width_m": 0.1918,
+          "yaw_deg": 149.34,
+          "area_m2": 0.03664,
+          "polygon_xy": [
+            [
+              0.06949999928474426,
+              -0.1251000016927719
+            ],
+            [
+              0.06650000065565109,
+              -0.10760000348091125
+            ],
+            [
+              0.061500001698732376,
+              -0.09510000050067902
+            ],
+            [
+              0.05820000171661377,
+              -0.08799999952316284
+            ],
+            [
+              0.044599998742341995,
+              -0.07000000029802322
+            ],
+            [
+              0.041200000792741776,
+              -0.06639999896287918
+            ],
+            [
+              0.025699999183416367,
+              -0.05000000074505806
+            ],
+            [
+              0.015300000086426735,
+              -0.04270000010728836
+            ],
+            [
+              0.008299999870359898,
+              -0.03889999911189079
+            ],
+            [
+              -0.01269999984651804,
+              -0.03139999881386757
+            ],
+            [
+              -0.02500000037252903,
+              -0.02930000051856041
+            ],
+            [
+              -0.032099999487400055,
+              -0.029200000688433647
+            ],
+            [
+              -0.035599999129772186,
+              -0.029100000858306885
+            ],
+            [
+              -0.04270000010728836,
+              -0.028999999165534973
+            ],
+            [
+              -0.04619999974966049,
+              -0.02889999933540821
+            ],
+            [
+              -0.05860000103712082,
+              -0.030500000342726707
+            ],
+            [
+              -0.07270000129938126,
+              -0.033900000154972076
+            ],
+            [
+              -0.0868000015616417,
+              -0.040800001472234726
+            ],
+            [
+              -0.10260000079870224,
+              -0.0494999997317791
+            ],
+            [
+              -0.12189999967813492,
+              -0.06520000100135803
+            ],
+            [
+              -0.12359999865293503,
+              -0.06689999997615814
+            ],
+            [
+              -0.13230000436306,
+              -0.0828000009059906
+            ],
+            [
+              -0.13570000231266022,
+              -0.08980000019073486
+            ],
+            [
+              -0.13920000195503235,
+              -0.09679999947547913
+            ],
+            [
+              -0.14419999718666077,
+              -0.11599999666213989
+            ],
+            [
+              -0.14589999616146088,
+              -0.12470000237226486
+            ],
+            [
+              -0.14589999616146088,
+              -0.1281999945640564
+            ],
+            [
+              -0.14569999277591705,
+              -0.14910000562667847
+            ],
+            [
+              -0.14560000598430634,
+              -0.1526000052690506
+            ],
+            [
+              -0.14030000567436218,
+              -0.17170000076293945
+            ],
+            [
+              -0.13850000500679016,
+              -0.17679999768733978
+            ],
+            [
+              -0.13500000536441803,
+              -0.18379999697208405
+            ],
+            [
+              -0.1315000057220459,
+              -0.1906999945640564
+            ],
+            [
+              -0.12290000170469284,
+              -0.20280000567436218
+            ],
+            [
+              -0.11429999768733978,
+              -0.21140000224113464
+            ],
+            [
+              -0.10909999907016754,
+              -0.21660000085830688
+            ],
+            [
+              -0.09369999915361404,
+              -0.22869999706745148
+            ],
+            [
+              -0.08009999990463257,
+              -0.23569999635219574
+            ],
+            [
+              -0.07500000298023224,
+              -0.23749999701976776
+            ],
+            [
+              -0.06469999998807907,
+              -0.2409999966621399
+            ],
+            [
+              -0.052799999713897705,
+              -0.24289999902248383
+            ],
+            [
+              -0.015399999916553497,
+              -0.24690000712871552
+            ],
+            [
+              0.0,
+              -0.23880000412464142
+            ],
+            [
+              0.01549999974668026,
+              -0.23070000112056732
+            ],
+            [
+              0.02759999968111515,
+              -0.2223999947309494
+            ],
+            [
+              0.031099999323487282,
+              -0.2190999984741211
+            ],
+            [
+              0.046799998730421066,
+              -0.20409999787807465
+            ],
+            [
+              0.04859999939799309,
+              -0.20239999890327454
+            ],
+            [
+              0.05570000037550926,
+              -0.1923000067472458
+            ],
+            [
+              0.059300001710653305,
+              -0.18549999594688416
+            ],
+            [
+              0.06480000168085098,
+              -0.1736000031232834
+            ],
+            [
+              0.066600002348423,
+              -0.16850000619888306
+            ],
+            [
+              0.06880000233650208,
+              -0.14949999749660492
+            ],
+            [
+              0.06889999657869339,
+              -0.1459999978542328
+            ],
+            [
+              0.06939999759197235,
+              -0.12860000133514404
+            ]
+          ],
+          "plane_height_m": 0.0
+        },
+        "bbox_px": [
+          230,
+          197,
+          318,
+          284
+        ],
+        "mask_pixels": 6086
+      },
+      "grape": {
+        "segmentation_error": "source segmentation is empty or covers the entire image; inspect the source and revise the box"
+      }
+    },
+    "missing_native_goal": "Grape held through opposed contacts at two separate chopstick tips; no direct hand-grape grasp."
+  },
+  "chopsticks_perception": {
+    "scope": "Source-derived perception diagnostic, not native Stage 2 acceptance or a robot execution.",
+    "result": {
+      "prompts": [
+        "grape",
+        "chopstick",
+        "bread",
+        "plate"
+      ],
+      "n_frames": 1,
+      "min_score": 0.3,
+      "mean_coverage": 0.0276,
+      "out_dir": "/data1/SRL_V2D/experiments/dexagent_egotools_10/continuation/chopsticks/sam3",
+      "model_identity": {
+        "version": "sam3",
+        "repo_id": "facebook/sam3",
+        "checkpoint_sha256": "9999e2341ceef5e136daa386eecb55cb414446a00ac2b55eb2dfd2f7c3cf8c9e",
+        "sam3_package_version": "0.1.0",
+        "torch_version": "2.8.0+cu128",
+        "device": "cpu"
+      },
+      "instances": {
+        "grape": [
+          []
+        ],
+        "chopstick": [
+          [
+            {
+              "mask": "/data1/SRL_V2D/experiments/dexagent_egotools_10/continuation/chopsticks/sam3/instances/chopstick/frame00000_0.png",
+              "score": 0.9668,
+              "area_px": 604,
+              "box": [
+                309,
+                203,
+                444,
+                286
+              ]
+            },
+            {
+              "mask": "/data1/SRL_V2D/experiments/dexagent_egotools_10/continuation/chopsticks/sam3/instances/chopstick/frame00000_1.png",
+              "score": 0.9486,
+              "area_px": 670,
+              "box": [
+                296,
+                226,
+                436,
+                296
+              ]
+            }
+          ]
+        ],
+        "bread": [
+          [
+            {
+              "mask": "/data1/SRL_V2D/experiments/dexagent_egotools_10/continuation/chopsticks/sam3/instances/bread/frame00000_0.png",
+              "score": 0.5263,
+              "area_px": 1268,
+              "box": [
+                251,
+                217,
+                294,
+                256
+              ]
+            }
+          ]
+        ],
+        "plate": [
+          [
+            {
+              "mask": "/data1/SRL_V2D/experiments/dexagent_egotools_10/continuation/chopsticks/sam3/instances/plate/frame00000_0.png",
+              "score": 0.9645,
+              "area_px": 4692,
+              "box": [
+                230,
+                197,
+                317,
+                285
+              ]
+            }
+          ]
+        ]
+      },
+      "n_instances": {
+        "grape": [
+          0
+        ],
+        "chopstick": [
+          2
+        ],
+        "bread": [
+          1
+        ],
+        "plate": [
+          1
+        ]
+      }
+    }
+  },
+  "tube_size_sensitivity": {
+    "scope": "Visible-stem sensitivity under a vertical-axis assumption. These are not full-tube dimensions or a reconstructed initial pose.",
+    "clip_frame": 412,
+    "depth_source_frame": 329,
+    "time_alignment_uncertainty_s": 0.05,
+    "visible_endpoints_px": [
+      [
+        309.0,
+        215.0
+      ],
+      [
+        298.0,
+        236.0
+      ]
+    ],
+    "near_hand_depth_percentiles_m": [
+      0.39168743789196014,
+      0.4103398025035858,
+      0.43925376832485197
+    ],
+    "plane": {
+      "gravity_cam": [
+        -0.05162026221584909,
+        0.624683400525496,
+        0.7791700697759572
+      ],
+      "up": [
+        0.05162026221584909,
+        -0.624683400525496,
+        -0.7791700697759572
+      ],
+      "pitch_deg": 51.185,
+      "roll_deg": 4.724,
+      "camera_height_m": 0.5098,
+      "inlier_frac": 0.801,
+      "n_frames": 1,
+      "normal_spread_deg": 0.0,
+      "mode": "object_ring",
+      "original_angle_diagnostics": {
+        "pitch_deg": -51.185,
+        "roll_deg": -4.724
+      },
+      "angle_convention": "common.rigcam.R_cv_from_angles: positive pitch below horizon"
+    },
+    "sensitivity": [
+      {
+        "assumed_top_depth_m": 0.4,
+        "vertical_visible_length_m": 0.06366316315841657,
+        "pixel_residual": 3.8853225990916056
+      },
+      {
+        "assumed_top_depth_m": 0.45,
+        "vertical_visible_length_m": 0.07162101751731846,
+        "pixel_residual": 3.8853225993300398
+      },
+      {
+        "assumed_top_depth_m": 0.5,
+        "vertical_visible_length_m": 0.0795794524598713,
+        "pixel_residual": 3.8853225988711597
+      },
+      {
+        "assumed_top_depth_m": 0.55,
+        "vertical_visible_length_m": 0.0875365252462787,
+        "pixel_residual": 3.8853226012775757
+      }
+    ]
+  },
+  "native_stage2": {
+    "finished": false,
+    "rounds": 20,
+    "verdict": {
+      "ok": false,
+      "issues": [
+        "$.objects: Stage 1 object 'test_tube' (rigid) has no entry",
+        "free_body_policy_check: Stage 1 object test_tube (manipulated) has no body in the scene",
+        "video_frustum_check: Stage 1 object test_tube has no body in the scene; reconstruct it (or name its root_body in scene_recon.json)",
+        "geom_count_budget_check: 51 object collision geoms lie within 6 cm of 'rack_rack_bottom' (> 48), from [('rack', 51)]: a hand there is paired with all of them, so every hand-scene and executor step pays for 51 x 38 pairs; simplify 'rack' (51 here, mostly 55 boxs): fewer, larger segments (a ring wall of 24 boxes often works as 12-16; re-run the part's own mechanism test after merging: a thin cord escapes a coarse bead)"
+      ],
+      "reports": {
+        "source_video_identity_check": {
+          "ok": true,
+          "issues": [],
+          "warnings": [],
+          "identity_verified": true,
+          "identity_evidence": "recorded_sha256",
+          "actual": {
+            "path": "/data1/SRL_V2D/experiments/dexagent_egotools_10/clips/01_grasp_test_tube.mp4",
+            "sha256": "496a96624aa71066d188d982b3377a2692ca815ec4f4f7c70a304050dfcf995f",
+            "frames": 453,
+            "fps": 25.0,
+            "duration_s": 18.12,
+            "width": 512,
+            "height": 512
+          }
+        },
+        "source_reference_provenance_check": {
+          "ok": true,
+          "issues": [],
+          "source_video_sha256": "496a96624aa71066d188d982b3377a2692ca815ec4f4f7c70a304050dfcf995f",
+          "checked": [
+            {
+              "object": "rack",
+              "sha256": "ec896d456cf357abd6ccff163114850aafcb37e83bdb97aebbd145d28a184a50",
+              "role": "object",
+              "source_frame_index": 0
+            }
+          ],
+          "scope": "source-derived mask provenance only; semantic accuracy remains separate"
+        },
+        "scene_recon_manifest_check": {
+          "ok": false,
+          "issues": [
+            "$.objects: Stage 1 object 'test_tube' (rigid) has no entry"
+          ],
+          "per_object": {
+            "test_tube": {
+              "found": false
+            },
+            "rack": {
+              "found": true,
+              "iou": 0.751,
+              "verifiers_ok": true
+            }
+          },
+          "n_stage1_objects": 2,
+          "n_entries": 1,
+          "full_containment_trials": {
+            "ok": true,
+            "issues": [],
+            "trials": []
+          },
+          "independent_mechanism_trials": {
+            "ok": true,
+            "issues": [],
+            "trials": [],
+            "coverage": "articulated components only; explicit supported claims independently replayed; other report categories are not certified here"
+          }
+        },
+        "scene_qc": {
+          "ok": true,
+          "issues": [],
+          "report": {
+            "ok": true,
+            "failed": [],
+            "warnings": [
+              "NO SAMPLED POSE WITNESS: rack_rack at y=0.36 m (left arm, 42 mm short); check calibration and scale. Finite orientation probes cannot prove impossibility."
+            ]
+          }
+        },
+        "stage2_gate_suite": {
+          "ok": false,
+          "issues": [
+            "free_body_policy_check: Stage 1 object test_tube (manipulated) has no body in the scene",
+            "video_frustum_check: Stage 1 object test_tube has no body in the scene; reconstruct it (or name its root_body in scene_recon.json)",
+            "geom_count_budget_check: 51 object collision geoms lie within 6 cm of 'rack_rack_bottom' (> 48), from [('rack', 51)]: a hand there is paired with all of them, so every hand-scene and executor step pays for 51 x 38 pairs; simplify 'rack' (51 here, mostly 55 boxs): fewer, larger segments (a ring wall of 24 boxes often works as 12-16; re-run the part's own mechanism test after merging: a thin cord escapes a coarse bead)"
+          ],
+          "warnings": [
+            "object_reach_check: rack_rack: sampled hand poses failed; contact feasibility is inconclusive, not certified unreachable",
+            "asset_path_portability_check: 58 mesh reference(s) are absolute (first: mesh 'robot_right_right_hand_C_MC_visual' file=\"/data1/SRL_V2D/experiments/dexagent_egotools_10/deps/DexAgent-adapted/setup/assets/sharpa/right_hand_C_MC_visual_.STL\" in scene.xml): the scene only opens on this machine; rewrite it relative to the scene folder, e.g. file=\"../../../../deps/DexAgent-adapted/setup/assets/sharpa/right_hand_C_MC_visual_.STL\""
+          ],
+          "report": {
+            "source_reference_provenance_check": true,
+            "robot_model_integrity_check": true,
+            "robot_joint_range_check": true,
+            "actuator_limit_integrity_check": true,
+            "contact_exclusion_audit": true,
+            "physics_options_check": true,
+            "stage_station_integrity_check": true,
+            "initial_keyframe_state_check": true,
+            "hand_contact_pair_mask_check": true,
+            "object_mass_plausibility_check": true,
+            "object_inertia_plausibility_check": true,
+            "friction_parameter_check": true,
+            "free_body_policy_check": false,
+            "collision_visual_alignment_check": true,
+            "object_count_vs_stage1_check": true,
+            "articulation_axis_semantics_check": true,
+            "appearance_texture_check": true,
+            "asset_scene_consistency_check": true,
+            "object_reach_check": true,
+            "video_frustum_check": false,
+            "camera_registration_check": true,
+            "object_scale_vs_footprint_check": true,
+            "mesh_validity_check": true,
+            "inertia_validity_check": true,
+            "name_uniqueness_check": true,
+            "keyframe_dimension_check": true,
+            "equality_constraint_check": true,
+            "solver_parameter_sanity_check": true,
+            "contact_margin_gap_check": true,
+            "simulation_stability_check": true,
+            "actuator_mapping_check": true,
+            "joint_armature_damping_check": true,
+            "texture_material_resolution_check": true,
+            "geom_count_budget_check": false,
+            "compile_determinism_check": true,
+            "mujoco_version_compat_check": true,
+            "free_joint_object_check": true,
+            "scene_size_budget_check": true,
+            "asset_path_portability_check": false
+          }
+        }
+      }
+    },
+    "new_tools": [
+      {
+        "kind": "skill",
+        "name": "construct_round_test_tube",
+        "file": "tool_library/skills/construct_round_test_tube.py",
+        "test": "tool_library/tests/test_construct_round_test_tube.py",
+        "cases": [
+          "large open cavity, closed round bottom, free joint, positive mass and inertia",
+          "medium open cavity, closed round bottom, free joint, positive mass and inertia",
+          "small open cavity, closed round bottom, free joint, positive mass and inertia"
+        ]
+      },
+      {
+        "kind": "skill",
+        "name": "fit_camera_to_table_plane_cv",
+        "file": "tool_library/skills/fit_camera_to_table_plane_cv.py",
+        "test": "tool_library/tests/test_fit_camera_to_table_plane_cv.py",
+        "cases": [
+          "depth plane pitch 30.0 roll 0.0 height 0.55: orientation and metric height recovered",
+          "depth plane pitch 55.0 roll 12.0 height 0.7: orientation and metric height recovered",
+          "depth plane pitch 70.0 roll -10.0 height 0.9: orientation and metric height recovered"
+        ]
+      }
+    ],
+    "workspace": "/data1/SRL_V2D/experiments/dexagent_egotools_10/continuation/runs/grasp/stage2",
+    "tool_calls": 24,
+    "tools_used": {
+      "extract_frames": 2,
+      "segment_source_frame": 4,
+      "library_create": 2,
+      "run_python": 9,
+      "segment_with_text_prompts": 7
+    },
+    "elapsed_s": 4241.7,
+    "stage": "stage2",
+    "failure": "blocked: This test run cannot certify the required transparent tube from the pinned input. CPU GrabCut returned empty masks at frame 0 and revealed frame 412. Strict-checkpoint SAM3 completed on CPU but found no test tube in either frame at score 0.3, and no glass/transparent tube in the revealed frame even at 0.1. An empty result in a visibly revealed view cannot justify declaring the initial object hidden. The partial rack scene therefore fails the required-object manifest, free-body and frustum checks; its rack also has 51 local collision geoms against the unchanged 48-geom budget. Nominal hand-only tests do not certify this reconstruction, and the mounted-arm candidate search plus contact optimization failed. The run is recorded as failed, without claiming the task impossible or weakening any goal or physical check."
+  },
+  "native_finish_feedback": {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "record_partial_reconstruction",
+        "content": [
+          {
+            "type": "text",
+            "text": "{\n \"ok\": true,\n \"returncode\": 0,\n \"stdout\": \"{\\\"partial_objects\\\": [\\\"rack\\\"], \\\"missing_objects\\\": [\\\"test_tube\\\"], \\\"accepted\\\": false}\\n\",\n \"stderr\": \"\"\n}"
+          }
+        ]
+      },
+      {
+        "type": "tool_result",
+        "tool_use_id": "evaluate_incomplete_reconstruction",
+        "content": [
+          {
+            "type": "text",
+            "text": "Verifiers FAILED. Fix the deliverable and call finish again.\n{\"ok\": false, \"authority\": \"diagnostic_only; original verifier verdict controls acceptance\", \"failed_check_names\": [\"scene_recon_manifest_check\", \"stage2_gate_suite\"], \"diagnostic_report\": null, \"comparison_scope\": null, \"candidate_binding\": null, \"next_step\": \"Read failed evidence; repair the candidate; rerun affected skills and finish. Read diagnostic_report for omitted detail.\", \"issues\": [\"$.objects: Stage 1 object 'test_tube' (rigid) has no entry\", \"free_body_policy_check: Stage 1 object test_tube (manipulated) has no body in the scene\", \"video_frustum_check: Stage 1 object test_tube has no body in the scene; reconstruct it (or name its root_body in scene_recon.json)\", \"geom_count_budget_check: 51 object collision geoms lie within 6 cm of 'rack_rack_bottom' (> 48), from [('rack', 51)]: a hand there is paired with all of them, so every hand-scene and executor step pays for 51 x 38 pairs; simplify 'rack' (51 here, mostly 55 boxs): fewer, larger segments (a ring wall of 24 boxes often works as 12-16; re-run the part's own mechanism test after merging: a thin cord escapes a coarse bead)\"], \"failed_checks\": {\"scene_recon_manifest_check\": {\"ok\": false, \"issues\": [\"$.objects: Stage 1 object 'test_tube' (rigid) has no entry\"], \"n_entries\": 1, \"n_stage1_objects\": 2, \"full_containment_trials\": {\"ok\": true, \"issues\": [], \"trials\": []}, \"independent_mechanism_trials\": {\"ok\": true, \"issues\": [], \"coverage\": \"articulated components only; explicit supported claims independently replayed; other report categories are not certified here\", \"trials\": []}, \"per_object\": {\"rack\": {\"found\": true, \"iou\": 0.751, \"verifiers_ok\": true}, \"test_tube\": {\"found\": false}}}, \"stage2_gate_suite\": {\"ok\": false, \"issues\": [\"free_body_policy_check: Stage 1 object test_tube (manipulated) has no body in the scene\", \"video_frustum_check: Stage 1 object test_tube has no body in the scene; reconstruct it (or name its root_body in scene_recon.json)\", \"geom_count_budget_check: 51 object collision geoms lie within 6 cm of 'rack_rack_bottom' (> 48), from [('rack', 51)]: a hand there is paired with all of them, so every hand-scene and executor step pays for 51 x 38 pairs; simplify 'rack' (51 here, mostly 55 boxs): fewer, larger segments (a ring wall of 24 boxes often works as 12-16; re-run the part's own mechanism test after merging: a thin cord escapes a coarse bead)\"], \"report\": {\"actuator_limit_integrity_check\": true, \"actuator_mapping_check\": true, \"appearance_texture_check\": true, \"articulation_axis_semantics_check\": true, \"asset_path_portability_check\": false, \"asset_scene_consistency_check\": true, \"camera_registration_check\": true, \"collision_visual_alignment_check\": true, \"compile_determinism_check\": true, \"contact_exclusion_audit\": true, \"contact_margin_gap_check\": true, \"equality_constraint_check\": true, \"omitted_keys\": [\"free_body_policy_check\", \"free_joint_object_check\", \"friction_parameter_check\", \"geom_count_budget_check\", \"hand_contact_pair_mask_check\", \"inertia_validity_check\", \"initial_keyframe_state_check\", \"joint_armature_damping_check\", \"keyframe_dimension_check\", \"mesh_validity_check\", \"mujoco_version_compat_check\", \"name_uniqueness_check\", \"object_count_vs_stage1_check\", \"object_inertia_plausibility_check\", \"object_mass_plausibility_check\", \"object_reach_check\", \"object_scale_vs_footprint_check\", \"physics_options_check\", \"robot_joint_range_check\", \"robot_model_integrity_check\", \"scene_size_budget_check\", \"simulation_stability_check\", \"solver_parameter_sanity_check\", \"source_reference_provenance_check\", \"stage_station_integrity_check\", \"texture_material_resolution_check\", \"video_frustum_check\"]}, \"warnings\": [\"object_reach_check: rack_rack: sampled hand poses failed; contact feasibility is inconclusive, not certified unreachable\", \"asset_path_portability_check: 58 mesh reference(s) are absolute (first: mesh 'robot_right_right_hand_C_MC_visual' file=\\\"/data1/SRL_V2D/experiments/dexagent_egotools_10/deps/DexAgent-adapted/setup/assets/sharpa/right_hand_C_MC_visual_.STL\\\" in scene.xml): the scene only opens on this machine; rewrite it relative to the scene folder, e.g. file=\\\"../../../../deps/DexAgent-adapted/setup/assets/sharpa/right_hand_C_MC_visual_.STL\\\"\"]}}}"
+          }
+        ]
+      }
+    ]
+  },
+  "sam3_checkpoint": {
+    "path": "/data1/SRL_V2D/experiments/dexagent_egotools_10/models/hf/hub/models--facebook--sam3/blobs/9999e2341ceef5e136daa386eecb55cb414446a00ac2b55eb2dfd2f7c3cf8c9e",
+    "bytes": 3450062241,
+    "sha256": "9999e2341ceef5e136daa386eecb55cb414446a00ac2b55eb2dfd2f7c3cf8c9e",
+    "expected_sha256": "9999e2341ceef5e136daa386eecb55cb414446a00ac2b55eb2dfd2f7c3cf8c9e"
+  },
+  "sam3_inference_outputs": {
+    "runs/grasp/stage2/source_masks/sam3_tube_initial/meta.json": {
+      "prompts": [
+        "test tube"
+      ],
+      "n_frames": 1,
+      "min_score": 0.3,
+      "mean_coverage": 0.0,
+      "out_dir": "source_masks/sam3_tube_initial",
+      "model_identity": {
+        "version": "sam3",
+        "repo_id": "facebook/sam3",
+        "checkpoint_sha256": "9999e2341ceef5e136daa386eecb55cb414446a00ac2b55eb2dfd2f7c3cf8c9e",
+        "sam3_package_version": "0.1.0",
+        "torch_version": "2.8.0+cu128",
+        "device": "cpu"
+      },
+      "instances": {
+        "test tube": [
+          []
+        ]
+      },
+      "n_instances": {
+        "test tube": [
+          0
+        ]
+      }
+    },
+    "runs/grasp/stage2/source_masks/sam3_tube_aliases/meta.json": {
+      "prompts": [
+        "glass tube",
+        "transparent tube"
+      ],
+      "n_frames": 1,
+      "min_score": 0.1,
+      "mean_coverage": 0.0,
+      "out_dir": "source_masks/sam3_tube_aliases",
+      "model_identity": {
+        "version": "sam3",
+        "repo_id": "facebook/sam3",
+        "checkpoint_sha256": "9999e2341ceef5e136daa386eecb55cb414446a00ac2b55eb2dfd2f7c3cf8c9e",
+        "sam3_package_version": "0.1.0",
+        "torch_version": "2.8.0+cu128",
+        "device": "cpu"
+      },
+      "instances": {
+        "glass tube": [
+          []
+        ],
+        "transparent tube": [
+          []
+        ]
+      },
+      "n_instances": {
+        "glass tube": [
+          0
+        ],
+        "transparent tube": [
+          0
+        ]
+      }
+    },
+    "runs/grasp/stage2/source_masks/sam3_tube_reveal/meta.json": {
+      "prompts": [
+        "test tube"
+      ],
+      "n_frames": 1,
+      "min_score": 0.3,
+      "mean_coverage": 0.0,
+      "out_dir": "source_masks/sam3_tube_reveal",
+      "model_identity": {
+        "version": "sam3",
+        "repo_id": "facebook/sam3",
+        "checkpoint_sha256": "9999e2341ceef5e136daa386eecb55cb414446a00ac2b55eb2dfd2f7c3cf8c9e",
+        "sam3_package_version": "0.1.0",
+        "torch_version": "2.8.0+cu128",
+        "device": "cpu"
+      },
+      "instances": {
+        "test tube": [
+          []
+        ]
+      },
+      "n_instances": {
+        "test tube": [
+          0
+        ]
+      }
+    }
+  },
+  "sam3_native_attempts": [
+    {
+      "round": 15,
+      "frames_dir": "frames",
+      "ok": false,
+      "error": "RuntimeError: mat1 and mat2 must have the same dtype, but got BFloat16 and Float"
+    },
+    {
+      "round": 15,
+      "frames_dir": "reveal_frames",
+      "ok": false,
+      "error": "RuntimeError: mat1 and mat2 must have the same dtype, but got BFloat16 and Float"
+    },
+    {
+      "round": 16,
+      "frames_dir": "frames",
+      "ok": false,
+      "error": "RuntimeError: No CUDA GPUs are available"
+    },
+    {
+      "round": 16,
+      "frames_dir": "reveal_frames",
+      "ok": false,
+      "error": "RuntimeError: No CUDA GPUs are available"
+    },
+    {
+      "round": 17,
+      "frames_dir": "frames",
+      "ok": true,
+      "error": null
+    },
+    {
+      "round": 17,
+      "frames_dir": "reveal_frames",
+      "ok": true,
+      "error": null
+    },
+    {
+      "round": 18,
+      "frames_dir": "reveal_frames",
+      "ok": true,
+      "error": null
+    }
+  ],
+  "changes": [
+    "Added construct_round_test_tube with real hollow collision geometry; three size variations compile and pass mass, inertia, cavity, free-joint and no-equality checks.",
+    "Added fit_camera_to_table_plane_cv; fixes the sign mismatch with rigcam camera registration. Three synthetic depth planes recover pitch, roll and metric height.",
+    "Patched SAM3 CPU initialization caches, fused-MLP dtype handling and GPU-only pinned memory. Three position-encoding resolutions and three MLP shapes match ordinary CPU operations; the 840,509,750-parameter image model builds on CPU. Inference outcomes are recorded separately."
+  ],
+  "limitations": [
+    "The test-tube interaction assets use nominal tube dimensions and placement. Their local lift pass is not a video-reconstructed episode.",
+    "The source-derived rack is a partial reconstruction. A rack fit does not validate the tube or whole scene.",
+    "Near-table-edge alignment assumes the demonstration edge maps to the supplied bench edge and the camera is laterally centred. No station or robot was moved.",
+    "The native right-arm reach bound passes for the rack but sampled grasp-orientation probes are inconclusive.",
+    "CPU GrabCut could not isolate the transparent tube, including the later revealed stem. No accepted mask was painted or substituted.",
+    "Chopsticks require independent contact-based tool success conditions. The original unsupported requirements remain present in all baseline results.",
+    "This is not an official EgoTools multiple-choice benchmark evaluation or an unaided VLM evaluation.",
+    "No verified complete robot episode or robot success rate was obtained. Failed recorded segments are diagnostic evidence only."
+  ]
+}

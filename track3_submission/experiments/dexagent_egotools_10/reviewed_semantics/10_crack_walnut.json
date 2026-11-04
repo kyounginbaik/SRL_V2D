@@ -1,0 +1,134 @@
+{
+  "task_prompt": "Place the walnut in the nutcracker and squeeze the handles to crack its shell.",
+  "task_summary": "The left hand holds the red-handled nutcracker while the right hand places and stabilizes a walnut in its jaws, then the handles close.",
+  "environment": {
+    "support_surface": "dark mat on the table",
+    "camera": "Moving head-mounted rectified stereo-left camera."
+  },
+  "hands": {
+    "used": [
+      "left",
+      "right"
+    ]
+  },
+  "objects": [
+    {
+      "id": "nutcracker",
+      "name": "red handled metal nutcracker",
+      "type": "articulated",
+      "role": "tool",
+      "properties": [
+        "Two handles and jaws pivot about a hinge.",
+        "Closing the handles compresses the walnut between the metal jaws.",
+        "The tool must not be represented as a rigid shape with immobile jaws."
+      ],
+      "evidence": "Red handles are open at 0-2 s and squeezed around the walnut at 2-7 s.",
+      "parts": [
+        "jaw_a",
+        "jaw_b"
+      ],
+      "articulation": {
+        "moving_part": "jaw_a",
+        "fixed_part": "jaw_b",
+        "joint_type": "revolute",
+        "axis": "Across the hinge pin",
+        "state_over_video": "Open, closes against the walnut, then opens."
+      }
+    },
+    {
+      "id": "walnut",
+      "name": "brown walnut",
+      "type": "other",
+      "role": "manipulated",
+      "properties": [
+        "Brittle shell surrounds an interior kernel.",
+        "Sufficient jaw compression should fracture the shell.",
+        "Shell fracture is a material change, not just a change of walnut pose."
+      ],
+      "evidence": "Right hand holds the walnut at 0-1 s, positions it in the jaws near 1-3 s and holds it again near 8-9 s."
+    }
+  ],
+  "subgoals": [
+    {
+      "acting_hand": "left",
+      "motion": "hold",
+      "action": "Hold the nutcracker with the jaws open.",
+      "object_refs": [
+        "nutcracker"
+      ],
+      "goal": "The nutcracker is held in the left hand.",
+      "time_window_s": [
+        0,
+        1.2
+      ],
+      "hand_roles": {
+        "left": "Holds the red handles.",
+        "right": "Holds the walnut."
+      },
+      "index": 1
+    },
+    {
+      "acting_hand": "right",
+      "motion": "insert",
+      "action": "Place the walnut between the nutcracker jaws.",
+      "object_refs": [
+        "walnut",
+        "nutcracker"
+      ],
+      "goal": "The walnut is between the nutcracker jaws.",
+      "time_window_s": [
+        1.2,
+        3.5
+      ],
+      "hand_roles": {
+        "left": "Supports the tool.",
+        "right": "Positions and steadies the walnut."
+      },
+      "index": 2
+    },
+    {
+      "acting_hand": "both",
+      "motion": "press",
+      "action": "Squeeze the nutcracker handles against the walnut.",
+      "object_refs": [
+        "nutcracker",
+        "walnut"
+      ],
+      "goal": "The walnut shell is cracked by the nutcracker.",
+      "time_window_s": [
+        3.5,
+        7.8
+      ],
+      "hand_roles": {
+        "left": "Squeezes the tool handles.",
+        "right": "Steadies the walnut at the jaws."
+      },
+      "observed_outcome": "Jaw closure is visible, but shell fracture is not resolved confidently in this short clip.",
+      "index": 3
+    },
+    {
+      "acting_hand": "left",
+      "motion": "place",
+      "action": "Return the nutcracker to the mat.",
+      "object_refs": [
+        "nutcracker"
+      ],
+      "goal": "The nutcracker rests on the table.",
+      "time_window_s": [
+        7.8,
+        9
+      ],
+      "hand_roles": {
+        "left": "Lowers and releases the tool.",
+        "right": "Continues to hold the walnut."
+      },
+      "index": 4
+    }
+  ],
+  "task_success": "The walnut shell is cracked by the nutcracker, the nutcracker rests on the table.",
+  "notes": [
+    "Do not infer an observed successful shell fracture solely from the handle squeeze.",
+    "Current-session Codex visual review; fixed upstream library; no example reuse.",
+    "Unsupported functional/material outcomes must remain explicit and must not be replaced with pose-only success."
+  ]
+}

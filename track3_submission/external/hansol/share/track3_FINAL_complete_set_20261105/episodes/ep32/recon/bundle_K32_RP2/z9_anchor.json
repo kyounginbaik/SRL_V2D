@@ -1,0 +1,112 @@
+{
+ "root": "/data1/SRL_V2D/challenge_reconstruction/reconstruction_recovery_20261026/canonical/evaluation/episode_000032",
+ "poses": "/data1/SRL_V2D/challenge_reconstruction/reconstruction_recovery_20261026/selected20_final_v5/episode_000032",
+ "ground_truth_used": false,
+ "anchor": "wooden_spoon",
+ "fired": true,
+ "static_window_end": 24,
+ "f0_rot_dev_deg": 5.888448395441806,
+ "f0_pos_dev_mm": 4.50072600510287,
+ "f0_body_rotvec_deg": [
+  5.77,
+  0.1,
+  -1.18
+ ],
+ "window_rot_spread_deg": 1.2108578597619917,
+ "window_pos_spread_mm": 3.192884786159366,
+ "per_frame_rot_dev_deg": [
+  5.89,
+  1.74,
+  2.74,
+  1.22,
+  3.18,
+  1.13,
+  0.6,
+  1.93,
+  3.47,
+  5.1,
+  1.2,
+  1.02,
+  1.0,
+  0.44,
+  0.4,
+  0.58,
+  0.63,
+  0.3,
+  5.7,
+  2.57,
+  2.04,
+  3.21,
+  1.04,
+  0.76
+ ],
+ "gates": {
+  "rot_deg": 3.632573579285975,
+  "pos_mm": 10.0
+ },
+ "candidate": true,
+ "static": {
+  "frames": 24,
+  "iou_ok_fraction": 1.0,
+  "depth_diff_mm": 0.38006218579006434,
+  "spread_ok": true,
+  "is_static": true
+ },
+ "evidence": {
+  "iou_p0_mean": 0.7285008331448847,
+  "iou_c_mean": 0.7359898154461298,
+  "iou_trk_mean": 0.7344760881916258,
+  "c_wins": 15,
+  "p0_wins": 9,
+  "profile_grid": [
+   -1.0,
+   -0.75,
+   -0.5,
+   -0.25,
+   0.0,
+   0.25,
+   0.5,
+   0.75,
+   1.0,
+   1.25,
+   1.5,
+   1.75,
+   2.0
+  ],
+  "profile_cost": [
+   209.824,
+   189.195,
+   169.965,
+   152.363,
+   137.515,
+   129.156,
+   125.965,
+   127.177,
+   131.482,
+   140.09,
+   152.86,
+   168.97,
+   185.728
+  ],
+  "s_star": 0.5561796922468716,
+  "s_boot_p05_p95": [
+   0.488,
+   0.667
+  ],
+  "conf_closer_to_consensus": 0.898,
+  "conf_p0_rejected": 1.0,
+  "ball_p0_median": 5.899814258783694,
+  "ball_c_median": 5.509992310155761,
+  "ball_trk_median": 5.545482789762624
+ },
+ "replaced_frames": [
+  0
+ ],
+ "replacement_s": 1.0,
+ "applied_rot_deg": [
+  5.888448395441802
+ ],
+ "applied_pos_mm": [
+  4.489954431936129
+ ]
+}

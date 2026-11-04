@@ -1,0 +1,112 @@
+{
+  "task_prompt": "Fold and crease the paper sheet using both hands.",
+  "task_summary": "Both hands fold the white sheet twice, crease the folds and hold the folded sheet.",
+  "environment": {
+    "support_surface": "tabletop",
+    "camera": "Moving head-mounted rectified stereo-left camera."
+  },
+  "hands": {
+    "used": [
+      "left",
+      "right"
+    ]
+  },
+  "objects": [
+    {
+      "id": "paper",
+      "name": "white paper sheet",
+      "type": "deformable",
+      "role": "manipulated",
+      "properties": [
+        "Thin sheet bends and folds rather than moving as one rigid solid.",
+        "A crease remains after the fingers press along the fold.",
+        "Two hands align the edges and fold the sheet into a smaller layered form."
+      ],
+      "evidence": "Sheet is open at 0 s, folded near 1-4 s and folded again near 5-11 s.",
+      "deformation": {
+        "kind": "creased sheet",
+        "how_the_task_deforms_it": "The hands bend the sheet along straight creases and press the layers together."
+      }
+    }
+  ],
+  "subgoals": [
+    {
+      "acting_hand": "both",
+      "motion": "hold",
+      "action": "Hold the paper by its edges.",
+      "object_refs": [
+        "paper"
+      ],
+      "goal": "The paper is held in both hands.",
+      "time_window_s": [
+        0,
+        1
+      ],
+      "hand_roles": {
+        "left": "Holds the left edge.",
+        "right": "Holds the right edge."
+      },
+      "index": 1
+    },
+    {
+      "acting_hand": "both",
+      "motion": "fold",
+      "action": "Fold the sheet and press the first crease.",
+      "object_refs": [
+        "paper"
+      ],
+      "goal": "The paper is folded along a crease.",
+      "time_window_s": [
+        1,
+        4.8
+      ],
+      "hand_roles": {
+        "left": "Aligns and supports the paper.",
+        "right": "Turns the panel over and presses the crease."
+      },
+      "index": 2
+    },
+    {
+      "acting_hand": "both",
+      "motion": "fold",
+      "action": "Fold and crease the paper again.",
+      "object_refs": [
+        "paper"
+      ],
+      "goal": "The paper is folded twice with the creases retained.",
+      "time_window_s": [
+        4.8,
+        13.6
+      ],
+      "hand_roles": {
+        "left": "Aligns the layered edges.",
+        "right": "Folds the smaller sheet and presses the layers."
+      },
+      "index": 3
+    },
+    {
+      "acting_hand": "left",
+      "motion": "hold",
+      "action": "Hold the folded paper while the right hand moves aside.",
+      "object_refs": [
+        "paper"
+      ],
+      "goal": "The paper is held in the left hand.",
+      "time_window_s": [
+        13.6,
+        15.55
+      ],
+      "hand_roles": {
+        "left": "Holds the folded sheet.",
+        "right": "Reaches away from the paper."
+      },
+      "index": 4
+    }
+  ],
+  "task_success": "The paper is folded twice with the creases retained, the paper is held in the left hand.",
+  "notes": [
+    "The right-hand reach toward scissors at the end is outside the requested folding task.",
+    "Current-session Codex visual review; fixed upstream library; no example reuse.",
+    "Unsupported functional/material outcomes must remain explicit and must not be replaced with pose-only success."
+  ]
+}

@@ -1,0 +1,22 @@
+{
+ "episode": 33,
+ "frames_with_line": 92,
+ "cost": [
+  969.6,
+  724.6
+ ],
+ "status": 3,
+ "correction_deg": {
+  "median": 0.05,
+  "p90": 0.59,
+  "max": 15.54
+ },
+ "roll_change_deg_max": 0.56,
+ "translation_cm_max": 1.75,
+ "params": {
+  "min_elong": 12.0,
+  "sig_ang": 2.0,
+  "sig_px": 4.0,
+  "sig_acc": 2.0
+ }
+}

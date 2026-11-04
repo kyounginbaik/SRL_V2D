@@ -1,0 +1,19 @@
+{
+ "mode": "strong",
+ "episode": 33,
+ "base": "/data1/hansol/mink_S1_20261031/handlesmooth/gate/recon_E14_best_B2A_S1_HG",
+ "contact_frames": 93,
+ "edit_frames": 147,
+ "objects": {
+  "wooden_spoon": {
+   "changed_frames": 147,
+   "change_rot_mean_deg": 2.76,
+   "change_rot_max_deg": 11.37
+  },
+  "blue_cup": {
+   "changed_frames": 147,
+   "change_rot_mean_deg": 2.8,
+   "change_rot_max_deg": 12.94
+  }
+ }
+}

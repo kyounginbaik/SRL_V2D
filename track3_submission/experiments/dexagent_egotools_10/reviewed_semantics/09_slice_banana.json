@@ -1,0 +1,103 @@
+{
+  "task_prompt": "Steady the banana and slice it with the kitchen knife.",
+  "task_summary": "The left hand steadies a banana segment on the counter while the right hand repeatedly slices it with a kitchen knife.",
+  "environment": {
+    "support_surface": "kitchen counter",
+    "camera": "Moving head-mounted rectified stereo-left camera."
+  },
+  "hands": {
+    "used": [
+      "left",
+      "right"
+    ]
+  },
+  "objects": [
+    {
+      "id": "banana",
+      "name": "yellow banana segment",
+      "type": "other",
+      "role": "manipulated",
+      "properties": [
+        "Food segment can be separated into slices by a sharp blade.",
+        "The left hand stabilizes the segment during the cuts.",
+        "Successful slicing requires new separate pieces, not just a blade pose."
+      ],
+      "evidence": "Banana is steadied at 1.5-3 s and cut repeatedly near 3-17.5 s."
+    },
+    {
+      "id": "knife",
+      "name": "kitchen knife",
+      "type": "rigid",
+      "role": "tool",
+      "properties": [
+        "Long rigid blade and handle move together.",
+        "The blade edge is lowered repeatedly through the banana.",
+        "The cutting contact must cause material separation."
+      ],
+      "evidence": "Right hand holds the knife throughout 0-17.5 s."
+    }
+  ],
+  "subgoals": [
+    {
+      "acting_hand": "right",
+      "motion": "hold",
+      "action": "Hold the knife above the counter.",
+      "object_refs": [
+        "knife"
+      ],
+      "goal": "The knife is held in the right hand.",
+      "time_window_s": [
+        0,
+        1.6
+      ],
+      "hand_roles": {
+        "left": "Moves toward the banana.",
+        "right": "Holds the knife handle."
+      },
+      "index": 1
+    },
+    {
+      "acting_hand": "left",
+      "motion": "hold",
+      "action": "Steady the banana.",
+      "object_refs": [
+        "banana"
+      ],
+      "goal": "The banana is held in the left hand.",
+      "time_window_s": [
+        1.6,
+        3
+      ],
+      "hand_roles": {
+        "left": "Stabilizes the banana on the counter.",
+        "right": "Positions the blade."
+      },
+      "index": 2
+    },
+    {
+      "acting_hand": "both",
+      "motion": "cut",
+      "action": "Repeatedly slice the banana.",
+      "object_refs": [
+        "knife",
+        "banana"
+      ],
+      "goal": "The banana is cut into separate slices.",
+      "time_window_s": [
+        3,
+        17.5
+      ],
+      "hand_roles": {
+        "left": "Keeps the uncut segment steady.",
+        "right": "Lowers and raises the blade repeatedly."
+      },
+      "index": 3
+    }
+  ],
+  "task_success": "The banana is cut into separate slices, the knife is held in the right hand.",
+  "notes": [
+    "The precise number and thickness of the small slices cannot be counted confidently from the overview.",
+    "Current-session Codex visual review; fixed upstream library; no example reuse.",
+    "Unsupported functional/material outcomes must remain explicit and must not be replaced with pose-only success."
+  ]
+}

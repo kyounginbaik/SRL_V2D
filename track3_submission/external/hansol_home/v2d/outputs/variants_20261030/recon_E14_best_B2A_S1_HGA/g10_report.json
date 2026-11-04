@@ -1,0 +1,33 @@
+{
+ "base": "/data1/SRL_V2D/challenge_reconstruction/reconstruction_recovery_20261026/selected20_final_v6",
+ "rule": "spoon roll = ball-Viterbi track (streamG10_mp/code/balltrack.py), smoothed 5 frames",
+ "episodes": {
+  "32": {
+   "tag": "l0.05_m0.0_p20",
+   "segments": [
+    [
+     52,
+     151,
+     135.0
+    ]
+   ],
+   "flipped_frac": 0.305
+  },
+  "3": {
+   "tag": "l0.05_m0.0_p20",
+   "segments": [
+    [
+     50,
+     56,
+     105.0
+    ],
+    [
+     103,
+     159,
+     -135.0
+    ]
+   ],
+   "flipped_frac": 0.125
+  }
+ }
+}

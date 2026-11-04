@@ -1,0 +1,44 @@
+2026-11-04T16:32:40 make L_D100i2 69335 -> fcem33 F_D100i2 69336
+2026-11-04T16:33:39 lcem33 LC_f100 (follow -100) 69337
+2026-11-04T16:36:35 fcem33 F_LC_f100 on LC_f100 (after 69337) 69339
+2026-11-04T16:44:23 cancelled 69336 69337 69339 (main session: spoon grasp first, left-side cup deferred)
+2026-11-04T16:46:41 grid g3 right per-finger flex + perturbation (0.5/1 mm x4) 69352
+2026-11-04T16:55:59 grid g4 human IK grip blend + perturbation 69361
+2026-11-04T16:58:55 fcem33r FR_base (robust 3 x 0.5 mm) 69362 ; fcem33 FN_base (nominal + grasp term) 69363 ; both on team ilc2 iter1, no left change
+2026-11-04T17:00:27 pert33 team teacher 0.5/1/2 mm x4 69368
+2026-11-04T17:04:10 pert33 team teacher rerun with target-independent drop test 69369
+2026-11-04T17:04:24 distill33 DN (FN_base, after 69363) 69373 ; DR (FR_base, after 69362) 69374
+2026-11-04T17:16:22 perturb33 R12 16 draws 69389
+2026-11-04T17:20:35 FN_base table 69390 pert 69391
+2026-11-04T17:21:44 margins stage 1 (64x12) DNm1_c1536_p0.002 69393 ; DNm1_c3072_p0.003 69394
+2026-11-04T17:22:10 perturb33 DN c1536_p0.002 16 draws 69395
+2026-11-04T17:35:52 cancelled DR distill 69374 (FR_base worse than FN_base: cup 1.73/19.6 spoon 2.50/30.8 proxy MP-SR 0; nodes 95% busy)
+2026-11-04T17:42:29 margins stage 2 DNm2 69412 ; perturb33 DNm1 69413 ; table DNm1 69414
+2026-11-04T17:49:49 beam burst M1_A on DNm1 windows 2.50:2.75,2.75:3.00,3.00:3.25,3.25:3.50,3.50:3.75,3.75:4.00,4.00:4.25,4.25:4.50,4.50:4.75,4.75:5.00 job 69417
+2026-11-04T18:01:51 beam M1_B 69430 (after 69417) M1_C 69431 (after 69430) on DNm1
+2026-11-04T18:11:41 save M1_A f0 69451 ; perturb33 69452
+2026-11-04T18:16:12 t33svst M1_A_f0 (stage+g18swap+build-v2) 69455
+2026-11-04T18:20:39 t33pkg M1_A_f0 69461
+2026-11-04T20:22:44 M1_C f0: save 69548 pert 69549 table 69550 svst 69551 pkg 69552
+2026-11-04T20:23:07 [main session] save M1_C f0 69553 ; perturb33 69554 ; t33svst 69555 ; t33pkg 69556
+2026-11-04T20:23:36 [main session] cancelled 69553-69556 (duplicate of the teacher session chain 69548-69552)
+2026-11-04T20:33:50 target copy R33_H5r16 (byte copy of streamK33 K33_H5r16); mkref R33H5r16_W1 69563
+2026-11-04T20:35:14 H5r16: snap W1s; fcem33 FN_H5r16 69565; tables team teacher 69566, R12 69567
+2026-11-04T20:37:52 distill33 DH5 (FN_H5r16, W1s H5r16) after 69565: 69571
+2026-11-04T20:38:44 H5r16 chain: margins33auto 69572 -> beam H5_A 69573 -> H5_B 69574 -> H5_C 69575 -> save 69576 -> pert 69577, table 69578, svst 69579 -> pkg 69580
+2026-11-04T20:40:35 table FN_H5r16 69582
+2026-11-04T20:57:49 teacher_ilc_b IL_H5r16 (spoon ILC all axes, gr0.3 gp0.4, 3.6-15 s, 2 it) 69600
+2026-11-04T21:01:06 [main session] M1_C_fz161 (M1_C table + --freeze right,16.1,0.2): save 69622 pert 69623 svst 69624 pkg 69625
+2026-11-04T21:04:08 [main session] M2_end beam 69631 (14.5-16 s, SH=4,4,5,280,322, FZ right,16.1,0.2) -> save 69632 pert 69633 svst 69634 pkg 69635
+2026-11-04T21:12:31 r6 chain (TG=R33_HGA_r6, worlds R33r6_W1/W1s): mkref 69637 snap 69638 fcem 69639 tab 69640 distill 69641 margins 69642 A 69643 B 69644 C 69645 save 69646 pert 69647 table 69648 svst 69649 pkg 69650
+2026-11-04T21:15:09 cancelled H5r16 chain 69572-69580 (main session: flipped spoon direction is right; free CPUs for moved-start r6)
+2026-11-04T21:16:55 build_world_t33 -> worlds/R33r6M (r6 frame-0 start poses in the scene)
+2026-11-04T21:18:06 delta_port_t33 into R33r6M:  full/0.5:69653/69654 full/1.0:69655/69656 const/0.5:69657/69658 const/1.0:69659/69660
+2026-11-04T21:18:23 cancelled unmoved r6 chain 69639-69650 (moved-start r6 has priority; unmoved keeps the 5 cm frame-0 anchor offset)
+2026-11-04T21:19:57 moved-start r6 chain (world R33r6M, base P_r6M_full_b0.5): fcem 69661 tab 69662 distill 69663 margins 69664 A 69665 B 69666 C 69667 save 69668 pert 69669 table 69670 svst 69671 pkg 69672
+2026-11-04T22:01:32 R6M2: A 69712 B 69713 C 69714 save 69715 pert 69716 table 69717 svst 69718 pkg 69719 (both hands, HG 6,1.0, ow cup 2)
+2026-11-04T22:01:33 target copy R33_RP (byte copy of streamK33 K33_RP); RPM: world 69720 port 69721 tab 69722 fcem 69723 tab 69724 distill 69725 margins 69726 A 69727 B 69728 C 69729 save 69730 pert 69731 table 69732 svst 69733 pkg 69734
+2026-11-05T00:00:20 R6M end-of-clip fix (main session request; table R6M_C final_0, windows 13.75-16.00, SH 4,4,5,280,322, NC 60, WK 24) | E1 (FZ right,13.9,0.2,15.0): beam 69881 save 69882 pert 69883 table 69884 svst 69885 pkg 69886 | E2 (FZ right,13.9,0.2,17.25): beam 69887 save 69888 pert 69889 table 69890 svst 69891 pkg 69892
+2026-11-05T00:15:55 end-of-clip E1 chains (FZ right,13.9,0.2,15.0, windows 13.75-16.00, wbeamHGg SH 4,4,5,280,322 NC 60 WK 24): R6M2_E1 [R6M2_E1|69903|69904|69905|69906|69907|69908|69909|track3_FINAL_ep33T33_R6M2E1_r6moved_20261104|] RPM_E1 [RPM_E1|69910|69911|69912|69913|69914|69915|69916|track3_FINAL_ep33T33_RPME1_RPmoved_20261104|69734]; STATUS reporters R6M_E1 69917 R6M_E2 69918 RPM_C 69919
+2026-11-05T00:16:59 wrote out/STATUS_20261105.md (job table + T33-report appenders)
+2026-11-05T00:17:52 RPM_E2 end-of-clip chain (FZ right,14.7,0.2,15.2; RPM release ~14.9 s): beam 69923 save 69924 pert 69925 table 69926 svst 69927 pkg 69928 report 69929

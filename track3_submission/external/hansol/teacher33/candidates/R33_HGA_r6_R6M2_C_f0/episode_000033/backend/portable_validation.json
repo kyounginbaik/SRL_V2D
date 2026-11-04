@@ -1,0 +1,85 @@
+{
+  "episode": "episode_000033",
+  "bundle": "/data1/hansol/teacher33/staging/R33_HGA_r6_ep33_R6M2_C_f0/components/episode_000033/portable",
+  "working_directory": "/tmp",
+  "original_scene_sha256": "dc320e7ec052740e202e28be71a8d2bc270d345f723cdb1f901334eda3fd587d",
+  "relocated_scene_sha256": "f3ba8d69559b7c7b8b21229c8f4ab329a4116a7264c0129de52dee7979f5eac9",
+  "original_checkpoint_sha256": "c4996715daef2829f894354f38cdebc675d68b70fb40630e74e90b861841a449",
+  "relocated_checkpoint_sha256": "96fcda4bf2a258f531501556c4c1a08b97b867dbc35695ff93ae195819f702ad",
+  "original_weights_unchanged": true,
+  "compiled_model_arrays_options_exact": true,
+  "excluded_model_source_path_metadata": [
+    "hfield_pathadr",
+    "mesh_pathadr",
+    "nbuffer",
+    "npaths",
+    "paths",
+    "tex_pathadr"
+  ],
+  "physical_trajectory_comparison": {
+    "qpos": {
+      "exact": true,
+      "max_abs_difference": 0.0
+    },
+    "qvel": {
+      "exact": true,
+      "max_abs_difference": 0.0
+    },
+    "ctrl": {
+      "exact": true,
+      "max_abs_difference": 0.0
+    },
+    "time_s": {
+      "exact": true,
+      "max_abs_difference": 0.0
+    },
+    "substep_qpos": {
+      "exact": true,
+      "max_abs_difference": 0.0
+    },
+    "substep_qvel": {
+      "exact": true,
+      "max_abs_difference": 0.0
+    },
+    "substep_ctrl": {
+      "exact": true,
+      "max_abs_difference": 0.0
+    },
+    "substep_time_s": {
+      "exact": true,
+      "max_abs_difference": 0.0
+    },
+    "initial_qpos": {
+      "exact": true,
+      "max_abs_difference": 0.0
+    },
+    "initial_qvel": {
+      "exact": true,
+      "max_abs_difference": 0.0
+    },
+    "initial_state": {
+      "exact": true,
+      "max_abs_difference": 0.0
+    },
+    "final_state": {
+      "exact": true,
+      "max_abs_difference": 0.0
+    }
+  },
+  "all_physical_states_actions_exact": true,
+  "source_object_targets_unchanged": true,
+  "reference_proxy_mp_sr": 1.0,
+  "independent_control_replay": {
+    "ok": true,
+    "issues": [],
+    "frames": 348,
+    "substeps": 8675,
+    "duration_s": 17.350000000001263,
+    "replayed_substeps": 8675,
+    "max_replay_qpos_error": 0.0,
+    "max_replay_qvel_error": 0.0
+  },
+  "retraining": null,
+  "complete_submission_ready": false,
+  "uploaded": false
+}

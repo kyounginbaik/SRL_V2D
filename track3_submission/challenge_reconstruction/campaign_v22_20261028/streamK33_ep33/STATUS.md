@@ -1,0 +1,2 @@
+- 2026-11-04 14:10 UTC EP33 beams: T33r2_a2_b1 cup 1.23/7.8 spoon 1.43/10.4 (finish chain); acemA_b1 1.31/9.2 1.45/9.5; r1cup_a2_c2 1.42/8.4 1.48/9.2; r1cup_a1_b1 1.36/5.8 1.52/14.9. Pass-2 chains launched.
+- 2026-11-04 14:45 UTC EP33 recon v2 (spoon bowl constraint 5.5-7.3 s) accepted by user -> target K33_RP2; retarget relaunched (teacher pipeline c + beams on existing T33 actors).

@@ -1,0 +1,2303 @@
+{
+  "test_type": "operator_assisted_fixed_library_video_task_compatibility",
+  "dexagent_commit": "e29bdad8ed3e95b2c9ee2eea9044a6b4115ec633",
+  "egotools_data_revision": "c738802d9ac9bf1b79b7993592096a3dcd6391ec",
+  "source_repository": "https://github.com/dexagent1/DexAgent",
+  "data_repository": "https://huggingface.co/datasets/ropedia-ai/egotools-data",
+  "paper": "https://arxiv.org/abs/2609.39378",
+  "n_tasks": 10,
+  "decoded_clips": 10,
+  "schema_pass": 10,
+  "consistency_pass": 10,
+  "goal_language_pass": 1,
+  "verified_robot_rollouts_produced": 0,
+  "robot_success_rate": null,
+  "scope": "Current Codex session selected clips using published captions, inspected frame contact sheets, authored task semantics, and exercised unmodified native checks and external transport. No separate model API was used. The library was frozen: unsupported goals were retained rather than repaired with new tools. This is not an unaided VLM benchmark or the official EgoTools QA benchmark.",
+  "limitations": [
+    "Goal-language rejection concerns the exact reviewed wording and the finite compiler; it is not proof that every equivalent task formulation or an extended library must fail.",
+    "Native Stage 1 schema/consistency/goal checks do not establish semantic ground truth or physical task success.",
+    "Released stereo_left_synced streams are 512x512 near 20 FPS. Task clips were encoded as H.264 at 25 FPS by ffmpeg, preserving elapsed-time windows and duplicating frames as necessary. They are not the paper benchmark canonical videos.",
+    "The paper-folding source advertises 3445 frames and decodes 3444; the selected extracted clip decodes fully.",
+    "Camera intrinsics come from calibration.json cam01 K. Bench extrinsics and moving-camera support were not calibrated. The grasping clip contains a large head turn.",
+    "Stage 2 object detection failed because torch and SAM 3 are absent from the configured interpreter. No alternative perception environment was configured or installed by this test.",
+    "Stages 3 and 4 were not run. Zero verified rollouts produced is not a measured 0% robot success rate."
+  ],
+  "regression_checks": [
+    {
+      "script": "tool_library/tests/test_stage1_goal_gate.py",
+      "exit_code": 0,
+      "printed_pass_cases": 14
+    },
+    {
+      "script": "tool_library/tests/test_goal_language.py",
+      "exit_code": 0,
+      "printed_pass_cases": 4
+    }
+  ],
+  "grasp_stage2": {
+    "finished": false,
+    "rounds": 3,
+    "verdict": {
+      "ok": false,
+      "issues": [
+        "cannot verify source reference evidence: [Errno 2] No such file or directory: '/data1/SRL_V2D/experiments/dexagent_egotools_10/runs/01_grasp_test_tube/stage2/scene_recon.json'"
+      ],
+      "reports": {
+        "source_reference_provenance_check": {
+          "ok": false,
+          "issues": [
+            "cannot verify source reference evidence: [Errno 2] No such file or directory: '/data1/SRL_V2D/experiments/dexagent_egotools_10/runs/01_grasp_test_tube/stage2/scene_recon.json'"
+          ],
+          "source_video_sha256": "496a96624aa71066d188d982b3377a2692ca815ec4f4f7c70a304050dfcf995f",
+          "checked": [],
+          "scope": "source-derived mask provenance only; semantic accuracy remains separate"
+        }
+      }
+    },
+    "new_tools": [],
+    "workspace": "/data1/SRL_V2D/experiments/dexagent_egotools_10/runs/01_grasp_test_tube/stage2",
+    "tool_calls": 1,
+    "tools_used": {
+      "run_python": 1
+    },
+    "elapsed_s": 13.5,
+    "stage": "stage2",
+    "failure": "blocked: Required source object detection failed in the configured interpreter; see perception_attempt.json. No verified scene or source masks were produced. The selected video also has a moving head camera, while the supplied camera contract is static. This attempt does not establish robot task success."
+  },
+  "grasp_perception_attempt": {
+    "ok": false,
+    "error": "ImportError: SAM 3 image dependencies are missing in this interpreter. Configure environments.sam3 and route detect_objects / segment_with_text_prompts to it; install sam3 and torch there (https://github.com/facebookresearch/sam3) and provide facebook/sam3 checkpoint access",
+    "traceback": "Traceback (most recent call last):\n  File \"/data1/SRL_V2D/third_party/DexAgent/tool_library/skills/detect_objects.py\", line 80, in load_sam3\n    import torch\nModuleNotFoundError: No module named 'torch'\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/data1/SRL_V2D/third_party/DexAgent/agent/library.py\", line 273, in call_tool\n    result = call_tool_inprocess(lib, tool, args)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/data1/SRL_V2D/third_party/DexAgent/agent/library.py\", line 217, in call_tool_inprocess\n    return _jsonable(fn(**args))\n                     ^^^^^^^^^^\n  File \"/data1/SRL_V2D/third_party/DexAgent/tool_library/skills/detect_objects.py\", line 145, in detect_objects\n    proc = processor or load_sam3(min_score, version)\n                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/data1/SRL_V2D/third_party/DexAgent/tool_library/skills/detect_objects.py\", line 85, in load_sam3\n    raise ImportError(\"SAM 3 image dependencies are missing in this interpreter. Configure environments.sam3 \"\nImportError: SAM 3 image dependencies are missing in this interpreter. Configure environments.sam3 and route detect_objects / segment_with_text_prompts to it; install sam3 and torch there (https://github.com/facebookresearch/sam3) and provide facebook/sam3 checkpoint access\n"
+  },
+  "tasks": [
+    {
+      "id": "01_grasp_test_tube",
+      "uuid": "02430554-623d-4a36-936e-b1ae200b43af",
+      "start_s": 0,
+      "end_s": 18.1,
+      "task": "Grasp and lift a test tube from the rack.",
+      "category": "grasping",
+      "checks": {
+        "clip_integrity": {
+          "ok": true,
+          "sha256": "496a96624aa71066d188d982b3377a2692ca815ec4f4f7c70a304050dfcf995f",
+          "video_info": {
+            "path": "/data1/SRL_V2D/experiments/dexagent_egotools_10/clips/01_grasp_test_tube.mp4",
+            "width": 512,
+            "height": 512,
+            "fps": 25.0,
+            "frames": 453,
+            "duration_s": 18.12,
+            "thumbnails": []
+          }
+        },
+        "scene_semantic_schema_check": {
+          "ok": true,
+          "issues": [],
+          "n_objects": 2,
+          "n_subgoals": 2
+        },
+        "scene_semantic_consistency_check": {
+          "ok": true,
+          "issues": [],
+          "uncovered_prompt_words": [],
+          "checked_prompt_words": [
+            "rack",
+            "test",
+            "tube"
+          ],
+          "unreferenced_objects": [],
+          "hands_without_subgoals": [],
+          "n_objects": 2,
+          "n_subgoals": 2
+        },
+        "goal_language_coverage_check": {
+          "ok": true,
+          "issues": [],
+          "clauses": {
+            "$.subgoals[0].goal": [
+              {
+                "clause": "the @0 is held in the right hand",
+                "covered": true
+              },
+              {
+                "clause": "the @0 is held clear of the @1",
+                "covered": true
+              }
+            ],
+            "$.subgoals[1].goal": [
+              {
+                "clause": "the @0 is held in the right hand",
+                "covered": true
+              }
+            ],
+            "$.task_success": [
+              {
+                "clause": "the @0 is held in the right hand",
+                "covered": true
+              },
+              {
+                "clause": "the @0 is held clear of the @1",
+                "covered": true
+              },
+              {
+                "clause": "the @2 has not moved",
+                "covered": true
+              }
+            ]
+          }
+        }
+      },
+      "compatible": true,
+      "media": {
+        "id": "01_grasp_test_tube",
+        "uuid": "02430554-623d-4a36-936e-b1ae200b43af",
+        "start_s": 0,
+        "end_s": 18.1,
+        "task": "Grasp and lift a test tube from the rack.",
+        "category": "grasping",
+        "source_file": "data/raw/02430554-623d-4a36-936e-b1ae200b43af/ep1/stereo_left_synced.mp4",
+        "source_bytes": 10530575,
+        "source_sha256": "7479e50f3e6d7baa4f97ed8d0d9f8ce7268f6c072b0fd0a1b6a8cbc37f9230e4",
+        "source_decoded_frames": 2096,
+        "source_advertised_frames": 2096,
+        "source_manifest_frames": 2096,
+        "source_fps": 20.0,
+        "width": 512,
+        "height": 512,
+        "clip": "clips/01_grasp_test_tube.mp4",
+        "clip_sha256": "496a96624aa71066d188d982b3377a2692ca815ec4f4f7c70a304050dfcf995f",
+        "camera_intrinsics": {
+          "fx": 200.00000000000006,
+          "fy": 200.00000000000006,
+          "cx": 256.0,
+          "cy": 256.0
+        },
+        "config": "configs/01_grasp_test_tube.yaml"
+      },
+      "clip_decoded_frames": 453,
+      "native_stage1": {
+        "finished": true,
+        "rounds": 1,
+        "verdict": {
+          "ok": true,
+          "issues": [],
+          "reports": {
+            "source_video_identity_check": {
+              "ok": true,
+              "issues": [],
+              "warnings": [],
+              "identity_verified": true,
+              "identity_evidence": "recorded_sha256",
+              "actual": {
+                "path": "/data1/SRL_V2D/experiments/dexagent_egotools_10/clips/01_grasp_test_tube.mp4",
+                "sha256": "496a96624aa71066d188d982b3377a2692ca815ec4f4f7c70a304050dfcf995f",
+                "frames": 453,
+                "fps": 25.0,
+                "duration_s": 18.12,
+                "width": 512,
+                "height": 512
+              }
+            },
+            "scene_semantic_schema_check": {
+              "ok": true,
+              "issues": [],
+              "n_objects": 2,
+              "n_subgoals": 2
+            },
+            "scene_semantic_consistency_check": {
+              "ok": true,
+              "issues": [],
+              "uncovered_prompt_words": [],
+              "checked_prompt_words": [
+                "rack",
+                "test",
+                "tube"
+              ],
+              "unreferenced_objects": [],
+              "hands_without_subgoals": [],
+              "n_objects": 2,
+              "n_subgoals": 2
+            },
+            "goal_language_coverage_check": {
+              "ok": true,
+              "issues": [],
+              "clauses": {
+                "$.subgoals[0].goal": [
+                  {
+                    "clause": "the @0 is held in the right hand",
+                    "covered": true
+                  },
+                  {
+                    "clause": "the @0 is held clear of the @1",
+                    "covered": true
+                  }
+                ],
+                "$.subgoals[1].goal": [
+                  {
+                    "clause": "the @0 is held in the right hand",
+                    "covered": true
+                  }
+                ],
+                "$.task_success": [
+                  {
+                    "clause": "the @0 is held in the right hand",
+                    "covered": true
+                  },
+                  {
+                    "clause": "the @0 is held clear of the @1",
+                    "covered": true
+                  },
+                  {
+                    "clause": "the @2 has not moved",
+                    "covered": true
+                  }
+                ]
+              }
+            },
+            "verified_delivery": {
+              "ok": true,
+              "issues": [],
+              "video_sha256": "496a96624aa71066d188d982b3377a2692ca815ec4f4f7c70a304050dfcf995f"
+            }
+          }
+        },
+        "new_tools": [],
+        "workspace": "/data1/SRL_V2D/experiments/dexagent_egotools_10/runs/01_grasp_test_tube/stage1",
+        "tool_calls": 1,
+        "tools_used": {
+          "write_text": 1
+        },
+        "elapsed_s": 5.4,
+        "stage": "stage1"
+      },
+      "stage2": "blocked_missing_perception_dependencies",
+      "stage3": "not_run",
+      "stage4": "not_run"
+    },
+    {
+      "id": "02_chopsticks_grape",
+      "uuid": "8183ff10-49e4-49c8-bdd2-ac0164c1916f",
+      "start_s": 9,
+      "end_s": 23,
+      "task": "Use chopsticks to pick up a green grape and place it on the bread.",
+      "category": "chopsticks",
+      "checks": {
+        "clip_integrity": {
+          "ok": true,
+          "sha256": "ad79baeb5c211472830cf1e663cb5721406622f4859a2731e73bb92e2c66862c",
+          "video_info": {
+            "path": "/data1/SRL_V2D/experiments/dexagent_egotools_10/clips/02_chopsticks_grape.mp4",
+            "width": 512,
+            "height": 512,
+            "fps": 25.0,
+            "frames": 350,
+            "duration_s": 14.0,
+            "thumbnails": []
+          }
+        },
+        "scene_semantic_schema_check": {
+          "ok": true,
+          "issues": [],
+          "n_objects": 5,
+          "n_subgoals": 7
+        },
+        "scene_semantic_consistency_check": {
+          "ok": true,
+          "issues": [],
+          "uncovered_prompt_words": [],
+          "checked_prompt_words": [
+            "bread",
+            "chopsticks",
+            "grape",
+            "green"
+          ],
+          "unreferenced_objects": [],
+          "hands_without_subgoals": [],
+          "n_objects": 5,
+          "n_subgoals": 7
+        },
+        "goal_language_coverage_check": {
+          "ok": false,
+          "issues": [
+            "$.subgoals[1].goal: clause 'the @0 is clamped between the chopstick tips' of \"The first green grape is clamped between the chopstick tips and held clear of the table.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')",
+            "$.subgoals[2].goal: clause 'the @0 is held over the @1' of \"The first green grape is held over the bread.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')",
+            "$.subgoals[4].goal: clause 'the @0 is clamped between the chopstick tips' of \"The second green grape is clamped between the chopstick tips and held clear of the table.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')",
+            "$.subgoals[5].goal: clause 'the @0 is held over the @1' of \"The second green grape is held over the bread.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')"
+          ],
+          "clauses": {
+            "$.subgoals[0].goal": [
+              {
+                "clause": "the @0 are held in the right hand",
+                "covered": true
+              }
+            ],
+            "$.subgoals[1].goal": [
+              {
+                "clause": "the @0 is clamped between the chopstick tips",
+                "covered": false
+              },
+              {
+                "clause": "held clear of the @1",
+                "covered": true
+              }
+            ],
+            "$.subgoals[2].goal": [
+              {
+                "clause": "the @0 is held over the @1",
+                "covered": false
+              }
+            ],
+            "$.subgoals[3].goal": [
+              {
+                "clause": "the @0 rests on the @1",
+                "covered": true
+              }
+            ],
+            "$.subgoals[4].goal": [
+              {
+                "clause": "the @0 is clamped between the chopstick tips",
+                "covered": false
+              },
+              {
+                "clause": "held clear of the @1",
+                "covered": true
+              }
+            ],
+            "$.subgoals[5].goal": [
+              {
+                "clause": "the @0 is held over the @1",
+                "covered": false
+              }
+            ],
+            "$.subgoals[6].goal": [
+              {
+                "clause": "the @0 rests on the @1",
+                "covered": true
+              }
+            ],
+            "$.task_success": [
+              {
+                "clause": "the @0 rests on the @1",
+                "covered": true
+              },
+              {
+                "clause": "the @2 rests on the @1",
+                "covered": true
+              },
+              {
+                "clause": "the @3 are held in the right hand",
+                "covered": true
+              }
+            ]
+          }
+        }
+      },
+      "compatible": false,
+      "media": {
+        "id": "02_chopsticks_grape",
+        "uuid": "8183ff10-49e4-49c8-bdd2-ac0164c1916f",
+        "start_s": 9,
+        "end_s": 23,
+        "task": "Use chopsticks to pick up a green grape and place it on the bread.",
+        "category": "chopsticks",
+        "source_file": "data/raw/8183ff10-49e4-49c8-bdd2-ac0164c1916f/ep1/stereo_left_synced.mp4",
+        "source_bytes": 4885271,
+        "source_sha256": "2461bb7f781d450a49987237306844d679176830599e5521245e330d056eb147",
+        "source_decoded_frames": 986,
+        "source_advertised_frames": 986,
+        "source_manifest_frames": 986,
+        "source_fps": 19.991889699918897,
+        "width": 512,
+        "height": 512,
+        "clip": "clips/02_chopsticks_grape.mp4",
+        "clip_sha256": "ad79baeb5c211472830cf1e663cb5721406622f4859a2731e73bb92e2c66862c",
+        "camera_intrinsics": {
+          "fx": 200.00000000000006,
+          "fy": 200.00000000000006,
+          "cx": 256.0,
+          "cy": 256.0
+        },
+        "config": "configs/02_chopsticks_grape.yaml"
+      },
+      "clip_decoded_frames": 350,
+      "native_stage1": {
+        "finished": false,
+        "rounds": 6,
+        "verdict": {
+          "ok": false,
+          "issues": [
+            "$.subgoals[1].goal: clause 'the @0 is clamped between the chopstick tips' of \"The first green grape is clamped between the chopstick tips and held clear of the table.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')",
+            "$.subgoals[2].goal: clause 'the @0 is held over the @1' of \"The first green grape is held over the bread.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')",
+            "$.subgoals[4].goal: clause 'the @0 is clamped between the chopstick tips' of \"The second green grape is clamped between the chopstick tips and held clear of the table.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')",
+            "$.subgoals[5].goal: clause 'the @0 is held over the @1' of \"The second green grape is held over the bread.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')"
+          ],
+          "reports": {
+            "source_video_identity_check": {
+              "ok": true,
+              "issues": [],
+              "warnings": [],
+              "identity_verified": true,
+              "identity_evidence": "recorded_sha256",
+              "actual": {
+                "path": "/data1/SRL_V2D/experiments/dexagent_egotools_10/clips/02_chopsticks_grape.mp4",
+                "sha256": "ad79baeb5c211472830cf1e663cb5721406622f4859a2731e73bb92e2c66862c",
+                "frames": 350,
+                "fps": 25.0,
+                "duration_s": 14.0,
+                "width": 512,
+                "height": 512
+              }
+            },
+            "scene_semantic_schema_check": {
+              "ok": true,
+              "issues": [],
+              "n_objects": 5,
+              "n_subgoals": 7
+            },
+            "scene_semantic_consistency_check": {
+              "ok": true,
+              "issues": [],
+              "uncovered_prompt_words": [],
+              "checked_prompt_words": [
+                "bread",
+                "chopsticks",
+                "grape",
+                "green"
+              ],
+              "unreferenced_objects": [],
+              "hands_without_subgoals": [],
+              "n_objects": 5,
+              "n_subgoals": 7
+            },
+            "goal_language_coverage_check": {
+              "ok": false,
+              "issues": [
+                "$.subgoals[1].goal: clause 'the @0 is clamped between the chopstick tips' of \"The first green grape is clamped between the chopstick tips and held clear of the table.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')",
+                "$.subgoals[2].goal: clause 'the @0 is held over the @1' of \"The first green grape is held over the bread.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')",
+                "$.subgoals[4].goal: clause 'the @0 is clamped between the chopstick tips' of \"The second green grape is clamped between the chopstick tips and held clear of the table.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')",
+                "$.subgoals[5].goal: clause 'the @0 is held over the @1' of \"The second green grape is held over the bread.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')"
+              ],
+              "clauses": {
+                "$.subgoals[0].goal": [
+                  {
+                    "clause": "the @0 are held in the right hand",
+                    "covered": true
+                  }
+                ],
+                "$.subgoals[1].goal": [
+                  {
+                    "clause": "the @0 is clamped between the chopstick tips",
+                    "covered": false
+                  },
+                  {
+                    "clause": "held clear of the @1",
+                    "covered": true
+                  }
+                ],
+                "$.subgoals[2].goal": [
+                  {
+                    "clause": "the @0 is held over the @1",
+                    "covered": false
+                  }
+                ],
+                "$.subgoals[3].goal": [
+                  {
+                    "clause": "the @0 rests on the @1",
+                    "covered": true
+                  }
+                ],
+                "$.subgoals[4].goal": [
+                  {
+                    "clause": "the @0 is clamped between the chopstick tips",
+                    "covered": false
+                  },
+                  {
+                    "clause": "held clear of the @1",
+                    "covered": true
+                  }
+                ],
+                "$.subgoals[5].goal": [
+                  {
+                    "clause": "the @0 is held over the @1",
+                    "covered": false
+                  }
+                ],
+                "$.subgoals[6].goal": [
+                  {
+                    "clause": "the @0 rests on the @1",
+                    "covered": true
+                  }
+                ],
+                "$.task_success": [
+                  {
+                    "clause": "the @0 rests on the @1",
+                    "covered": true
+                  },
+                  {
+                    "clause": "the @2 rests on the @1",
+                    "covered": true
+                  },
+                  {
+                    "clause": "the @3 are held in the right hand",
+                    "covered": true
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "new_tools": [],
+        "workspace": "/data1/SRL_V2D/experiments/dexagent_egotools_10/runs/02_chopsticks_grape/stage1",
+        "tool_calls": 5,
+        "tools_used": {
+          "run_python": 1,
+          "look": 1,
+          "write_text": 3
+        },
+        "elapsed_s": 395.0,
+        "stage": "stage1",
+        "failure": "blocked: The native schema and semantic consistency checks pass, but goal_language_coverage_check rejects essential tool-mediated or material outcomes in this video. This is a fixed-library compatibility test; substituting a direct-hand grasp or a pose-only outcome would change the requested task. The exact rejected clauses are retained in the preceding native verifier verdict."
+      },
+      "stage2": "not_run_stage1_goal_rejected",
+      "stage3": "not_run",
+      "stage4": "not_run"
+    },
+    {
+      "id": "03_cut_paper",
+      "uuid": "3571faff-0099-447d-8eac-c31b4d2908b9",
+      "start_s": 17,
+      "end_s": 40,
+      "task": "Hold the folded paper and cut it with the handheld shears.",
+      "category": "cutting",
+      "checks": {
+        "clip_integrity": {
+          "ok": true,
+          "sha256": "79447b0524c41047af98bc57042a9f00fe8307a166253af907430e9a73fe97e5",
+          "video_info": {
+            "path": "/data1/SRL_V2D/experiments/dexagent_egotools_10/clips/03_cut_paper.mp4",
+            "width": 512,
+            "height": 512,
+            "fps": 25.0,
+            "frames": 575,
+            "duration_s": 23.0,
+            "thumbnails": []
+          }
+        },
+        "scene_semantic_schema_check": {
+          "ok": true,
+          "issues": [],
+          "n_objects": 2,
+          "n_subgoals": 3
+        },
+        "scene_semantic_consistency_check": {
+          "ok": true,
+          "issues": [],
+          "uncovered_prompt_words": [],
+          "checked_prompt_words": [
+            "handheld",
+            "paper",
+            "shears"
+          ],
+          "unreferenced_objects": [],
+          "hands_without_subgoals": [],
+          "n_objects": 2,
+          "n_subgoals": 3
+        },
+        "goal_language_coverage_check": {
+          "ok": false,
+          "issues": [
+            "$.subgoals[2].goal: clause 'the @0 has a slit cut from its edge by the @1' of \"The paper has a slit cut from its edge by the shears.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')",
+            "$.task_success: clause 'the @0 has a slit cut from its edge by the @1' of \"The paper has a slit cut from its edge by the shears, the paper is held in the left hand.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')"
+          ],
+          "clauses": {
+            "$.subgoals[0].goal": [
+              {
+                "clause": "the @0 is held in the left hand",
+                "covered": true
+              }
+            ],
+            "$.subgoals[1].goal": [
+              {
+                "clause": "the @0 are held in the right hand",
+                "covered": true
+              }
+            ],
+            "$.subgoals[2].goal": [
+              {
+                "clause": "the @0 has a slit cut from its edge by the @1",
+                "covered": false
+              }
+            ],
+            "$.task_success": [
+              {
+                "clause": "the @0 has a slit cut from its edge by the @1",
+                "covered": false
+              },
+              {
+                "clause": "the @0 is held in the left hand",
+                "covered": true
+              }
+            ]
+          }
+        }
+      },
+      "compatible": false,
+      "media": {
+        "id": "03_cut_paper",
+        "uuid": "3571faff-0099-447d-8eac-c31b4d2908b9",
+        "start_s": 17,
+        "end_s": 40,
+        "task": "Hold the folded paper and cut it with the handheld shears.",
+        "category": "cutting",
+        "source_file": "data/raw/3571faff-0099-447d-8eac-c31b4d2908b9/ep1/stereo_left_synced.mp4",
+        "source_bytes": 6312562,
+        "source_sha256": "7ef4d456c869abc51f87e7ebdae4bcc26a246241c00228fcb06de4098d1f3c3f",
+        "source_decoded_frames": 1315,
+        "source_advertised_frames": 1315,
+        "source_manifest_frames": 1315,
+        "source_fps": 19.996958637469586,
+        "width": 512,
+        "height": 512,
+        "clip": "clips/03_cut_paper.mp4",
+        "clip_sha256": "79447b0524c41047af98bc57042a9f00fe8307a166253af907430e9a73fe97e5",
+        "camera_intrinsics": {
+          "fx": 200.00000000000006,
+          "fy": 200.00000000000006,
+          "cx": 256.0,
+          "cy": 256.0
+        },
+        "config": "configs/03_cut_paper.yaml"
+      },
+      "clip_decoded_frames": 575,
+      "native_stage1": {
+        "finished": false,
+        "rounds": 4,
+        "verdict": {
+          "ok": false,
+          "issues": [
+            "$.subgoals[2].goal: clause 'the @0 has a slit cut from its edge by the @1' of \"The paper has a slit cut from its edge by the shears.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')",
+            "$.task_success: clause 'the @0 has a slit cut from its edge by the @1' of \"The paper has a slit cut from its edge by the shears, the paper is held in the left hand.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')"
+          ],
+          "reports": {
+            "source_video_identity_check": {
+              "ok": true,
+              "issues": [],
+              "warnings": [],
+              "identity_verified": true,
+              "identity_evidence": "recorded_sha256",
+              "actual": {
+                "path": "/data1/SRL_V2D/experiments/dexagent_egotools_10/clips/03_cut_paper.mp4",
+                "sha256": "79447b0524c41047af98bc57042a9f00fe8307a166253af907430e9a73fe97e5",
+                "frames": 575,
+                "fps": 25.0,
+                "duration_s": 23.0,
+                "width": 512,
+                "height": 512
+              }
+            },
+            "scene_semantic_schema_check": {
+              "ok": true,
+              "issues": [],
+              "n_objects": 2,
+              "n_subgoals": 3
+            },
+            "scene_semantic_consistency_check": {
+              "ok": true,
+              "issues": [],
+              "uncovered_prompt_words": [],
+              "checked_prompt_words": [
+                "handheld",
+                "paper",
+                "shears"
+              ],
+              "unreferenced_objects": [],
+              "hands_without_subgoals": [],
+              "n_objects": 2,
+              "n_subgoals": 3
+            },
+            "goal_language_coverage_check": {
+              "ok": false,
+              "issues": [
+                "$.subgoals[2].goal: clause 'the @0 has a slit cut from its edge by the @1' of \"The paper has a slit cut from its edge by the shears.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')",
+                "$.task_success: clause 'the @0 has a slit cut from its edge by the @1' of \"The paper has a slit cut from its edge by the shears, the paper is held in the left hand.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')"
+              ],
+              "clauses": {
+                "$.subgoals[0].goal": [
+                  {
+                    "clause": "the @0 is held in the left hand",
+                    "covered": true
+                  }
+                ],
+                "$.subgoals[1].goal": [
+                  {
+                    "clause": "the @0 are held in the right hand",
+                    "covered": true
+                  }
+                ],
+                "$.subgoals[2].goal": [
+                  {
+                    "clause": "the @0 has a slit cut from its edge by the @1",
+                    "covered": false
+                  }
+                ],
+                "$.task_success": [
+                  {
+                    "clause": "the @0 has a slit cut from its edge by the @1",
+                    "covered": false
+                  },
+                  {
+                    "clause": "the @0 is held in the left hand",
+                    "covered": true
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "new_tools": [],
+        "workspace": "/data1/SRL_V2D/experiments/dexagent_egotools_10/runs/03_cut_paper/stage1",
+        "tool_calls": 3,
+        "tools_used": {
+          "run_python": 1,
+          "look": 1,
+          "write_text": 1
+        },
+        "elapsed_s": 449.3,
+        "stage": "stage1",
+        "failure": "blocked: The preceding native verifier accepts the schema and semantic consistency, but rejects an essential outcome for this task. The fixed-library test preserves the cut, transfer, wiping, or material-change requirement; it cannot be replaced honestly with a pose-only success condition."
+      },
+      "stage2": "not_run_stage1_goal_rejected",
+      "stage3": "not_run",
+      "stage4": "not_run"
+    },
+    {
+      "id": "04_stir_liquid",
+      "uuid": "2294a413-aee4-4378-8bd7-b767dfb243ec",
+      "start_s": 25,
+      "end_s": 37.5,
+      "task": "Insert the stirring rod into the mug and stir the liquid.",
+      "category": "stirring",
+      "checks": {
+        "clip_integrity": {
+          "ok": true,
+          "sha256": "0fc61a8b1b617ea7f8dc3446c4c86bfa43aa712207fb127b2521dd7ae2124c63",
+          "video_info": {
+            "path": "/data1/SRL_V2D/experiments/dexagent_egotools_10/clips/04_stir_liquid.mp4",
+            "width": 512,
+            "height": 512,
+            "fps": 25.0,
+            "frames": 313,
+            "duration_s": 12.52,
+            "thumbnails": []
+          }
+        },
+        "scene_semantic_schema_check": {
+          "ok": true,
+          "issues": [],
+          "n_objects": 3,
+          "n_subgoals": 5
+        },
+        "scene_semantic_consistency_check": {
+          "ok": true,
+          "issues": [],
+          "uncovered_prompt_words": [],
+          "checked_prompt_words": [
+            "liquid"
+          ],
+          "unreferenced_objects": [],
+          "hands_without_subgoals": [],
+          "n_objects": 3,
+          "n_subgoals": 5
+        },
+        "goal_language_coverage_check": {
+          "ok": false,
+          "issues": [
+            "$.subgoals[1].goal: clause 'the @0 @1 is inside the @2' of \"The stirring rod tip is inside the mug.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')",
+            "$.subgoals[2].goal: clause 'the @0 @1 traces repeated circular strokes through the @2' of \"The stirring rod tip traces repeated circular strokes through the liquid.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')",
+            "$.task_success: clause 'the @0 has been stirred' of \"The liquid has been stirred with the stirring rod, the stirring rod is held in the right hand, the mug rests on the table.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')",
+            "$.task_success: clause 'the @1' of \"The liquid has been stirred with the stirring rod, the stirring rod is held in the right hand, the mug rests on the table.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')"
+          ],
+          "clauses": {
+            "$.subgoals[0].goal": [
+              {
+                "clause": "the @0 is held in the left hand",
+                "covered": true
+              }
+            ],
+            "$.subgoals[1].goal": [
+              {
+                "clause": "the @0 @1 is inside the @2",
+                "covered": false
+              }
+            ],
+            "$.subgoals[2].goal": [
+              {
+                "clause": "the @0 @1 traces repeated circular strokes through the @2",
+                "covered": false
+              }
+            ],
+            "$.subgoals[3].goal": [
+              {
+                "clause": "the @0 is held in the right hand",
+                "covered": true
+              }
+            ],
+            "$.subgoals[4].goal": [
+              {
+                "clause": "the @0 rests on the @1",
+                "covered": true
+              }
+            ],
+            "$.task_success": [
+              {
+                "clause": "the @0 has been stirred",
+                "covered": false
+              },
+              {
+                "clause": "the @1",
+                "covered": false
+              },
+              {
+                "clause": "the @1 is held in the right hand",
+                "covered": true
+              },
+              {
+                "clause": "the @2 rests on the @3",
+                "covered": true
+              }
+            ]
+          }
+        }
+      },
+      "compatible": false,
+      "media": {
+        "id": "04_stir_liquid",
+        "uuid": "2294a413-aee4-4378-8bd7-b767dfb243ec",
+        "start_s": 25,
+        "end_s": 37.5,
+        "task": "Insert the stirring rod into the mug and stir the liquid.",
+        "category": "stirring",
+        "source_file": "data/raw/2294a413-aee4-4378-8bd7-b767dfb243ec/ep1/stereo_left_synced.mp4",
+        "source_bytes": 7223444,
+        "source_sha256": "0ddfe7d1c5dce65da9452e8ca56e6bbfc632273156c22a3663f9093d492a42eb",
+        "source_decoded_frames": 1220,
+        "source_advertised_frames": 1220,
+        "source_manifest_frames": 1220,
+        "source_fps": 20.0,
+        "width": 512,
+        "height": 512,
+        "clip": "clips/04_stir_liquid.mp4",
+        "clip_sha256": "0fc61a8b1b617ea7f8dc3446c4c86bfa43aa712207fb127b2521dd7ae2124c63",
+        "camera_intrinsics": {
+          "fx": 200.00000000000006,
+          "fy": 200.00000000000006,
+          "cx": 256.0,
+          "cy": 256.0
+        },
+        "config": "configs/04_stir_liquid.yaml"
+      },
+      "clip_decoded_frames": 313,
+      "native_stage1": {
+        "finished": false,
+        "rounds": 2,
+        "verdict": {
+          "ok": false,
+          "issues": [
+            "$.subgoals[1].goal: clause 'the @0 @1 is inside the @2' of \"The stirring rod tip is inside the mug.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')",
+            "$.subgoals[2].goal: clause 'the @0 @1 traces repeated circular strokes through the @2' of \"The stirring rod tip traces repeated circular strokes through the liquid.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')",
+            "$.task_success: clause 'the @0 has been stirred' of \"The liquid has been stirred with the stirring rod, the stirring rod is held in the right hand, the mug rests on the table.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')",
+            "$.task_success: clause 'the @1' of \"The liquid has been stirred with the stirring rod, the stirring rod is held in the right hand, the mug rests on the table.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')"
+          ],
+          "reports": {
+            "source_video_identity_check": {
+              "ok": true,
+              "issues": [],
+              "warnings": [],
+              "identity_verified": true,
+              "identity_evidence": "recorded_sha256",
+              "actual": {
+                "path": "/data1/SRL_V2D/experiments/dexagent_egotools_10/clips/04_stir_liquid.mp4",
+                "sha256": "0fc61a8b1b617ea7f8dc3446c4c86bfa43aa712207fb127b2521dd7ae2124c63",
+                "frames": 313,
+                "fps": 25.0,
+                "duration_s": 12.52,
+                "width": 512,
+                "height": 512
+              }
+            },
+            "scene_semantic_schema_check": {
+              "ok": true,
+              "issues": [],
+              "n_objects": 3,
+              "n_subgoals": 5
+            },
+            "scene_semantic_consistency_check": {
+              "ok": true,
+              "issues": [],
+              "uncovered_prompt_words": [],
+              "checked_prompt_words": [
+                "liquid"
+              ],
+              "unreferenced_objects": [],
+              "hands_without_subgoals": [],
+              "n_objects": 3,
+              "n_subgoals": 5
+            },
+            "goal_language_coverage_check": {
+              "ok": false,
+              "issues": [
+                "$.subgoals[1].goal: clause 'the @0 @1 is inside the @2' of \"The stirring rod tip is inside the mug.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')",
+                "$.subgoals[2].goal: clause 'the @0 @1 traces repeated circular strokes through the @2' of \"The stirring rod tip traces repeated circular strokes through the liquid.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')",
+                "$.task_success: clause 'the @0 has been stirred' of \"The liquid has been stirred with the stirring rod, the stirring rod is held in the right hand, the mug rests on the table.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')",
+                "$.task_success: clause 'the @1' of \"The liquid has been stirred with the stirring rod, the stirring rod is held in the right hand, the mug rests on the table.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')"
+              ],
+              "clauses": {
+                "$.subgoals[0].goal": [
+                  {
+                    "clause": "the @0 is held in the left hand",
+                    "covered": true
+                  }
+                ],
+                "$.subgoals[1].goal": [
+                  {
+                    "clause": "the @0 @1 is inside the @2",
+                    "covered": false
+                  }
+                ],
+                "$.subgoals[2].goal": [
+                  {
+                    "clause": "the @0 @1 traces repeated circular strokes through the @2",
+                    "covered": false
+                  }
+                ],
+                "$.subgoals[3].goal": [
+                  {
+                    "clause": "the @0 is held in the right hand",
+                    "covered": true
+                  }
+                ],
+                "$.subgoals[4].goal": [
+                  {
+                    "clause": "the @0 rests on the @1",
+                    "covered": true
+                  }
+                ],
+                "$.task_success": [
+                  {
+                    "clause": "the @0 has been stirred",
+                    "covered": false
+                  },
+                  {
+                    "clause": "the @1",
+                    "covered": false
+                  },
+                  {
+                    "clause": "the @1 is held in the right hand",
+                    "covered": true
+                  },
+                  {
+                    "clause": "the @2 rests on the @3",
+                    "covered": true
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "new_tools": [],
+        "workspace": "/data1/SRL_V2D/experiments/dexagent_egotools_10/runs/04_stir_liquid/stage1",
+        "tool_calls": 1,
+        "tools_used": {
+          "write_text": 1
+        },
+        "elapsed_s": 6.1,
+        "stage": "stage1",
+        "failure": "blocked: The reviewed candidate failed the native finish checks; preserve their exact verdict."
+      },
+      "stage2": "not_run_stage1_goal_rejected",
+      "stage3": "not_run",
+      "stage4": "not_run"
+    },
+    {
+      "id": "05_pipette_transfer",
+      "uuid": "e32e6e74-eaf7-4f28-b9ed-71c86ba4c41c",
+      "start_s": 99,
+      "end_s": 112,
+      "task": "Use the pipette to transfer liquid from the clear cup to the pink solution container.",
+      "category": "pipetting",
+      "checks": {
+        "clip_integrity": {
+          "ok": true,
+          "sha256": "85df18ad495100edc02fc871ee0a84adba2038ed7714d34198d17dea54a05ae8",
+          "video_info": {
+            "path": "/data1/SRL_V2D/experiments/dexagent_egotools_10/clips/05_pipette_transfer.mp4",
+            "width": 512,
+            "height": 512,
+            "fps": 25.0,
+            "frames": 325,
+            "duration_s": 13.0,
+            "thumbnails": []
+          }
+        },
+        "scene_semantic_schema_check": {
+          "ok": true,
+          "issues": [],
+          "n_objects": 4,
+          "n_subgoals": 3
+        },
+        "scene_semantic_consistency_check": {
+          "ok": true,
+          "issues": [],
+          "uncovered_prompt_words": [],
+          "checked_prompt_words": [
+            "clear",
+            "container",
+            "liquid",
+            "pink",
+            "pipette",
+            "solution"
+          ],
+          "unreferenced_objects": [],
+          "hands_without_subgoals": [],
+          "n_objects": 4,
+          "n_subgoals": 3
+        },
+        "goal_language_coverage_check": {
+          "ok": false,
+          "issues": [
+            "$.subgoals[1].goal: clause 'the @0 contains @1 drawn from the @2' of \"The pipette contains liquid drawn from the clear source cup.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')",
+            "$.subgoals[2].goal: clause '@0 has been transferred into the @1' of \"Clear liquid has been transferred into the pink solution container.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')",
+            "$.task_success: clause '@0 has been transferred into the @1' of \"Clear liquid has been transferred into the pink solution container, the pipette is held in the right hand.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')"
+          ],
+          "clauses": {
+            "$.subgoals[0].goal": [
+              {
+                "clause": "the @0 is held in the right hand",
+                "covered": true
+              }
+            ],
+            "$.subgoals[1].goal": [
+              {
+                "clause": "the @0 contains @1 drawn from the @2",
+                "covered": false
+              }
+            ],
+            "$.subgoals[2].goal": [
+              {
+                "clause": "@0 has been transferred into the @1",
+                "covered": false
+              }
+            ],
+            "$.task_success": [
+              {
+                "clause": "@0 has been transferred into the @1",
+                "covered": false
+              },
+              {
+                "clause": "the @2 is held in the right hand",
+                "covered": true
+              }
+            ]
+          }
+        }
+      },
+      "compatible": false,
+      "media": {
+        "id": "05_pipette_transfer",
+        "uuid": "e32e6e74-eaf7-4f28-b9ed-71c86ba4c41c",
+        "start_s": 99,
+        "end_s": 112,
+        "task": "Use the pipette to transfer liquid from the clear cup to the pink solution container.",
+        "category": "pipetting",
+        "source_file": "data/raw/e32e6e74-eaf7-4f28-b9ed-71c86ba4c41c/ep1/stereo_left_synced.mp4",
+        "source_bytes": 17003844,
+        "source_sha256": "76377d042104fb618979a5aa0563c7789ea4c4fea1a9a8f30ec147a6e145cc70",
+        "source_decoded_frames": 3627,
+        "source_advertised_frames": 3628,
+        "source_manifest_frames": 3628,
+        "source_fps": 20.004411116012353,
+        "width": 512,
+        "height": 512,
+        "clip": "clips/05_pipette_transfer.mp4",
+        "clip_sha256": "85df18ad495100edc02fc871ee0a84adba2038ed7714d34198d17dea54a05ae8",
+        "camera_intrinsics": {
+          "fx": 200.00000000000006,
+          "fy": 200.00000000000006,
+          "cx": 256.0,
+          "cy": 256.0
+        },
+        "config": "configs/05_pipette_transfer.yaml"
+      },
+      "clip_decoded_frames": 325,
+      "native_stage1": {
+        "finished": false,
+        "rounds": 4,
+        "verdict": {
+          "ok": false,
+          "issues": [
+            "$.subgoals[1].goal: clause 'the @0 contains @1 drawn from the @2' of \"The pipette contains liquid drawn from the clear source cup.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')",
+            "$.subgoals[2].goal: clause '@0 has been transferred into the @1' of \"Clear liquid has been transferred into the pink solution container.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')",
+            "$.task_success: clause '@0 has been transferred into the @1' of \"Clear liquid has been transferred into the pink solution container, the pipette is held in the right hand.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')"
+          ],
+          "reports": {
+            "source_video_identity_check": {
+              "ok": true,
+              "issues": [],
+              "warnings": [],
+              "identity_verified": true,
+              "identity_evidence": "recorded_sha256",
+              "actual": {
+                "path": "/data1/SRL_V2D/experiments/dexagent_egotools_10/clips/05_pipette_transfer.mp4",
+                "sha256": "85df18ad495100edc02fc871ee0a84adba2038ed7714d34198d17dea54a05ae8",
+                "frames": 325,
+                "fps": 25.0,
+                "duration_s": 13.0,
+                "width": 512,
+                "height": 512
+              }
+            },
+            "scene_semantic_schema_check": {
+              "ok": true,
+              "issues": [],
+              "n_objects": 4,
+              "n_subgoals": 3
+            },
+            "scene_semantic_consistency_check": {
+              "ok": true,
+              "issues": [],
+              "uncovered_prompt_words": [],
+              "checked_prompt_words": [
+                "clear",
+                "container",
+                "liquid",
+                "pink",
+                "pipette",
+                "solution"
+              ],
+              "unreferenced_objects": [],
+              "hands_without_subgoals": [],
+              "n_objects": 4,
+              "n_subgoals": 3
+            },
+            "goal_language_coverage_check": {
+              "ok": false,
+              "issues": [
+                "$.subgoals[1].goal: clause 'the @0 contains @1 drawn from the @2' of \"The pipette contains liquid drawn from the clear source cup.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')",
+                "$.subgoals[2].goal: clause '@0 has been transferred into the @1' of \"Clear liquid has been transferred into the pink solution container.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')",
+                "$.task_success: clause '@0 has been transferred into the @1' of \"Clear liquid has been transferred into the pink solution container, the pipette is held in the right hand.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')"
+              ],
+              "clauses": {
+                "$.subgoals[0].goal": [
+                  {
+                    "clause": "the @0 is held in the right hand",
+                    "covered": true
+                  }
+                ],
+                "$.subgoals[1].goal": [
+                  {
+                    "clause": "the @0 contains @1 drawn from the @2",
+                    "covered": false
+                  }
+                ],
+                "$.subgoals[2].goal": [
+                  {
+                    "clause": "@0 has been transferred into the @1",
+                    "covered": false
+                  }
+                ],
+                "$.task_success": [
+                  {
+                    "clause": "@0 has been transferred into the @1",
+                    "covered": false
+                  },
+                  {
+                    "clause": "the @2 is held in the right hand",
+                    "covered": true
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "new_tools": [],
+        "workspace": "/data1/SRL_V2D/experiments/dexagent_egotools_10/runs/05_pipette_transfer/stage1",
+        "tool_calls": 3,
+        "tools_used": {
+          "run_python": 1,
+          "look": 1,
+          "write_text": 1
+        },
+        "elapsed_s": 259.7,
+        "stage": "stage1",
+        "failure": "blocked: The preceding native verifier accepts the schema and semantic consistency, but rejects an essential outcome for this task. The fixed-library test preserves the cut, transfer, wiping, or material-change requirement; it cannot be replaced honestly with a pose-only success condition."
+      },
+      "stage2": "not_run_stage1_goal_rejected",
+      "stage3": "not_run",
+      "stage4": "not_run"
+    },
+    {
+      "id": "06_pour_liquid",
+      "uuid": "5b329e73-fe32-4a01-aab3-c681acb06386",
+      "start_s": 39,
+      "end_s": 50,
+      "task": "Pour liquid from the cup into the small clear container.",
+      "category": "pouring",
+      "checks": {
+        "clip_integrity": {
+          "ok": true,
+          "sha256": "43b849665e05008e50163b278a31d7a1bf6b1116f401121339677a29901fc655",
+          "video_info": {
+            "path": "/data1/SRL_V2D/experiments/dexagent_egotools_10/clips/06_pour_liquid.mp4",
+            "width": 512,
+            "height": 512,
+            "fps": 25.0,
+            "frames": 275,
+            "duration_s": 11.0,
+            "thumbnails": []
+          }
+        },
+        "scene_semantic_schema_check": {
+          "ok": true,
+          "issues": [],
+          "n_objects": 3,
+          "n_subgoals": 3
+        },
+        "scene_semantic_consistency_check": {
+          "ok": true,
+          "issues": [],
+          "uncovered_prompt_words": [],
+          "checked_prompt_words": [
+            "clear",
+            "container",
+            "liquid"
+          ],
+          "unreferenced_objects": [],
+          "hands_without_subgoals": [],
+          "n_objects": 3,
+          "n_subgoals": 3
+        },
+        "goal_language_coverage_check": {
+          "ok": false,
+          "issues": [
+            "$.subgoals[2].goal: clause '@0 has transferred from the @1 into the @2' of \"Liquid has transferred from the white plastic cup into the small transparent container.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')",
+            "$.task_success: clause '@0 has transferred into the @1' of \"Liquid has transferred into the small transparent container, the small transparent container is held in the left hand, the white plastic cup is held in the righ\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')"
+          ],
+          "clauses": {
+            "$.subgoals[0].goal": [
+              {
+                "clause": "the @0 is held in the left hand",
+                "covered": true
+              }
+            ],
+            "$.subgoals[1].goal": [
+              {
+                "clause": "the @0 is held in the right hand",
+                "covered": true
+              }
+            ],
+            "$.subgoals[2].goal": [
+              {
+                "clause": "@0 has transferred from the @1 into the @2",
+                "covered": false
+              }
+            ],
+            "$.task_success": [
+              {
+                "clause": "@0 has transferred into the @1",
+                "covered": false
+              },
+              {
+                "clause": "the @1 is held in the left hand",
+                "covered": true
+              },
+              {
+                "clause": "the @2 is held in the right hand",
+                "covered": true
+              }
+            ]
+          }
+        }
+      },
+      "compatible": false,
+      "media": {
+        "id": "06_pour_liquid",
+        "uuid": "5b329e73-fe32-4a01-aab3-c681acb06386",
+        "start_s": 39,
+        "end_s": 50,
+        "task": "Pour liquid from the cup into the small clear container.",
+        "category": "pouring",
+        "source_file": "data/raw/5b329e73-fe32-4a01-aab3-c681acb06386/ep1/stereo_left_synced.mp4",
+        "source_bytes": 12994305,
+        "source_sha256": "7c12ee42b22a8e523e570512cb4b43e3a1ef62792260b1f08a132f9a0bd4c4db",
+        "source_decoded_frames": 2373,
+        "source_advertised_frames": 2373,
+        "source_manifest_frames": 2373,
+        "source_fps": 19.98820754716981,
+        "width": 512,
+        "height": 512,
+        "clip": "clips/06_pour_liquid.mp4",
+        "clip_sha256": "43b849665e05008e50163b278a31d7a1bf6b1116f401121339677a29901fc655",
+        "camera_intrinsics": {
+          "fx": 200.00000000000006,
+          "fy": 200.00000000000006,
+          "cx": 256.0,
+          "cy": 256.0
+        },
+        "config": "configs/06_pour_liquid.yaml"
+      },
+      "clip_decoded_frames": 275,
+      "native_stage1": {
+        "finished": false,
+        "rounds": 2,
+        "verdict": {
+          "ok": false,
+          "issues": [
+            "$.subgoals[2].goal: clause '@0 has transferred from the @1 into the @2' of \"Liquid has transferred from the white plastic cup into the small transparent container.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')",
+            "$.task_success: clause '@0 has transferred into the @1' of \"Liquid has transferred into the small transparent container, the small transparent container is held in the left hand, the white plastic cup is held in the righ\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')"
+          ],
+          "reports": {
+            "source_video_identity_check": {
+              "ok": true,
+              "issues": [],
+              "warnings": [],
+              "identity_verified": true,
+              "identity_evidence": "recorded_sha256",
+              "actual": {
+                "path": "/data1/SRL_V2D/experiments/dexagent_egotools_10/clips/06_pour_liquid.mp4",
+                "sha256": "43b849665e05008e50163b278a31d7a1bf6b1116f401121339677a29901fc655",
+                "frames": 275,
+                "fps": 25.0,
+                "duration_s": 11.0,
+                "width": 512,
+                "height": 512
+              }
+            },
+            "scene_semantic_schema_check": {
+              "ok": true,
+              "issues": [],
+              "n_objects": 3,
+              "n_subgoals": 3
+            },
+            "scene_semantic_consistency_check": {
+              "ok": true,
+              "issues": [],
+              "uncovered_prompt_words": [],
+              "checked_prompt_words": [
+                "clear",
+                "container",
+                "liquid"
+              ],
+              "unreferenced_objects": [],
+              "hands_without_subgoals": [],
+              "n_objects": 3,
+              "n_subgoals": 3
+            },
+            "goal_language_coverage_check": {
+              "ok": false,
+              "issues": [
+                "$.subgoals[2].goal: clause '@0 has transferred from the @1 into the @2' of \"Liquid has transferred from the white plastic cup into the small transparent container.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')",
+                "$.task_success: clause '@0 has transferred into the @1' of \"Liquid has transferred into the small transparent container, the small transparent container is held in the left hand, the white plastic cup is held in the righ\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')"
+              ],
+              "clauses": {
+                "$.subgoals[0].goal": [
+                  {
+                    "clause": "the @0 is held in the left hand",
+                    "covered": true
+                  }
+                ],
+                "$.subgoals[1].goal": [
+                  {
+                    "clause": "the @0 is held in the right hand",
+                    "covered": true
+                  }
+                ],
+                "$.subgoals[2].goal": [
+                  {
+                    "clause": "@0 has transferred from the @1 into the @2",
+                    "covered": false
+                  }
+                ],
+                "$.task_success": [
+                  {
+                    "clause": "@0 has transferred into the @1",
+                    "covered": false
+                  },
+                  {
+                    "clause": "the @1 is held in the left hand",
+                    "covered": true
+                  },
+                  {
+                    "clause": "the @2 is held in the right hand",
+                    "covered": true
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "new_tools": [],
+        "workspace": "/data1/SRL_V2D/experiments/dexagent_egotools_10/runs/06_pour_liquid/stage1",
+        "tool_calls": 1,
+        "tools_used": {
+          "write_text": 1
+        },
+        "elapsed_s": 6.2,
+        "stage": "stage1",
+        "failure": "blocked: The reviewed candidate failed the native finish checks; preserve their exact verdict."
+      },
+      "stage2": "not_run_stage1_goal_rejected",
+      "stage3": "not_run",
+      "stage4": "not_run"
+    },
+    {
+      "id": "07_fold_paper",
+      "uuid": "11680759-1775-4b97-9f70-81e7c030ecbb",
+      "start_s": 5,
+      "end_s": 20.55,
+      "task": "Fold and crease the paper sheet using both hands.",
+      "category": "folding",
+      "checks": {
+        "clip_integrity": {
+          "ok": true,
+          "sha256": "3d7b202fe8561ea4e12563ab9904a64c1e5b259ded312166af8cf4e16b0783a8",
+          "video_info": {
+            "path": "/data1/SRL_V2D/experiments/dexagent_egotools_10/clips/07_fold_paper.mp4",
+            "width": 512,
+            "height": 512,
+            "fps": 25.0,
+            "frames": 388,
+            "duration_s": 15.52,
+            "thumbnails": []
+          }
+        },
+        "scene_semantic_schema_check": {
+          "ok": true,
+          "issues": [],
+          "n_objects": 1,
+          "n_subgoals": 4
+        },
+        "scene_semantic_consistency_check": {
+          "ok": true,
+          "issues": [],
+          "uncovered_prompt_words": [],
+          "checked_prompt_words": [
+            "paper",
+            "sheet"
+          ],
+          "unreferenced_objects": [],
+          "hands_without_subgoals": [],
+          "n_objects": 1,
+          "n_subgoals": 4
+        },
+        "goal_language_coverage_check": {
+          "ok": false,
+          "issues": [
+            "$.subgoals[0].goal: clause 'the @0 is held in both hands' of \"The paper is held in both hands.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')",
+            "$.subgoals[1].goal: clause 'the @0 is folded along a crease' of \"The paper is folded along a crease.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')",
+            "$.subgoals[2].goal: clause 'the @0 is folded twice with the creases retained' of \"The paper is folded twice with the creases retained.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')",
+            "$.task_success: clause 'the @0 is folded twice with the creases retained' of \"The paper is folded twice with the creases retained, the paper is held in the left hand.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')"
+          ],
+          "clauses": {
+            "$.subgoals[0].goal": [
+              {
+                "clause": "the @0 is held in both hands",
+                "covered": false
+              }
+            ],
+            "$.subgoals[1].goal": [
+              {
+                "clause": "the @0 is folded along a crease",
+                "covered": false
+              }
+            ],
+            "$.subgoals[2].goal": [
+              {
+                "clause": "the @0 is folded twice with the creases retained",
+                "covered": false
+              }
+            ],
+            "$.subgoals[3].goal": [
+              {
+                "clause": "the @0 is held in the left hand",
+                "covered": true
+              }
+            ],
+            "$.task_success": [
+              {
+                "clause": "the @0 is folded twice with the creases retained",
+                "covered": false
+              },
+              {
+                "clause": "the @0 is held in the left hand",
+                "covered": true
+              }
+            ]
+          }
+        }
+      },
+      "compatible": false,
+      "media": {
+        "id": "07_fold_paper",
+        "uuid": "11680759-1775-4b97-9f70-81e7c030ecbb",
+        "start_s": 5,
+        "end_s": 20.55,
+        "task": "Fold and crease the paper sheet using both hands.",
+        "category": "folding",
+        "source_file": "data/raw/11680759-1775-4b97-9f70-81e7c030ecbb/ep1/stereo_left_synced.mp4",
+        "source_bytes": 16362255,
+        "source_sha256": "62d16c13bf8879ffdfac86efdbb903e7584dbe77ec70dbda08102d32a33efca0",
+        "source_decoded_frames": 3444,
+        "source_advertised_frames": 3445,
+        "source_manifest_frames": 3445,
+        "source_fps": 20.00580720092915,
+        "width": 512,
+        "height": 512,
+        "clip": "clips/07_fold_paper.mp4",
+        "clip_sha256": "3d7b202fe8561ea4e12563ab9904a64c1e5b259ded312166af8cf4e16b0783a8",
+        "camera_intrinsics": {
+          "fx": 200.00000000000006,
+          "fy": 200.00000000000006,
+          "cx": 256.0,
+          "cy": 256.0
+        },
+        "config": "configs/07_fold_paper.yaml"
+      },
+      "clip_decoded_frames": 388,
+      "native_stage1": {
+        "finished": false,
+        "rounds": 4,
+        "verdict": {
+          "ok": false,
+          "issues": [
+            "$.subgoals[0].goal: clause 'the @0 is held in both hands' of \"The paper is held in both hands.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')",
+            "$.subgoals[1].goal: clause 'the @0 is folded along a crease' of \"The paper is folded along a crease.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')",
+            "$.subgoals[2].goal: clause 'the @0 is folded twice with the creases retained' of \"The paper is folded twice with the creases retained.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')",
+            "$.task_success: clause 'the @0 is folded twice with the creases retained' of \"The paper is folded twice with the creases retained, the paper is held in the left hand.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')"
+          ],
+          "reports": {
+            "source_video_identity_check": {
+              "ok": true,
+              "issues": [],
+              "warnings": [],
+              "identity_verified": true,
+              "identity_evidence": "recorded_sha256",
+              "actual": {
+                "path": "/data1/SRL_V2D/experiments/dexagent_egotools_10/clips/07_fold_paper.mp4",
+                "sha256": "3d7b202fe8561ea4e12563ab9904a64c1e5b259ded312166af8cf4e16b0783a8",
+                "frames": 388,
+                "fps": 25.0,
+                "duration_s": 15.52,
+                "width": 512,
+                "height": 512
+              }
+            },
+            "scene_semantic_schema_check": {
+              "ok": true,
+              "issues": [],
+              "n_objects": 1,
+              "n_subgoals": 4
+            },
+            "scene_semantic_consistency_check": {
+              "ok": true,
+              "issues": [],
+              "uncovered_prompt_words": [],
+              "checked_prompt_words": [
+                "paper",
+                "sheet"
+              ],
+              "unreferenced_objects": [],
+              "hands_without_subgoals": [],
+              "n_objects": 1,
+              "n_subgoals": 4
+            },
+            "goal_language_coverage_check": {
+              "ok": false,
+              "issues": [
+                "$.subgoals[0].goal: clause 'the @0 is held in both hands' of \"The paper is held in both hands.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')",
+                "$.subgoals[1].goal: clause 'the @0 is folded along a crease' of \"The paper is folded along a crease.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')",
+                "$.subgoals[2].goal: clause 'the @0 is folded twice with the creases retained' of \"The paper is folded twice with the creases retained.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')",
+                "$.task_success: clause 'the @0 is folded twice with the creases retained' of \"The paper is folded twice with the creases retained, the paper is held in the left hand.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')"
+              ],
+              "clauses": {
+                "$.subgoals[0].goal": [
+                  {
+                    "clause": "the @0 is held in both hands",
+                    "covered": false
+                  }
+                ],
+                "$.subgoals[1].goal": [
+                  {
+                    "clause": "the @0 is folded along a crease",
+                    "covered": false
+                  }
+                ],
+                "$.subgoals[2].goal": [
+                  {
+                    "clause": "the @0 is folded twice with the creases retained",
+                    "covered": false
+                  }
+                ],
+                "$.subgoals[3].goal": [
+                  {
+                    "clause": "the @0 is held in the left hand",
+                    "covered": true
+                  }
+                ],
+                "$.task_success": [
+                  {
+                    "clause": "the @0 is folded twice with the creases retained",
+                    "covered": false
+                  },
+                  {
+                    "clause": "the @0 is held in the left hand",
+                    "covered": true
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "new_tools": [],
+        "workspace": "/data1/SRL_V2D/experiments/dexagent_egotools_10/runs/07_fold_paper/stage1",
+        "tool_calls": 3,
+        "tools_used": {
+          "run_python": 1,
+          "look": 1,
+          "write_text": 1
+        },
+        "elapsed_s": 283.2,
+        "stage": "stage1",
+        "failure": "blocked: The native schema and semantic consistency checks pass, but goal_language_coverage_check rejects essential tool-mediated or material outcomes in this video. This is a fixed-library compatibility test; substituting a direct-hand grasp or a pose-only outcome would change the requested task. The exact rejected clauses are retained in the preceding native verifier verdict."
+      },
+      "stage2": "not_run_stage1_goal_rejected",
+      "stage3": "not_run",
+      "stage4": "not_run"
+    },
+    {
+      "id": "08_wipe_counter",
+      "uuid": "95b74d85-f2cf-4053-94b7-64ae7767f72e",
+      "start_s": 0,
+      "end_s": 17.5,
+      "task": "Wipe the kitchen counter with the paper towel.",
+      "category": "wiping",
+      "checks": {
+        "clip_integrity": {
+          "ok": true,
+          "sha256": "614e9c48b967958cc1a09650a41bbaa5e15fa90b94168f9fb739928c20c9e20c",
+          "video_info": {
+            "path": "/data1/SRL_V2D/experiments/dexagent_egotools_10/clips/08_wipe_counter.mp4",
+            "width": 512,
+            "height": 512,
+            "fps": 25.0,
+            "frames": 438,
+            "duration_s": 17.52,
+            "thumbnails": []
+          }
+        },
+        "scene_semantic_schema_check": {
+          "ok": true,
+          "issues": [],
+          "n_objects": 2,
+          "n_subgoals": 2
+        },
+        "scene_semantic_consistency_check": {
+          "ok": true,
+          "issues": [],
+          "uncovered_prompt_words": [],
+          "checked_prompt_words": [
+            "counter",
+            "kitchen",
+            "paper",
+            "towel"
+          ],
+          "unreferenced_objects": [],
+          "hands_without_subgoals": [],
+          "n_objects": 2,
+          "n_subgoals": 2
+        },
+        "goal_language_coverage_check": {
+          "ok": false,
+          "issues": [
+            "$.subgoals[1].goal: clause 'the @0 traverses the counter @1 while pressed against it' of \"The paper towel traverses the counter surface while pressed against it.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')",
+            "$.task_success: clause 'the counter @0 has been wiped by the @1' of \"The counter surface has been wiped by the paper towel.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')"
+          ],
+          "clauses": {
+            "$.subgoals[0].goal": [
+              {
+                "clause": "the @0 is held in the right hand",
+                "covered": true
+              }
+            ],
+            "$.subgoals[1].goal": [
+              {
+                "clause": "the @0 traverses the counter @1 while pressed against it",
+                "covered": false
+              }
+            ],
+            "$.task_success": [
+              {
+                "clause": "the counter @0 has been wiped by the @1",
+                "covered": false
+              }
+            ]
+          }
+        }
+      },
+      "compatible": false,
+      "media": {
+        "id": "08_wipe_counter",
+        "uuid": "95b74d85-f2cf-4053-94b7-64ae7767f72e",
+        "start_s": 0,
+        "end_s": 17.5,
+        "task": "Wipe the kitchen counter with the paper towel.",
+        "category": "wiping",
+        "source_file": "data/raw/95b74d85-f2cf-4053-94b7-64ae7767f72e/ep1/stereo_left_synced.mp4",
+        "source_bytes": 17510717,
+        "source_sha256": "1d6d19e8e556c9622a43b16fb267032a56048ac19b9c56bd23dc563094f3140f",
+        "source_decoded_frames": 3650,
+        "source_advertised_frames": 3650,
+        "source_manifest_frames": 3650,
+        "source_fps": 19.99780845934692,
+        "width": 512,
+        "height": 512,
+        "clip": "clips/08_wipe_counter.mp4",
+        "clip_sha256": "614e9c48b967958cc1a09650a41bbaa5e15fa90b94168f9fb739928c20c9e20c",
+        "camera_intrinsics": {
+          "fx": 200.00000000000006,
+          "fy": 200.00000000000006,
+          "cx": 256.0,
+          "cy": 256.0
+        },
+        "config": "configs/08_wipe_counter.yaml"
+      },
+      "clip_decoded_frames": 438,
+      "native_stage1": {
+        "finished": false,
+        "rounds": 4,
+        "verdict": {
+          "ok": false,
+          "issues": [
+            "$.subgoals[1].goal: clause 'the @0 traverses the counter @1 while pressed against it' of \"The paper towel traverses the counter surface while pressed against it.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')",
+            "$.task_success: clause 'the counter @0 has been wiped by the @1' of \"The counter surface has been wiped by the paper towel.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')"
+          ],
+          "reports": {
+            "source_video_identity_check": {
+              "ok": true,
+              "issues": [],
+              "warnings": [],
+              "identity_verified": true,
+              "identity_evidence": "recorded_sha256",
+              "actual": {
+                "path": "/data1/SRL_V2D/experiments/dexagent_egotools_10/clips/08_wipe_counter.mp4",
+                "sha256": "614e9c48b967958cc1a09650a41bbaa5e15fa90b94168f9fb739928c20c9e20c",
+                "frames": 438,
+                "fps": 25.0,
+                "duration_s": 17.52,
+                "width": 512,
+                "height": 512
+              }
+            },
+            "scene_semantic_schema_check": {
+              "ok": true,
+              "issues": [],
+              "n_objects": 2,
+              "n_subgoals": 2
+            },
+            "scene_semantic_consistency_check": {
+              "ok": true,
+              "issues": [],
+              "uncovered_prompt_words": [],
+              "checked_prompt_words": [
+                "counter",
+                "kitchen",
+                "paper",
+                "towel"
+              ],
+              "unreferenced_objects": [],
+              "hands_without_subgoals": [],
+              "n_objects": 2,
+              "n_subgoals": 2
+            },
+            "goal_language_coverage_check": {
+              "ok": false,
+              "issues": [
+                "$.subgoals[1].goal: clause 'the @0 traverses the counter @1 while pressed against it' of \"The paper towel traverses the counter surface while pressed against it.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')",
+                "$.task_success: clause 'the counter @0 has been wiped by the @1' of \"The counter surface has been wiped by the paper towel.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')"
+              ],
+              "clauses": {
+                "$.subgoals[0].goal": [
+                  {
+                    "clause": "the @0 is held in the right hand",
+                    "covered": true
+                  }
+                ],
+                "$.subgoals[1].goal": [
+                  {
+                    "clause": "the @0 traverses the counter @1 while pressed against it",
+                    "covered": false
+                  }
+                ],
+                "$.task_success": [
+                  {
+                    "clause": "the counter @0 has been wiped by the @1",
+                    "covered": false
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "new_tools": [],
+        "workspace": "/data1/SRL_V2D/experiments/dexagent_egotools_10/runs/08_wipe_counter/stage1",
+        "tool_calls": 3,
+        "tools_used": {
+          "run_python": 1,
+          "look": 1,
+          "write_text": 1
+        },
+        "elapsed_s": 235.3,
+        "stage": "stage1",
+        "failure": "blocked: The preceding native verifier accepts the schema and semantic consistency, but rejects an essential outcome for this task. The fixed-library test preserves the cut, transfer, wiping, or material-change requirement; it cannot be replaced honestly with a pose-only success condition."
+      },
+      "stage2": "not_run_stage1_goal_rejected",
+      "stage3": "not_run",
+      "stage4": "not_run"
+    },
+    {
+      "id": "09_slice_banana",
+      "uuid": "32a7a34c-f698-4053-aeda-e7ae5fa18bed",
+      "start_s": 32.5,
+      "end_s": 50,
+      "task": "Steady the banana and slice it with the kitchen knife.",
+      "category": "slicing",
+      "checks": {
+        "clip_integrity": {
+          "ok": true,
+          "sha256": "d87465a812f3814f6db80d72082b08702b6a6a4966cb41b9b0336c5de6a02719",
+          "video_info": {
+            "path": "/data1/SRL_V2D/experiments/dexagent_egotools_10/clips/09_slice_banana.mp4",
+            "width": 512,
+            "height": 512,
+            "fps": 25.0,
+            "frames": 438,
+            "duration_s": 17.52,
+            "thumbnails": []
+          }
+        },
+        "scene_semantic_schema_check": {
+          "ok": true,
+          "issues": [],
+          "n_objects": 2,
+          "n_subgoals": 3
+        },
+        "scene_semantic_consistency_check": {
+          "ok": true,
+          "issues": [],
+          "uncovered_prompt_words": [],
+          "checked_prompt_words": [
+            "banana",
+            "kitchen",
+            "knife",
+            "slice"
+          ],
+          "unreferenced_objects": [],
+          "hands_without_subgoals": [],
+          "n_objects": 2,
+          "n_subgoals": 3
+        },
+        "goal_language_coverage_check": {
+          "ok": false,
+          "issues": [
+            "$.subgoals[2].goal: clause 'the @0 is cut into separate slices' of \"The banana is cut into separate slices.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')",
+            "$.task_success: clause 'the @0 is cut into separate slices' of \"The banana is cut into separate slices, the knife is held in the right hand.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')"
+          ],
+          "clauses": {
+            "$.subgoals[0].goal": [
+              {
+                "clause": "the @0 is held in the right hand",
+                "covered": true
+              }
+            ],
+            "$.subgoals[1].goal": [
+              {
+                "clause": "the @0 is held in the left hand",
+                "covered": true
+              }
+            ],
+            "$.subgoals[2].goal": [
+              {
+                "clause": "the @0 is cut into separate slices",
+                "covered": false
+              }
+            ],
+            "$.task_success": [
+              {
+                "clause": "the @0 is cut into separate slices",
+                "covered": false
+              },
+              {
+                "clause": "the @1 is held in the right hand",
+                "covered": true
+              }
+            ]
+          }
+        }
+      },
+      "compatible": false,
+      "media": {
+        "id": "09_slice_banana",
+        "uuid": "32a7a34c-f698-4053-aeda-e7ae5fa18bed",
+        "start_s": 32.5,
+        "end_s": 50,
+        "task": "Steady the banana and slice it with the kitchen knife.",
+        "category": "slicing",
+        "source_file": "data/raw/32a7a34c-f698-4053-aeda-e7ae5fa18bed/ep1/stereo_left_synced.mp4",
+        "source_bytes": 10283742,
+        "source_sha256": "515230455124ce819ef18266a686ab5ce7b4defa44cfbf6ffc61462e7e9f22b4",
+        "source_decoded_frames": 2346,
+        "source_advertised_frames": 2346,
+        "source_manifest_frames": 2346,
+        "source_fps": 20.003410641200546,
+        "width": 512,
+        "height": 512,
+        "clip": "clips/09_slice_banana.mp4",
+        "clip_sha256": "d87465a812f3814f6db80d72082b08702b6a6a4966cb41b9b0336c5de6a02719",
+        "camera_intrinsics": {
+          "fx": 200.00000000000006,
+          "fy": 200.00000000000006,
+          "cx": 256.0,
+          "cy": 256.0
+        },
+        "config": "configs/09_slice_banana.yaml"
+      },
+      "clip_decoded_frames": 438,
+      "native_stage1": {
+        "finished": false,
+        "rounds": 4,
+        "verdict": {
+          "ok": false,
+          "issues": [
+            "$.subgoals[2].goal: clause 'the @0 is cut into separate slices' of \"The banana is cut into separate slices.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')",
+            "$.task_success: clause 'the @0 is cut into separate slices' of \"The banana is cut into separate slices, the knife is held in the right hand.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')"
+          ],
+          "reports": {
+            "source_video_identity_check": {
+              "ok": true,
+              "issues": [],
+              "warnings": [],
+              "identity_verified": true,
+              "identity_evidence": "recorded_sha256",
+              "actual": {
+                "path": "/data1/SRL_V2D/experiments/dexagent_egotools_10/clips/09_slice_banana.mp4",
+                "sha256": "d87465a812f3814f6db80d72082b08702b6a6a4966cb41b9b0336c5de6a02719",
+                "frames": 438,
+                "fps": 25.0,
+                "duration_s": 17.52,
+                "width": 512,
+                "height": 512
+              }
+            },
+            "scene_semantic_schema_check": {
+              "ok": true,
+              "issues": [],
+              "n_objects": 2,
+              "n_subgoals": 3
+            },
+            "scene_semantic_consistency_check": {
+              "ok": true,
+              "issues": [],
+              "uncovered_prompt_words": [],
+              "checked_prompt_words": [
+                "banana",
+                "kitchen",
+                "knife",
+                "slice"
+              ],
+              "unreferenced_objects": [],
+              "hands_without_subgoals": [],
+              "n_objects": 2,
+              "n_subgoals": 3
+            },
+            "goal_language_coverage_check": {
+              "ok": false,
+              "issues": [
+                "$.subgoals[2].goal: clause 'the @0 is cut into separate slices' of \"The banana is cut into separate slices.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')",
+                "$.task_success: clause 'the @0 is cut into separate slices' of \"The banana is cut into separate slices, the knife is held in the right hand.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')"
+              ],
+              "clauses": {
+                "$.subgoals[0].goal": [
+                  {
+                    "clause": "the @0 is held in the right hand",
+                    "covered": true
+                  }
+                ],
+                "$.subgoals[1].goal": [
+                  {
+                    "clause": "the @0 is held in the left hand",
+                    "covered": true
+                  }
+                ],
+                "$.subgoals[2].goal": [
+                  {
+                    "clause": "the @0 is cut into separate slices",
+                    "covered": false
+                  }
+                ],
+                "$.task_success": [
+                  {
+                    "clause": "the @0 is cut into separate slices",
+                    "covered": false
+                  },
+                  {
+                    "clause": "the @1 is held in the right hand",
+                    "covered": true
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "new_tools": [],
+        "workspace": "/data1/SRL_V2D/experiments/dexagent_egotools_10/runs/09_slice_banana/stage1",
+        "tool_calls": 3,
+        "tools_used": {
+          "run_python": 1,
+          "look": 1,
+          "write_text": 1
+        },
+        "elapsed_s": 236.8,
+        "stage": "stage1",
+        "failure": "blocked: The preceding native verifier accepts the schema and semantic consistency, but rejects an essential outcome for this task. The fixed-library test preserves the cut, transfer, wiping, or material-change requirement; it cannot be replaced honestly with a pose-only success condition."
+      },
+      "stage2": "not_run_stage1_goal_rejected",
+      "stage3": "not_run",
+      "stage4": "not_run"
+    },
+    {
+      "id": "10_crack_walnut",
+      "uuid": "d66517c1-ec51-4c7d-b7b3-5024e4076fc0",
+      "start_s": 77,
+      "end_s": 86,
+      "task": "Place the walnut in the nutcracker and squeeze the handles to crack its shell.",
+      "category": "cracking",
+      "checks": {
+        "clip_integrity": {
+          "ok": true,
+          "sha256": "460068c6cbd41ae67c92abafdcc103c15739f3bdc9635d379f537f2143fe6d0e",
+          "video_info": {
+            "path": "/data1/SRL_V2D/experiments/dexagent_egotools_10/clips/10_crack_walnut.mp4",
+            "width": 512,
+            "height": 512,
+            "fps": 25.0,
+            "frames": 225,
+            "duration_s": 9.0,
+            "thumbnails": []
+          }
+        },
+        "scene_semantic_schema_check": {
+          "ok": true,
+          "issues": [],
+          "n_objects": 2,
+          "n_subgoals": 4
+        },
+        "scene_semantic_consistency_check": {
+          "ok": true,
+          "issues": [],
+          "uncovered_prompt_words": [],
+          "checked_prompt_words": [
+            "handles",
+            "nutcracker",
+            "shell",
+            "walnut"
+          ],
+          "unreferenced_objects": [],
+          "hands_without_subgoals": [],
+          "n_objects": 2,
+          "n_subgoals": 4
+        },
+        "goal_language_coverage_check": {
+          "ok": false,
+          "issues": [
+            "$.subgoals[1].goal: clause 'the @0 is between the @1 jaws' of \"The walnut is between the nutcracker jaws.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')",
+            "$.subgoals[2].goal: clause 'the @0 shell is cracked by the @1' of \"The walnut shell is cracked by the nutcracker.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')",
+            "$.task_success: clause 'the @0 shell is cracked by the @1' of \"The walnut shell is cracked by the nutcracker, the nutcracker rests on the table.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')"
+          ],
+          "clauses": {
+            "$.subgoals[0].goal": [
+              {
+                "clause": "the @0 is held in the left hand",
+                "covered": true
+              }
+            ],
+            "$.subgoals[1].goal": [
+              {
+                "clause": "the @0 is between the @1 jaws",
+                "covered": false
+              }
+            ],
+            "$.subgoals[2].goal": [
+              {
+                "clause": "the @0 shell is cracked by the @1",
+                "covered": false
+              }
+            ],
+            "$.subgoals[3].goal": [
+              {
+                "clause": "the @0 rests on @1",
+                "covered": true
+              }
+            ],
+            "$.task_success": [
+              {
+                "clause": "the @0 shell is cracked by the @1",
+                "covered": false
+              },
+              {
+                "clause": "the @1 rests on @2",
+                "covered": true
+              }
+            ]
+          }
+        }
+      },
+      "compatible": false,
+      "media": {
+        "id": "10_crack_walnut",
+        "uuid": "d66517c1-ec51-4c7d-b7b3-5024e4076fc0",
+        "start_s": 77,
+        "end_s": 86,
+        "task": "Place the walnut in the nutcracker and squeeze the handles to crack its shell.",
+        "category": "cracking",
+        "source_file": "data/raw/d66517c1-ec51-4c7d-b7b3-5024e4076fc0/ep1/stereo_left_synced.mp4",
+        "source_bytes": 20615861,
+        "source_sha256": "908fcbaa46c14b250dfa7e9a90a49fe0c1a6f2d85384c4c5b8cdd56067341c40",
+        "source_decoded_frames": 5103,
+        "source_advertised_frames": 5103,
+        "source_manifest_frames": 5103,
+        "source_fps": 19.989815104982764,
+        "width": 512,
+        "height": 512,
+        "clip": "clips/10_crack_walnut.mp4",
+        "clip_sha256": "460068c6cbd41ae67c92abafdcc103c15739f3bdc9635d379f537f2143fe6d0e",
+        "camera_intrinsics": {
+          "fx": 200.00000000000006,
+          "fy": 200.00000000000006,
+          "cx": 256.0,
+          "cy": 256.0
+        },
+        "config": "configs/10_crack_walnut.yaml"
+      },
+      "clip_decoded_frames": 225,
+      "native_stage1": {
+        "finished": false,
+        "rounds": 4,
+        "verdict": {
+          "ok": false,
+          "issues": [
+            "$.subgoals[1].goal: clause 'the @0 is between the @1 jaws' of \"The walnut is between the nutcracker jaws.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')",
+            "$.subgoals[2].goal: clause 'the @0 shell is cracked by the @1' of \"The walnut shell is cracked by the nutcracker.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')",
+            "$.task_success: clause 'the @0 shell is cracked by the @1' of \"The walnut shell is cracked by the nutcracker, the nutcracker rests on the table.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')"
+          ],
+          "reports": {
+            "source_video_identity_check": {
+              "ok": true,
+              "issues": [],
+              "warnings": [],
+              "identity_verified": true,
+              "identity_evidence": "recorded_sha256",
+              "actual": {
+                "path": "/data1/SRL_V2D/experiments/dexagent_egotools_10/clips/10_crack_walnut.mp4",
+                "sha256": "460068c6cbd41ae67c92abafdcc103c15739f3bdc9635d379f537f2143fe6d0e",
+                "frames": 225,
+                "fps": 25.0,
+                "duration_s": 9.0,
+                "width": 512,
+                "height": 512
+              }
+            },
+            "scene_semantic_schema_check": {
+              "ok": true,
+              "issues": [],
+              "n_objects": 2,
+              "n_subgoals": 4
+            },
+            "scene_semantic_consistency_check": {
+              "ok": true,
+              "issues": [],
+              "uncovered_prompt_words": [],
+              "checked_prompt_words": [
+                "handles",
+                "nutcracker",
+                "shell",
+                "walnut"
+              ],
+              "unreferenced_objects": [],
+              "hands_without_subgoals": [],
+              "n_objects": 2,
+              "n_subgoals": 4
+            },
+            "goal_language_coverage_check": {
+              "ok": false,
+              "issues": [
+                "$.subgoals[1].goal: clause 'the @0 is between the @1 jaws' of \"The walnut is between the nutcracker jaws.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')",
+                "$.subgoals[2].goal: clause 'the @0 shell is cracked by the @1' of \"The walnut shell is cracked by the nutcracker.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')",
+                "$.task_success: clause 'the @0 shell is cracked by the @1' of \"The walnut shell is cracked by the nutcracker, the nutcracker rests on the table.\" cannot be measured by Stage 3's goal gate; rephrase it (measurable phrasings: 'X is held in the left hand', 'X is held clear of the table', 'X is above the Y's opening', 'X rests inside Y', 'X rests on Y', 'X stands upright', 'Y has not moved', 'the lid is closed', 'X is released', 'X has a knot in it'; one relation per clause, separated by commas or 'and')"
+              ],
+              "clauses": {
+                "$.subgoals[0].goal": [
+                  {
+                    "clause": "the @0 is held in the left hand",
+                    "covered": true
+                  }
+                ],
+                "$.subgoals[1].goal": [
+                  {
+                    "clause": "the @0 is between the @1 jaws",
+                    "covered": false
+                  }
+                ],
+                "$.subgoals[2].goal": [
+                  {
+                    "clause": "the @0 shell is cracked by the @1",
+                    "covered": false
+                  }
+                ],
+                "$.subgoals[3].goal": [
+                  {
+                    "clause": "the @0 rests on @1",
+                    "covered": true
+                  }
+                ],
+                "$.task_success": [
+                  {
+                    "clause": "the @0 shell is cracked by the @1",
+                    "covered": false
+                  },
+                  {
+                    "clause": "the @1 rests on @2",
+                    "covered": true
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "new_tools": [],
+        "workspace": "/data1/SRL_V2D/experiments/dexagent_egotools_10/runs/10_crack_walnut/stage1",
+        "tool_calls": 3,
+        "tools_used": {
+          "run_python": 1,
+          "look": 1,
+          "write_text": 1
+        },
+        "elapsed_s": 252.5,
+        "stage": "stage1",
+        "failure": "blocked: The native schema and semantic consistency checks pass, but goal_language_coverage_check rejects essential tool-mediated or material outcomes in this video. This is a fixed-library compatibility test; substituting a direct-hand grasp or a pose-only outcome would change the requested task. The exact rejected clauses are retained in the preceding native verifier verdict."
+      },
+      "stage2": "not_run_stage1_goal_rejected",
+      "stage3": "not_run",
+      "stage4": "not_run"
+    }
+  ]
+}

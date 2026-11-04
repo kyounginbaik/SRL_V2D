@@ -1,0 +1,26 @@
+{
+ "label": "track3_FINAL_ep33T33_R6M2Cf0_r6moved_20261104",
+ "base": "/data1/SRL_V2D/challenge_submissions_SRL/FINAL_20261104/all_20_episodes",
+ "base_sha": "0fca055ba6efd763b979404067a376dfd305a86d54c76d81866565092dd77e60",
+ "candidate": "/data1/hansol/teacher33/candidates/R33_HGA_r6_R6M2_C_f0/episode_000033",
+ "checkpoint_sha256": "c4996715daef2829f894354f38cdebc675d68b70fb40630e74e90b861841a449",
+ "rows_replaced": 696,
+ "mesh": {
+  "0": "base cell (mesh byte-identical to K33_H5r16_c3)",
+  "1": "base cell (mesh byte-identical to K33_H5r16_c3)"
+ },
+ "columns_changed": [
+  "pos_x",
+  "pos_y",
+  "pos_z",
+  "quat_x",
+  "quat_y",
+  "quat_z",
+  "quat_w",
+  "checkpoint_sha256"
+ ],
+ "sha": "c96244f0eac93d68014ec0f247d4ac56ff897264319397cd6b3548e357571988",
+ "cdo_sha": "a03230e5d6ecd598c4c6f424b1b8594f0f4f395d11889a84ed4a15f014dd28b9",
+ "uploaded": false,
+ "note": "ep33 only; candidate R33_HGA_r6_R6M2_C_f0 (target = the TG part of the tag, our GT-free recon); build-v2 exact"
+}

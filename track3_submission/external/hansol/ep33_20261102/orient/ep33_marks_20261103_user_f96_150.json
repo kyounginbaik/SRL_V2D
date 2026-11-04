@@ -1,0 +1,8 @@
+{"_comment": "ep33 spoon front/back marks drawn by the user on 2026-11-03 on deliverables/20261103_ep33_annot/ep33_frames_f96_150.jpg (RGB clock, every 2 frames). out = concave side towards the camera, in = away, [dx, dy] = image direction of the concave normal for an edge-on spoon (x right, y down). For the refit, edge-on marks get a facing cap of +0.3 ([dx, dy, 0.3], spoon_annot_roll2.py).",
+ "96": "out", "98": "out", "100": "out", "102": "out", "104": "out", "106": "out", "108": "out", "110": "out",
+ "112": [-0.5, 0.87], "114": [-0.5, 0.87], "116": [-0.55, 0.84], "118": [-0.6, 0.8], "120": [-0.55, 0.84],
+ "122": "out", "124": "out",
+ "126": [0.8, -0.6], "128": [0.8, -0.6], "130": [0.8, -0.6], "132": [0.75, -0.66],
+ "134": "out", "136": "out", "138": "out",
+ "140": [0, 1], "142": [0.15, 0.99],
+ "144": "in", "146": "in", "148": "in", "150": "in"}

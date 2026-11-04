@@ -1,0 +1,34 @@
+{
+  "track": "track_3",
+  "file": "/data1/hansol/spoon3537/rt/packages/track3_FINALc_B_ep36s4_ep37s1a/all_20_episodes/track3_submission.parquet",
+  "message": "B: 8b6fa2b9 + ep36 s4 + ep37 s1a",
+  "submissions": {
+    "maniptrans_sr": {
+      "slug": "v2d-challenge-track3-mp-sr",
+      "state": "COMPLETE",
+      "file": "/data1/hansol/spoon3537/rt/packages/track3_FINALc_B_ep36s4_ep37s1a/all_20_episodes/track3_submission.parquet",
+      "message": "Successfully submitted to Track 3 - Egocentric - MP-SR",
+      "ref": 57998187,
+      "public_score": "1.00000",
+      "error": ""
+    },
+    "mppe_cm": {
+      "slug": "v2d-challenge-track3-mppe",
+      "state": "COMPLETE",
+      "file": "/data1/hansol/spoon3537/rt/packages/track3_FINALc_B_ep36s4_ep37s1a/all_20_episodes/track3_submission.parquet",
+      "message": "Successfully submitted to Track 3 - Egocentric - MPPE (cm)",
+      "ref": 57998191,
+      "public_score": "1.39543",
+      "error": ""
+    },
+    "add_auc": {
+      "slug": "v2d-challenge-track3-auc",
+      "state": "COMPLETE",
+      "file": "/data1/hansol/spoon3537/rt/packages/track3_FINALc_B_ep36s4_ep37s1a/all_20_episodes/track3_submission.parquet",
+      "message": "Successfully submitted to Track 3 - Egocentric - AUC",
+      "ref": 57998192,
+      "public_score": "0.92323",
+      "error": ""
+    }
+  }
+}

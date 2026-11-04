@@ -1,0 +1,84 @@
+{
+  "task_prompt": "Grasp and lift a test tube from the rack.",
+  "task_summary": "The right hand reaches to the rack, lifts a clear test tube and holds it above the table; the left hand approaches to inspect it.",
+  "environment": {
+    "support_surface": "tabletop",
+    "camera": "Moving head-mounted rectified stereo-left camera."
+  },
+  "hands": {
+    "used": [
+      "right"
+    ]
+  },
+  "objects": [
+    {
+      "id": "test_tube",
+      "name": "transparent test tube",
+      "type": "rigid",
+      "role": "manipulated",
+      "properties": [
+        "A slender hollow tube that remains shape-preserving while lifted.",
+        "Can be grasped between fingers without an attached supporting joint.",
+        "Must be lifted clear of its support and remain held."
+      ],
+      "evidence": "The hand reaches toward the rack near 15-16 s and visibly holds the raised tube at 16-18.1 s."
+    },
+    {
+      "id": "rack",
+      "name": "red rack",
+      "type": "rigid",
+      "role": "target",
+      "properties": [
+        "A slotted support for upright tubes.",
+        "The tube can be withdrawn upwards without carrying the rack.",
+        "The rack remains on the tabletop."
+      ],
+      "evidence": "Red rack is visible on the table at 0 s and 8-18.1 s."
+    }
+  ],
+  "subgoals": [
+    {
+      "acting_hand": "right",
+      "motion": "grasp_lift",
+      "action": "Grasp and lift the test tube from the rack.",
+      "object_refs": [
+        "test_tube",
+        "rack"
+      ],
+      "goal": "The test tube is held in the right hand, the test tube is held clear of the table.",
+      "time_window_s": [
+        15,
+        16.8
+      ],
+      "hand_roles": {
+        "left": "Rests near the table edge.",
+        "right": "Pinches the tube and lifts it."
+      },
+      "index": 1
+    },
+    {
+      "acting_hand": "right",
+      "motion": "hold",
+      "action": "Hold the tube for inspection.",
+      "object_refs": [
+        "test_tube"
+      ],
+      "goal": "The test tube is held in the right hand.",
+      "time_window_s": [
+        16.8,
+        18.1
+      ],
+      "hand_roles": {
+        "left": "Approaches the lower end to assist inspection.",
+        "right": "Continues to hold the tube."
+      },
+      "index": 2
+    }
+  ],
+  "task_success": "The test tube is held in the right hand, the test tube is held clear of the table, the rack has not moved.",
+  "notes": [
+    "The first fifteen seconds show positioning and a large head turn before the actual pickup.",
+    "Current-session Codex visual review; fixed upstream library; no example reuse.",
+    "Unsupported functional/material outcomes must remain explicit and must not be replaced with pose-only success."
+  ]
+}

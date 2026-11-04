@@ -1,0 +1,442 @@
+{
+  "1": {
+    "scores": {
+      "MP-SR": 1.0,
+      "SP-SR": 1.0,
+      "MPPE": 0.5998438079245194,
+      "AUC": 0.9853544776119403
+    },
+    "objects": {
+      "white_pot": [
+        0.49,
+        2.3
+      ],
+      "white_pot_lid": [
+        0.55,
+        5.1
+      ]
+    },
+    "track_frames": [
+      335,
+      335
+    ],
+    "sub_frames": 335
+  },
+  "3": {
+    "scores": {
+      "MP-SR": 1.0,
+      "SP-SR": 1.0,
+      "MPPE": 1.0113704596617812,
+      "AUC": 0.9696485623003195
+    },
+    "objects": {
+      "white_pot": [
+        0.35,
+        3.2
+      ],
+      "wooden_spoon": [
+        0.99,
+        19.1
+      ]
+    },
+    "track_frames": [
+      313,
+      313
+    ],
+    "sub_frames": 313
+  },
+  "5": {
+    "scores": {
+      "MP-SR": 1.0,
+      "SP-SR": 1.0,
+      "MPPE": 0.8763696134568273,
+      "AUC": 0.9721137152777778
+    },
+    "objects": {
+      "white_pot": [
+        0.54,
+        4.5
+      ],
+      "wooden_spoon": [
+        1.0,
+        7.1
+      ]
+    },
+    "track_frames": [
+      288,
+      288
+    ],
+    "sub_frames": 288
+  },
+  "6": {
+    "scores": {
+      "MP-SR": 1.0,
+      "SP-SR": 1.0,
+      "MPPE": 0.7260275564565609,
+      "AUC": 0.9830246913580247
+    },
+    "objects": {
+      "white_pot": [
+        0.49,
+        2.4
+      ],
+      "wooden_spoon": [
+        0.76,
+        6.9
+      ]
+    },
+    "track_frames": [
+      243,
+      243
+    ],
+    "sub_frames": 243
+  },
+  "8": {
+    "scores": {
+      "MP-SR": 1.0,
+      "SP-SR": 1.0,
+      "MPPE": 0.37636704066627713,
+      "AUC": 0.9974315068493151
+    },
+    "objects": {
+      "beige_cup": [
+        0.39,
+        1.7
+      ],
+      "white_pot": [
+        0.32,
+        1.6
+      ]
+    },
+    "track_frames": [
+      219,
+      219
+    ],
+    "sub_frames": 219
+  },
+  "10": {
+    "scores": {
+      "MP-SR": 1.0,
+      "SP-SR": 1.0,
+      "MPPE": 0.5375806744776598,
+      "AUC": 0.9912655279503105
+    },
+    "objects": {
+      "blue_cup": [
+        0.48,
+        1.8
+      ],
+      "beige_cup": [
+        0.53,
+        3.0
+      ]
+    },
+    "track_frames": [
+      161,
+      161
+    ],
+    "sub_frames": 161
+  },
+  "14": {
+    "scores": {
+      "MP-SR": 1.0,
+      "SP-SR": 1.0,
+      "MPPE": 0.9098475685518871,
+      "AUC": 0.967365506329114
+    },
+    "objects": {
+      "blue_cup": [
+        1.01,
+        2.5
+      ],
+      "plastic_dish_rack": [
+        0.77,
+        2.7
+      ]
+    },
+    "track_frames": [
+      158,
+      158
+    ],
+    "sub_frames": 158
+  },
+  "15": {
+    "scores": {
+      "MP-SR": 1.0,
+      "SP-SR": 1.0,
+      "MPPE": 1.0089095217769586,
+      "AUC": 0.9576430722891567
+    },
+    "objects": {
+      "plastic_dish_rack": [
+        0.66,
+        2.9
+      ],
+      "wooden_spoon": [
+        1.14,
+        8.6
+      ]
+    },
+    "track_frames": [
+      166,
+      166
+    ],
+    "sub_frames": 166
+  },
+  "16": {
+    "scores": {
+      "MP-SR": 1.0,
+      "SP-SR": 1.0,
+      "MPPE": 0.7775158492683526,
+      "AUC": 0.9689306358381502
+    },
+    "objects": {
+      "plastic_dish_rack": [
+        0.42,
+        2.6
+      ],
+      "wooden_spoon": [
+        1.01,
+        5.7
+      ]
+    },
+    "track_frames": [
+      173,
+      173
+    ],
+    "sub_frames": 173
+  },
+  "19": {
+    "scores": {
+      "MP-SR": 1.0,
+      "SP-SR": 1.0,
+      "MPPE": 0.849208887652047,
+      "AUC": 0.9700797872340425
+    },
+    "objects": {
+      "mini_sweeper": [
+        0.72,
+        7.4
+      ],
+      "mini_dust_pan": [
+        0.75,
+        3.6
+      ]
+    },
+    "track_frames": [
+      235,
+      235
+    ],
+    "sub_frames": 235
+  },
+  "20": {
+    "scores": {
+      "MP-SR": 1.0,
+      "SP-SR": 1.0,
+      "MPPE": 0.4484155869445845,
+      "AUC": 0.994430693069307
+    },
+    "objects": {
+      "blue_cup": [
+        0.36,
+        1.3
+      ],
+      "water_pitcher": [
+        0.51,
+        1.8
+      ]
+    },
+    "track_frames": [
+      202,
+      202
+    ],
+    "sub_frames": 202
+  },
+  "25": {
+    "scores": {
+      "MP-SR": 1.0,
+      "SP-SR": 1.0,
+      "MPPE": 1.507886292151819,
+      "AUC": 0.8978230337078652
+    },
+    "objects": {
+      "wooden_piece_1": [
+        1.19,
+        12.6
+      ],
+      "wooden_piece_2": [
+        1.43,
+        4.8
+      ]
+    },
+    "track_frames": [
+      356,
+      356
+    ],
+    "sub_frames": 356
+  },
+  "28": {
+    "scores": {
+      "MP-SR": 1.0,
+      "SP-SR": 1.0,
+      "MPPE": 0.6747437064014957,
+      "AUC": 0.9731534090909091
+    },
+    "objects": {
+      "plastic_dish_rack": [
+        0.63,
+        1.7
+      ],
+      "white_pot": [
+        0.59,
+        5.5
+      ]
+    },
+    "track_frames": [
+      220,
+      220
+    ],
+    "sub_frames": 220
+  },
+  "30": {
+    "scores": {
+      "MP-SR": 1.0,
+      "SP-SR": 1.0,
+      "MPPE": 0.48757055076604944,
+      "AUC": 0.9932271863117871
+    },
+    "objects": {
+      "mini_sweeper": [
+        0.48,
+        3.2
+      ],
+      "plastic_dish_rack": [
+        0.34,
+        4.0
+      ]
+    },
+    "track_frames": [
+      263,
+      263
+    ],
+    "sub_frames": 263
+  },
+  "32": {
+    "scores": {
+      "MP-SR": 1.0,
+      "SP-SR": 1.0,
+      "MPPE": 1.8999517172096718,
+      "AUC": 0.8809121621621622
+    },
+    "objects": {
+      "blue_cup": [
+        1.13,
+        5.4
+      ],
+      "wooden_spoon": [
+        1.98,
+        22.8
+      ]
+    },
+    "track_frames": [
+      259,
+      259
+    ],
+    "sub_frames": 259
+  },
+  "33": {
+    "scores": {
+      "MP-SR": 1.0,
+      "SP-SR": 1.0,
+      "MPPE": 1.1257639999438822,
+      "AUC": 0.9461206896551724
+    },
+    "objects": {
+      "blue_cup": [
+        0.82,
+        4.8
+      ],
+      "wooden_spoon": [
+        1.25,
+        7.5
+      ]
+    },
+    "track_frames": [
+      348,
+      348
+    ],
+    "sub_frames": 348
+  },
+  "35": {
+    "scores": {
+      "MP-SR": 1.0,
+      "SP-SR": 1.0,
+      "MPPE": 1.0453417479913962,
+      "AUC": 0.943438242280285
+    },
+    "objects": {
+      "wooden_spoon": [
+        0.9,
+        7.4
+      ]
+    },
+    "track_frames": [
+      421
+    ],
+    "sub_frames": 421
+  },
+  "36": {
+    "scores": {
+      "MP-SR": 1.0,
+      "SP-SR": 1.0,
+      "MPPE": 1.5616884533434163,
+      "AUC": 0.9209152334152335
+    },
+    "objects": {
+      "wooden_spoon": [
+        1.47,
+        6.6
+      ]
+    },
+    "track_frames": [
+      407
+    ],
+    "sub_frames": 407
+  },
+  "37": {
+    "scores": {
+      "MP-SR": 1.0,
+      "SP-SR": 1.0,
+      "MPPE": 0.5646569687744045,
+      "AUC": 0.9908940397350994
+    },
+    "objects": {
+      "wooden_spoon": [
+        0.54,
+        1.7
+      ]
+    },
+    "track_frames": [
+      151
+    ],
+    "sub_frames": 151
+  },
+  "38": {
+    "scores": {
+      "MP-SR": 1.0,
+      "SP-SR": 1.0,
+      "MPPE": 0.4566571764928268,
+      "AUC": 0.9973859315589353
+    },
+    "objects": {
+      "mini_dust_pan": [
+        0.38,
+        3.2
+      ]
+    },
+    "track_frames": [
+      263
+    ],
+    "sub_frames": 263
+  }
+}

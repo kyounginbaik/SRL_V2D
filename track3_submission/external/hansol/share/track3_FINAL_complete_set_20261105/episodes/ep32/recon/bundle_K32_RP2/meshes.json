@@ -1,0 +1,10 @@
+{
+  "blue_cup": {
+    "file": "meshes/blue_cup.obj",
+    "source": "/data1/SRL_V2D/challenge_reconstruction/reconstruction_recovery_20261026/canonical/evaluation/episode_000032/objects/blue_cup/mesh.obj"
+  },
+  "wooden_spoon": {
+    "file": "meshes/wooden_spoon.obj",
+    "source": "/data1/SRL_V2D/challenge_reconstruction/reconstruction_recovery_20261026/canonical/evaluation/episode_000032/objects/wooden_spoon/mesh.obj"
+  }
+}

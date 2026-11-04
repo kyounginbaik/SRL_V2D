@@ -1,0 +1,332 @@
+{
+  "metrics": {
+    "metric": "MP-SR",
+    "reference_proxy_mp_sr": 1.0,
+    "declared_frame_mp_sr": 1.0,
+    "official_style_reference_proxy": {
+      "mp_sr": 1.0,
+      "per_world_success": [
+        true
+      ],
+      "objects": {
+        "white_pot": {
+          "mean_position_error_m": [
+            0.005010743125454816
+          ],
+          "mean_position_error_cm": [
+            0.5010743125454815
+          ],
+          "mean_orientation_error_degrees": [
+            3.377988196267977
+          ],
+          "success_per_world": [
+            true
+          ],
+          "max_position_error_m": [
+            0.015122402752830728
+          ],
+          "max_orientation_error_degrees": [
+            11.287166354777739
+          ]
+        },
+        "wooden_spoon": {
+          "mean_position_error_m": [
+            0.011028811879741172
+          ],
+          "mean_position_error_cm": [
+            1.1028811879741172
+          ],
+          "mean_orientation_error_degrees": [
+            18.807964585886836
+          ],
+          "success_per_world": [
+            true
+          ],
+          "max_position_error_m": [
+            0.05122814267847656
+          ],
+          "max_orientation_error_degrees": [
+            155.11016754217405
+          ]
+        }
+      }
+    },
+    "declared_frame_reference_proxy": {
+      "mp_sr": 1.0,
+      "per_world_success": [
+        true
+      ],
+      "objects": {
+        "white_pot": {
+          "mean_position_error_m": [
+            0.005010778347176059
+          ],
+          "mean_position_error_cm": [
+            0.5010778347176059
+          ],
+          "mean_orientation_error_degrees": [
+            3.377995287024675
+          ],
+          "success_per_world": [
+            true
+          ],
+          "max_position_error_m": [
+            0.01512243704954632
+          ],
+          "max_orientation_error_degrees": [
+            11.287147288119519
+          ]
+        },
+        "wooden_spoon": {
+          "mean_position_error_m": [
+            0.011028808934361199
+          ],
+          "mean_position_error_cm": [
+            1.1028808934361198
+          ],
+          "mean_orientation_error_degrees": [
+            18.807980214964672
+          ],
+          "success_per_world": [
+            true
+          ],
+          "max_position_error_m": [
+            0.05122836642835441
+          ],
+          "max_orientation_error_degrees": [
+            155.1101348091705
+          ]
+        }
+      }
+    },
+    "estimated": true,
+    "leaderboard_score": false,
+    "ground_truth": "immutable final_recon reconstructed object poses; confidential ground truth unavailable",
+    "physics_validation": "separate; MP-SR alone does not verify physically valid robot control",
+    "position_threshold_m": 0.03,
+    "orientation_threshold_degrees": 30.0,
+    "strict_thresholds": true,
+    "averaging": "framewise symmetry error, then arithmetic mean over all original frames per object; every object must pass",
+    "episode_aggregation": "mean episode MP-SR; episodes have equal weight regardless of duration",
+    "frames": 313,
+    "worlds": 1,
+    "horizon_seconds": [
+      0.0,
+      15.6
+    ],
+    "full_horizon": true,
+    "temporal_warp": false,
+    "per_object_pose_alignment": false,
+    "recording_to_reference_transform": [
+      [
+        0.9992361635548194,
+        -0.0031450288536272945,
+        -0.03895122896335264,
+        -0.005397044320165841
+      ],
+      [
+        -0.003145028853627295,
+        0.9870506224826532,
+        -0.16037823246973584,
+        -0.02222185157349969
+      ],
+      [
+        0.03895122896335264,
+        0.16037823246973582,
+        0.9862867860374729,
+        0.13665893575903226
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ],
+    "official_initial_scene_transforms": [
+      [
+        [
+          0.9999999999994784,
+          9.675141354963829e-07,
+          -3.2895884737025494e-07,
+          7.59589305066033e-08
+        ],
+        [
+          -9.675140447151844e-07,
+          0.9999999999994944,
+          2.7612898509232357e-07,
+          -6.175088054088951e-08
+        ],
+        [
+          3.289591145308812e-07,
+          -2.7612866681408247e-07,
+          0.9999999999999081,
+          4.772088282867237e-08
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ]
+    ],
+    "geometry": {
+      "official_symmetry_source": "https://nvidia-isaac.github.io/video_to_data/v2d_challenge/assets/v2d_submission_kit.zip",
+      "official_kit_sha256": "8d2bce64ecab6da4eee938fe2859bd60e767535af30068b386e2dc20a72cf43e",
+      "confidential_geometry_available": false,
+      "objects": {
+        "white_pot": {
+          "symmetry": "none",
+          "anchor_local_m": [
+            0.0023503277466761273,
+            -0.0016740290117018897,
+            0.002702973532393851
+          ],
+          "anchor_source": "surface centroid of exact local reconstruction mesh, not confidential scan",
+          "mesh_path": "/data1/hansol/spoon3537/rt/staging/tgt_e3s_ep3_e3s/components/episode_000003/portable/source/episode_000003/assets/white_pot.obj",
+          "mesh_sha256": "8cbd35431829ae37eddb9ad8fc573f823836d880f21519f99d18c7420726d8f8",
+          "axis_local": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "axis_source": "not applicable: official full orientation"
+        },
+        "wooden_spoon": {
+          "symmetry": "none",
+          "anchor_local_m": [
+            -0.001095695896808772,
+            -0.0002352949557241332,
+            0.000425572854268195
+          ],
+          "anchor_source": "surface centroid of exact local reconstruction mesh, not confidential scan",
+          "mesh_path": "/data1/hansol/spoon3537/rt/staging/tgt_e3s_ep3_e3s/components/episode_000003/portable/source/episode_000003/assets/wooden_spoon.obj",
+          "mesh_sha256": "c9ab88e33e5c78bfbd5e492d12565effafa8cd2c26d14fe6600e7fb0c1c5d904",
+          "axis_local": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "axis_source": "not applicable: official full orientation"
+        }
+      }
+    },
+    "metric_source": {
+      "url": "https://nvidia-isaac.github.io/video_to_data/v2d_challenge/assets/v2d_submission_kit.zip",
+      "sha256": "8d2bce64ecab6da4eee938fe2859bd60e767535af30068b386e2dc20a72cf43e",
+      "functions": "v2dlb/track3_pose.py:_symmetry_orientation_errors,_align_registered_scene,_registered_pose_metric"
+    },
+    "provenance": {
+      "reference": "/data1/hansol/spoon3537/rt/staging/tgt_e3s_ep3_e3s/components/episode_000003/portable/source/episode_000003/object_poses.npz",
+      "reference_sha256": "db1949bc38840a23ddc8be3d34259d39fd2f0266ea136dab29a28603df889cf3",
+      "trajectory": "/data1/hansol/spoon3537/rt/candidates/S3_ep3_e3s/episode_000003/backend/evaluation/execution/trajectory.npz",
+      "trajectory_sha256": "609da6dd1e328f38bf76e62faf5658b810142166eeeb2f07b855838f1a4f77e5",
+      "adapter_manifest": "/data1/hansol/spoon3537/rt/candidates/S3_ep3_e3s/episode_000003/backend/runtime/episodes/episode_000003/input_manifest.json",
+      "adapter_manifest_sha256": "fb51a2a4050f8fadbe9257e37c25031be7206d7e1ba281a1caa0986b11cab077",
+      "scene": "/data1/hansol/spoon3537/rt/candidates/S3_ep3_e3s/episode_000003/backend/evaluation/execution/scene_physics.xml",
+      "scene_sha256": "1fc805f41181c43720a28928512453de89d0e163b77c39f0380ac981eea821c3",
+      "geometry": "/data1/hansol/spoon3537/rt/candidates/S3_ep3_e3s/episode_000003/backend/runtime/episodes/episode_000003/metric_geometry.json",
+      "geometry_sha256": "e67b0fae2d07312706581e42c89927c07b29a5c84742b4c3d59e972ca6edfa19"
+    }
+  },
+  "backend_command": [
+    "/home/hansol/v2d/.venvs/v2d-host/bin/python",
+    "/data1/hansol/spoon3537/rt/staging/tgt_e3s_ep3_e3s/components/episode_000003/portable/code/reproduce_policy_component.py",
+    "replay",
+    "--bundle",
+    "/data1/hansol/spoon3537/rt/staging/tgt_e3s_ep3_e3s/components/episode_000003/portable",
+    "--output",
+    "/data1/hansol/spoon3537/rt/candidates/S3_ep3_e3s/episode_000003/backend"
+  ],
+  "backend_kind": "frozen_mujoco_rbf",
+  "legacy_component": "/data1/hansol/spoon3537/rt/staging/tgt_e3s_ep3_e3s/components/episode_000003",
+  "source_reference_sha256": "ab028d91cafd94240a1acbfbe38ba4885ec42eaa30df9cd987395be3e2b44fea",
+  "exact_previous_physical_states_actions": true,
+  "schema": "uniretarget_common_episode_execution_v1",
+  "episode": "episode_000003",
+  "started_utc": "2026-11-04T20:16:25.975379+00:00",
+  "completed_utc": "2026-11-04T20:17:00.396230+00:00",
+  "build_manifest_sha256": "5674b2fea091aeef2b50a6f2b72cc4f8f042b4695b5416addb29e855e948b925",
+  "eval_code_sha256": "fdddb348e3fe30b6786aad8430cd198d536dd50c947b4d12f99394d51d0caa76",
+  "eval_script_sha256": "cbe866f9cd8a8b9038671a25c8386ba38cfd24c4ec853299dc63ce8814a0177c",
+  "code_commit_url": "https://github.com/kyounginbaik/SRL_V2D/commit/5cc5ca516fc791f745449b279620c67e748856cd",
+  "checkpoint": {
+    "path": "/data1/hansol/spoon3537/rt/staging/tgt_e3s_ep3_e3s/components/episode_000003/portable/original/policy.npz",
+    "sha256": "12eef789d6f53031300e8d49ba1861c2b43ecda2ffc6dd8fb71685ee730393a8"
+  },
+  "actions": {
+    "path": "/data1/hansol/spoon3537/rt/candidates/S3_ep3_e3s/episode_000003/backend/evaluation/execution/trajectory.npz",
+    "sha256": "609da6dd1e328f38bf76e62faf5658b810142166eeeb2f07b855838f1a4f77e5"
+  },
+  "backend_export": {
+    "path": "/data1/hansol/spoon3537/rt/candidates/S3_ep3_e3s/episode_000003/backend/fresh_trajectory.parquet",
+    "sha256": "144c914b67e497a628408348ee85c7d2d636738d95f2c1c7cae2c708b857b68c",
+    "validation": {
+      "rows": 626,
+      "object_names": [
+        "white_pot",
+        "wooden_spoon"
+      ],
+      "full_public_grid": true,
+      "source_timestamp_grid": true,
+      "finite": true,
+      "provenance": {
+        "eval_script_sha256": "32f7b038ada4bf63e237e4eafebff2c21a726e121170adcb66fd62fb3e73af6e",
+        "eval_code_sha256": "250a9e63e8201b79a1a9c14b54d92eb40b83d3d21733060fe90a4aa51da62a2f",
+        "checkpoint_sha256": "12eef789d6f53031300e8d49ba1861c2b43ecda2ffc6dd8fb71685ee730393a8"
+      },
+      "sha256": "144c914b67e497a628408348ee85c7d2d636738d95f2c1c7cae2c708b857b68c",
+      "official_runtime_certification": false
+    }
+  },
+  "trajectory": {
+    "path": "/data1/hansol/spoon3537/rt/candidates/S3_ep3_e3s/episode_000003/results/episode_000003.parquet",
+    "sha256": "77bd7d9aa24113642a226ca4f96f61a2c32f69877d52f823516b50ba45552b67",
+    "validation": {
+      "rows": 626,
+      "object_names": [
+        "white_pot",
+        "wooden_spoon"
+      ],
+      "full_public_grid": true,
+      "source_timestamp_grid": true,
+      "finite": true,
+      "provenance": {
+        "eval_script_sha256": "cbe866f9cd8a8b9038671a25c8386ba38cfd24c4ec853299dc63ce8814a0177c",
+        "eval_code_sha256": "fdddb348e3fe30b6786aad8430cd198d536dd50c947b4d12f99394d51d0caa76",
+        "checkpoint_sha256": "12eef789d6f53031300e8d49ba1861c2b43ecda2ffc6dd8fb71685ee730393a8"
+      },
+      "sha256": "77bd7d9aa24113642a226ca4f96f61a2c32f69877d52f823516b50ba45552b67",
+      "official_runtime_certification": false
+    }
+  },
+  "meshes": {
+    "white_pot": {
+      "path": "/data1/hansol/spoon3537/rt/candidates/S3_ep3_e3s/episode_000003/meshes/episode_000003/white_pot.obj",
+      "sha256": "8cbd35431829ae37eddb9ad8fc573f823836d880f21519f99d18c7420726d8f8"
+    },
+    "wooden_spoon": {
+      "path": "/data1/hansol/spoon3537/rt/candidates/S3_ep3_e3s/episode_000003/meshes/episode_000003/wooden_spoon.obj",
+      "sha256": "02ecf22f4412f7c8bd8f01effe734054852b2d8d39250c7c3b8aecc7ba27d498"
+    }
+  },
+  "mesh_validation": {
+    "white_pot": {
+      "vertices": 4096,
+      "faces": 4096,
+      "finite": true
+    },
+    "wooden_spoon": {
+      "vertices": 4096,
+      "faces": 4096,
+      "finite": true
+    }
+  },
+  "fresh_backend_executed": true,
+  "original_backend_evidence_preserved": true,
+  "source_reference_proxy_not_official_gt": true,
+  "official_runtime_certification": false,
+  "complete_official_submission_ready": false,
+  "uploaded": false
+}

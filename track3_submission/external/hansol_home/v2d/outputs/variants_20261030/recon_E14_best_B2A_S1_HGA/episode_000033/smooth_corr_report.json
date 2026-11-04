@@ -1,0 +1,11 @@
+{
+ "sigma": 1.5,
+ "correction_deg_max": [
+  58.7,
+  50.9
+ ],
+ "correction_step_deg_max": [
+  20.0,
+  13.7
+ ]
+}

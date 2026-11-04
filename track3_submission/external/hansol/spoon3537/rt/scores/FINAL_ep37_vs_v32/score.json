@@ -1,0 +1,20 @@
+{
+ "37": {
+  "scores": {
+   "MP-SR": 1.0,
+   "SP-SR": 1.0,
+   "MPPE": 0.3621697898950115,
+   "AUC": 1.0
+  },
+  "objects": {
+   "wooden_spoon": [
+    0.32,
+    2.4
+   ]
+  },
+  "track_frames": [
+   151
+  ],
+  "sub_frames": 151
+ }
+}

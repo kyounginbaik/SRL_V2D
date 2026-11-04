@@ -1,0 +1,182 @@
+[
+  {
+    "split": "evaluation",
+    "episode": 1,
+    "name": "white_pot"
+  },
+  {
+    "split": "evaluation",
+    "episode": 1,
+    "name": "white_pot_lid"
+  },
+  {
+    "split": "evaluation",
+    "episode": 3,
+    "name": "white_pot"
+  },
+  {
+    "split": "evaluation",
+    "episode": 3,
+    "name": "wooden_spoon"
+  },
+  {
+    "split": "evaluation",
+    "episode": 5,
+    "name": "white_pot"
+  },
+  {
+    "split": "evaluation",
+    "episode": 5,
+    "name": "wooden_spoon"
+  },
+  {
+    "split": "evaluation",
+    "episode": 6,
+    "name": "white_pot"
+  },
+  {
+    "split": "evaluation",
+    "episode": 6,
+    "name": "wooden_spoon"
+  },
+  {
+    "split": "evaluation",
+    "episode": 8,
+    "name": "beige_cup"
+  },
+  {
+    "split": "evaluation",
+    "episode": 8,
+    "name": "white_pot"
+  },
+  {
+    "split": "evaluation",
+    "episode": 10,
+    "name": "blue_cup"
+  },
+  {
+    "split": "evaluation",
+    "episode": 10,
+    "name": "beige_cup"
+  },
+  {
+    "split": "evaluation",
+    "episode": 14,
+    "name": "blue_cup"
+  },
+  {
+    "split": "evaluation",
+    "episode": 14,
+    "name": "plastic_dish_rack"
+  },
+  {
+    "split": "evaluation",
+    "episode": 15,
+    "name": "plastic_dish_rack"
+  },
+  {
+    "split": "evaluation",
+    "episode": 15,
+    "name": "wooden_spoon"
+  },
+  {
+    "split": "evaluation",
+    "episode": 16,
+    "name": "plastic_dish_rack"
+  },
+  {
+    "split": "evaluation",
+    "episode": 16,
+    "name": "wooden_spoon"
+  },
+  {
+    "split": "evaluation",
+    "episode": 19,
+    "name": "mini_sweeper"
+  },
+  {
+    "split": "evaluation",
+    "episode": 19,
+    "name": "mini_dust_pan"
+  },
+  {
+    "split": "evaluation",
+    "episode": 20,
+    "name": "blue_cup"
+  },
+  {
+    "split": "evaluation",
+    "episode": 20,
+    "name": "water_pitcher"
+  },
+  {
+    "split": "evaluation",
+    "episode": 25,
+    "name": "wooden_piece_1"
+  },
+  {
+    "split": "evaluation",
+    "episode": 25,
+    "name": "wooden_piece_2"
+  },
+  {
+    "split": "evaluation",
+    "episode": 28,
+    "name": "plastic_dish_rack"
+  },
+  {
+    "split": "evaluation",
+    "episode": 28,
+    "name": "white_pot"
+  },
+  {
+    "split": "evaluation",
+    "episode": 30,
+    "name": "mini_sweeper"
+  },
+  {
+    "split": "evaluation",
+    "episode": 30,
+    "name": "plastic_dish_rack"
+  },
+  {
+    "split": "evaluation",
+    "episode": 32,
+    "name": "blue_cup"
+  },
+  {
+    "split": "evaluation",
+    "episode": 32,
+    "name": "wooden_spoon"
+  },
+  {
+    "split": "evaluation",
+    "episode": 33,
+    "name": "blue_cup"
+  },
+  {
+    "split": "evaluation",
+    "episode": 33,
+    "name": "wooden_spoon"
+  },
+  {
+    "split": "evaluation",
+    "episode": 35,
+    "name": "wooden_spoon"
+  },
+  {
+    "split": "evaluation",
+    "episode": 36,
+    "name": "wooden_spoon"
+  },
+  {
+    "split": "evaluation",
+    "episode": 37,
+    "name": "wooden_spoon"
+  },
+  {
+    "split": "evaluation",
+    "episode": 38,
+    "name": "mini_dust_pan"
+  }
+]

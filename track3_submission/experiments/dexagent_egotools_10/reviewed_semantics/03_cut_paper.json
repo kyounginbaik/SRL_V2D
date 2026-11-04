@@ -1,0 +1,117 @@
+{
+  "task_prompt": "Hold the folded paper and cut it with the handheld shears.",
+  "task_summary": "The left hand supports folded white paper while the right hand picks up orange-handled shears and repeatedly snips the edge.",
+  "environment": {
+    "support_surface": "tabletop",
+    "camera": "Moving head-mounted rectified stereo-left camera."
+  },
+  "hands": {
+    "used": [
+      "left",
+      "right"
+    ]
+  },
+  "objects": [
+    {
+      "id": "paper",
+      "name": "folded white paper",
+      "type": "deformable",
+      "role": "manipulated",
+      "properties": [
+        "Thin folded sheet bends while held in the left hand.",
+        "Opposed shear blades must cut through the paper layers.",
+        "The cut creates a slit from the edge; it does not require severing the entire sheet into two pieces."
+      ],
+      "evidence": "Paper is held at 0-23 s; repeated snips enter its edge near 3-15 s and 19-23 s.",
+      "deformation": {
+        "kind": "folded cuttable sheet",
+        "how_the_task_deforms_it": "The sheet bends during handling and is cut locally by the shears."
+      }
+    },
+    {
+      "id": "shears",
+      "name": "orange handled shears",
+      "type": "articulated",
+      "role": "tool",
+      "properties": [
+        "Two metal blades pivot relative to each other.",
+        "Finger pressure on the handles closes the blades through the paper.",
+        "Blade closure must produce a material cut in the paper."
+      ],
+      "evidence": "The right hand picks up the shears at 0-2 s and repeatedly closes them at 3-23 s.",
+      "parts": [
+        "blade_a",
+        "blade_b"
+      ],
+      "articulation": {
+        "moving_part": "blade_a",
+        "fixed_part": "blade_b",
+        "joint_type": "revolute",
+        "axis": "Across the blade pivot",
+        "state_over_video": "Blades repeatedly open and close."
+      }
+    }
+  ],
+  "subgoals": [
+    {
+      "acting_hand": "left",
+      "motion": "hold",
+      "action": "Hold the folded paper.",
+      "object_refs": [
+        "paper"
+      ],
+      "goal": "The paper is held in the left hand.",
+      "time_window_s": [
+        0,
+        1
+      ],
+      "hand_roles": {
+        "left": "Supports the folded sheet.",
+        "right": "Reaches toward the shears."
+      },
+      "index": 1
+    },
+    {
+      "acting_hand": "right",
+      "motion": "grasp_lift",
+      "action": "Pick up the shears.",
+      "object_refs": [
+        "shears"
+      ],
+      "goal": "The shears are held in the right hand.",
+      "time_window_s": [
+        0,
+        2
+      ],
+      "hand_roles": {
+        "left": "Keeps holding the sheet.",
+        "right": "Closes around the orange handles and lifts."
+      },
+      "index": 2
+    },
+    {
+      "acting_hand": "both",
+      "motion": "cut",
+      "action": "Repeatedly snip into the folded paper edge.",
+      "object_refs": [
+        "shears",
+        "paper"
+      ],
+      "goal": "The paper has a slit cut from its edge by the shears.",
+      "time_window_s": [
+        2,
+        23
+      ],
+      "hand_roles": {
+        "left": "Turns and supports the folded sheet.",
+        "right": "Repeatedly closes the blades through the edge."
+      },
+      "index": 3
+    }
+  ],
+  "task_success": "The paper has a slit cut from its edge by the shears, the paper is held in the left hand.",
+  "notes": [
+    "Current-session Codex visual review; fixed upstream library; no example reuse.",
+    "Unsupported functional/material outcomes must remain explicit and must not be replaced with pose-only success."
+  ]
+}

@@ -1,0 +1,85 @@
+{
+  "episode": "episode_000032",
+  "bundle": "/data1/SRL_V2D/challenge_reconstruction/campaign_v22_20261028/streamT32_teacher/staging/T32c_b1/components/episode_000032/portable",
+  "working_directory": "/tmp",
+  "original_scene_sha256": "10a425092708741530b76da80aa56854a26d67f81a2caad33ac21646502d0ad3",
+  "relocated_scene_sha256": "069aacf9be5f92b282ce9ded0d395f3e2a47ba4c02ebf2d0482fc9764c20ca95",
+  "original_checkpoint_sha256": "a5a181f8bf53577a4ea4d5b7d24f5f03f92b5d739144e2a738896339c105d9e9",
+  "relocated_checkpoint_sha256": "9bee59191d91f16855a57da6eba8ab22ad17ce9854fbe19435ec3fbf31cbefb7",
+  "original_weights_unchanged": true,
+  "compiled_model_arrays_options_exact": true,
+  "excluded_model_source_path_metadata": [
+    "hfield_pathadr",
+    "mesh_pathadr",
+    "nbuffer",
+    "npaths",
+    "paths",
+    "tex_pathadr"
+  ],
+  "physical_trajectory_comparison": {
+    "qpos": {
+      "exact": true,
+      "max_abs_difference": 0.0
+    },
+    "qvel": {
+      "exact": true,
+      "max_abs_difference": 0.0
+    },
+    "ctrl": {
+      "exact": true,
+      "max_abs_difference": 0.0
+    },
+    "time_s": {
+      "exact": true,
+      "max_abs_difference": 0.0
+    },
+    "substep_qpos": {
+      "exact": true,
+      "max_abs_difference": 0.0
+    },
+    "substep_qvel": {
+      "exact": true,
+      "max_abs_difference": 0.0
+    },
+    "substep_ctrl": {
+      "exact": true,
+      "max_abs_difference": 0.0
+    },
+    "substep_time_s": {
+      "exact": true,
+      "max_abs_difference": 0.0
+    },
+    "initial_qpos": {
+      "exact": true,
+      "max_abs_difference": 0.0
+    },
+    "initial_qvel": {
+      "exact": true,
+      "max_abs_difference": 0.0
+    },
+    "initial_state": {
+      "exact": true,
+      "max_abs_difference": 0.0
+    },
+    "final_state": {
+      "exact": true,
+      "max_abs_difference": 0.0
+    }
+  },
+  "all_physical_states_actions_exact": true,
+  "source_object_targets_unchanged": true,
+  "reference_proxy_mp_sr": 1.0,
+  "independent_control_replay": {
+    "ok": true,
+    "issues": [],
+    "frames": 259,
+    "substeps": 6450,
+    "duration_s": 12.900000000000977,
+    "replayed_substeps": 6450,
+    "max_replay_qpos_error": 0.0,
+    "max_replay_qvel_error": 0.0
+  },
+  "retraining": null,
+  "complete_submission_ready": false,
+  "uploaded": false
+}

@@ -1,0 +1,154 @@
+{
+ "label": "anc_ep16_anc1",
+ "base": "/data1/SRL_V2D/challenge_submissions_SRL/track3_v30c1_cwmesh_nogt_20261101/all_20_episodes",
+ "base_sha": "37038573ad9b0a05122c2b4efb78a9b0d21507a292b7d96bbf0ffb3a97ba2bc7",
+ "sha": "0fca055ba6efd763b979404067a376dfd305a86d54c76d81866565092dd77e60",
+ "episodes_replaced": {
+  "1": {
+   "donor": "/data1/SRL_V2D/challenge_submissions_SRL/a20_donors_20261102/A20_ep1_b1/all_20_episodes",
+   "donor_sha": "11f572f4958c87c3bb0e4dd018678677d228e24a46fe802627e3b42b858f6880",
+   "checkpoint": "fd2e54794ea413a94f51ccd9b5debd7b36bb5120a2f588e4bff66393631a0c40",
+   "rows": 670,
+   "mesh": {
+    "track_3/e000001/w000/f000000/o0": "base(cwmesh or v29)",
+    "track_3/e000001/w000/f000000/o1": "base(cwmesh or v29)"
+   }
+  },
+  "3": {
+   "donor": "/data1/SRL_V2D/challenge_submissions_SRL/a20_donors_20261102/A20_ep3_b2/all_20_episodes",
+   "donor_sha": "32f8eab5ab883b4f1bf6309a8cb378b8dc8bce3478f871106175033aad75e225",
+   "checkpoint": "0e008f0112f1e4b8b6708299979371c2d48aff065eb384107c854a832c65293f",
+   "rows": 626,
+   "mesh": {
+    "track_3/e000003/w000/f000000/o0": "base(cwmesh or v29)",
+    "track_3/e000003/w000/f000000/o1": "base(cwmesh or v29)"
+   }
+  },
+  "5": {
+   "donor": "/data1/SRL_V2D/challenge_submissions_SRL/a20_donors_20261102/A20_ep5_b2/all_20_episodes",
+   "donor_sha": "ad7ff6555399905123a480c8dc8806bbe344ba40c9739699ce6c3a57959b930b",
+   "checkpoint": "6003f6d708a9d8787f9fa6c158e77b38ed8f3b489b2f1da7159ee20885b247f9",
+   "rows": 576,
+   "mesh": {
+    "track_3/e000005/w000/f000000/o0": "base(cwmesh or v29)",
+    "track_3/e000005/w000/f000000/o1": "base(cwmesh or v29)"
+   }
+  },
+  "10": {
+   "donor": "/data1/SRL_V2D/challenge_submissions_SRL/a20_donors_20261102/A20_ep10_b1/all_20_episodes",
+   "donor_sha": "a67d6eba6efe752f668ef7175306bcc2e58c1436fa2d7b5b8bb4334254181f53",
+   "checkpoint": "3ce39357e19cb856e70f7268fb30c0eed157e740241300f5ff3e83f9dcb4a454",
+   "rows": 322,
+   "mesh": {
+    "track_3/e000010/w000/f000000/o0": "base(cwmesh or v29)",
+    "track_3/e000010/w000/f000000/o1": "base(cwmesh or v29)"
+   }
+  },
+  "15": {
+   "donor": "/data1/SRL_V2D/challenge_submissions_SRL/a20_donors_20261102/A20_ep15_b1/all_20_episodes",
+   "donor_sha": "c79065485b80208cd42f9280d744942d82d83554705468e015128327cad582be",
+   "checkpoint": "e24b7ded608ff81d73af6da4474a5843a25983113480d39d11b5d06b97f865e9",
+   "rows": 332,
+   "mesh": {
+    "track_3/e000015/w000/f000000/o0": "base(cwmesh or v29)",
+    "track_3/e000015/w000/f000000/o1": "base(cwmesh or v29)"
+   }
+  },
+  "16": {
+   "donor": "/data1/SRL_V2D/challenge_submissions_SRL/anchor_20261103/donors/A20_ep16_anc1/all_20_episodes",
+   "donor_sha": "80e0d9727fbb6774972c1610be28b6b5cb782c4dfccd50a587347dd2781eb972",
+   "checkpoint": "d5c108d6309840b830caa4b91b039897d8960028f7592a25d8725bdcd6af1506",
+   "rows": 346,
+   "mesh": {
+    "track_3/e000016/w000/f000000/o0": "base(cwmesh or v29)",
+    "track_3/e000016/w000/f000000/o1": "base(cwmesh or v29)"
+   }
+  },
+  "19": {
+   "donor": "/data1/SRL_V2D/challenge_submissions_SRL/a20_donors_20261102/A20_ep19_b2/all_20_episodes",
+   "donor_sha": "9713369eb6c83da6feeea35e46fcd17c206d27fa30f286b825bb7a128ea56184",
+   "checkpoint": "a44315289a60251aff6f0b6248cf668ff8d127bd5e23d8f0213e92eb1f1ff317",
+   "rows": 470,
+   "mesh": {
+    "track_3/e000019/w000/f000000/o0": "base(cwmesh or v29)",
+    "track_3/e000019/w000/f000000/o1": "base(cwmesh or v29)"
+   }
+  },
+  "28": {
+   "donor": "/data1/SRL_V2D/challenge_submissions_SRL/a20_donors_20261102/A20_ep28_b2/all_20_episodes",
+   "donor_sha": "153fa1ef98d35e8bfce59784bef06de6ed2e7e5edc8f55961a6b11fe9e057318",
+   "checkpoint": "b056f9f4897be3b87a02f7e9607537f6f77bf671658b933b124808b55348a6b2",
+   "rows": 440,
+   "mesh": {
+    "track_3/e000028/w000/f000000/o0": "base(cwmesh or v29)",
+    "track_3/e000028/w000/f000000/o1": "base(cwmesh or v29)"
+   }
+  },
+  "30": {
+   "donor": "/data1/SRL_V2D/challenge_submissions_SRL/a20_donors_20261102/A20_ep30_b1/all_20_episodes",
+   "donor_sha": "6a4541242fefb0f9eb8367fce3617e9a93d73e9f0571e9e49f487f425a919b7b",
+   "checkpoint": "b4f1a58475be56098020c83428c9fe83f5f1331eea00b517bc43b6bf9de39d1c",
+   "rows": 526,
+   "mesh": {
+    "track_3/e000030/w000/f000000/o0": "base(cwmesh or v29)",
+    "track_3/e000030/w000/f000000/o1": "base(cwmesh or v29)"
+   }
+  },
+  "32": {
+   "donor": "/data1/SRL_V2D/challenge_submissions_SRL/ep32_fix_20261102/K32_R10_R10_c1/all_20_episodes",
+   "donor_sha": "b3126beed8b1ff28f424a498cb93ae48cf838683914aa92eaf80c85c3b493703",
+   "checkpoint": "dd904268d818b1bff83a698012c6d071c8c5666d4c81c482846982658c637905",
+   "rows": 518,
+   "mesh": {
+    "track_3/e000032/w000/f000000/o0": "base(cwmesh or v29)",
+    "track_3/e000032/w000/f000000/o1": "base(cwmesh or v29)"
+   }
+  },
+  "33": {
+   "donor": "/data1/SRL_V2D/challenge_submissions_SRL/ep33_fix_20261102/K33_H5r16_c3/all_20_episodes",
+   "donor_sha": "c57ae87c25a87e174c011227bdb3e1ac7fa19b1667b2efd56145eea58e3d1189",
+   "checkpoint": "381aa36553286c9d72cabb7f633ea7940e0dcf2d1451b163f5aacf346e386962",
+   "rows": 696,
+   "mesh": {
+    "track_3/e000033/w000/f000000/o0": "base(cwmesh or v29)",
+    "track_3/e000033/w000/f000000/o1": "base(cwmesh or v29)"
+   }
+  },
+  "35": {
+   "donor": "/data1/SRL_V2D/challenge_submissions_SRL/ep35_fix_20261102/K35_H2joint_b1/all_20_episodes",
+   "donor_sha": "7e469bd0fad3b7f6db4b0357663f4c8421df0b882d418e668d22550fe09ce25c",
+   "checkpoint": "f0ce94aa956e1218e6c82e8fd390d556c2f3496df2e36762e47b1858cf5cfd2a",
+   "rows": 421,
+   "mesh": {
+    "track_3/e000035/w000/f000000/o0": "base(cwmesh or v29)"
+   }
+  },
+  "36": {
+   "donor": "/data1/SRL_V2D/challenge_submissions_SRL/a20_donors_20261102/A20_ep36_b2/all_20_episodes",
+   "donor_sha": "746eb4bec559c4ce63428d089f6f9551d9e570a8d5332b5b4b62fe9881604753",
+   "checkpoint": "c49bf1ef39b5bb89abd787ab3dc5ad8faa63e7f39052c630be9e47d95b8af713",
+   "rows": 407,
+   "mesh": {
+    "track_3/e000036/w000/f000000/o0": "base(cwmesh or v29)"
+   }
+  },
+  "37": {
+   "donor": "/data1/SRL_V2D/challenge_submissions_SRL/a20_donors_20261102/A20_ep37_b1/all_20_episodes",
+   "donor_sha": "39176e3490ddb168c7e434a8babc54bf83cf7e536a69ad535ce11d5004a0a963",
+   "checkpoint": "e8d1e1cd56d4e30d78b8f95545114e92fadce6c06b87c65c4b52a14292a5658d",
+   "rows": 151,
+   "mesh": {
+    "track_3/e000037/w000/f000000/o0": "base(cwmesh or v29)"
+   }
+  },
+  "38": {
+   "donor": "/data1/SRL_V2D/challenge_submissions_SRL/a20_donors_20261102/A20_ep38_b1/all_20_episodes",
+   "donor_sha": "21d656dbc58cbfc4b86a2645e726ea5b907c277a5c68366b62d1fbaaabe16e7d",
+   "checkpoint": "559351d08cd55f2654877d675a41a7fa53f66d965b607248b2479d344a4821e8",
+   "rows": 263,
+   "mesh": {
+    "track_3/e000038/w000/f000000/o0": "base(cwmesh or v29)"
+   }
+  }
+ }
+}

@@ -1,0 +1,310 @@
+{
+    "0":  {
+              "mark":  "out",
+              "conf":  "medium",
+              "why":  "Resting on table; rim and inner shading visible"
+          },
+    "2":  {
+              "mark":  "out",
+              "conf":  "medium",
+              "why":  "Resting on table; rim and inner shading visible"
+          },
+    "4":  {
+              "mark":  "out",
+              "conf":  "medium",
+              "why":  "Resting on table; rim and inner shading visible"
+          },
+    "6":  {
+              "mark":  "out",
+              "conf":  "medium",
+              "why":  "Resting on table; rim and inner shading visible"
+          },
+    "8":  {
+              "mark":  "out",
+              "conf":  "medium",
+              "why":  "Resting on table; rim and inner shading visible"
+          },
+    "10":  {
+               "mark":  "out",
+               "conf":  "medium",
+               "why":  "Resting on table; rim and inner shading visible"
+           },
+    "12":  {
+               "mark":  "out",
+               "conf":  "medium",
+               "why":  "Resting on table; rim and inner shading visible"
+           },
+    "14":  {
+               "mark":  "out",
+               "conf":  "medium",
+               "why":  "Resting on table; rim and inner shading visible"
+           },
+    "16":  {
+               "mark":  "out",
+               "conf":  "medium",
+               "why":  "Resting on table; rim and inner shading visible"
+           },
+    "18":  {
+               "mark":  "out",
+               "conf":  "medium",
+               "why":  "Resting on table; rim and inner shading visible"
+           },
+    "20":  {
+               "mark":  "out",
+               "conf":  "medium",
+               "why":  "Resting on table; rim and inner shading visible"
+           },
+    "22":  {
+               "mark":  "out",
+               "conf":  "medium",
+               "why":  "Resting on table; rim and inner shading visible"
+           },
+    "24":  {
+               "mark":  "out",
+               "conf":  "medium",
+               "why":  "Resting on table; rim and inner shading visible"
+           },
+    "26":  {
+               "mark":  "out",
+               "conf":  "medium",
+               "why":  "Resting on table; rim and inner shading visible"
+           },
+    "28":  {
+               "mark":  "out",
+               "conf":  "medium",
+               "why":  "Resting; concave interior with lower-right rim visible"
+           },
+    "30":  {
+               "mark":  "out",
+               "conf":  "medium",
+               "why":  "Resting; concave interior with lower-right rim visible"
+           },
+    "32":  {
+               "mark":  "out",
+               "conf":  "medium",
+               "why":  "Resting; concave interior with lower-right rim visible"
+           },
+    "34":  {
+               "mark":  "out",
+               "conf":  "medium",
+               "why":  "Resting; concave interior with lower-right rim visible"
+           },
+    "36":  {
+               "mark":  "out",
+               "conf":  "high",
+               "why":  "Clear rim band and shaded interior in close view"
+           },
+    "38":  {
+               "mark":  "out",
+               "conf":  "medium",
+               "why":  "Resting; concave interior with lower-right rim visible"
+           },
+    "40":  {
+               "mark":  "out",
+               "conf":  "medium",
+               "why":  "Resting; concave interior with lower-right rim visible"
+           },
+    "42":  {
+               "mark":  "out",
+               "conf":  "medium",
+               "why":  "Resting; concave interior with lower-right rim visible"
+           },
+    "44":  {
+               "mark":  "out",
+               "conf":  "medium",
+               "why":  "Resting; concave interior with lower-right rim visible"
+           },
+    "46":  {
+               "mark":  "out",
+               "conf":  "medium",
+               "why":  "Resting; concave interior with lower-right rim visible"
+           },
+    "48":  {
+               "mark":  "out",
+               "conf":  "medium",
+               "why":  "Resting; concave interior with lower-right rim visible"
+           },
+    "50":  {
+               "mark":  "out",
+               "conf":  "medium",
+               "why":  "Resting; concave interior with lower-right rim visible"
+           },
+    "52":  {
+               "mark":  "out",
+               "conf":  "medium",
+               "why":  "Resting; concave interior with lower-right rim visible"
+           },
+    "54":  {
+               "mark":  "out",
+               "conf":  "medium",
+               "why":  "Resting; concave interior with lower-right rim visible"
+           },
+    "56":  {
+               "mark":  "out",
+               "conf":  "low",
+               "why":  "Lifting, blurred; same pose as resting"
+           },
+    "58":  {
+               "mark":  "out",
+               "conf":  "low",
+               "why":  "Motion blurred; marker layout matches resting pose"
+           },
+    "60":  {
+               "mark":  "out",
+               "conf":  "low",
+               "why":  "Blurred; bowl face-on, continuity with resting"
+           },
+    "62":  {
+               "mark":  "out",
+               "conf":  "medium",
+               "why":  "Inner rim visible along lower-right edge"
+           },
+    "64":  {
+               "mark":  "out",
+               "conf":  "medium",
+               "why":  "Face-on, concave shading and rim visible"
+           },
+    "66":  {
+               "mark":  "out",
+               "conf":  "medium",
+               "why":  "Face-on, interior shading; neck marker at top edge"
+           },
+    "68":  {
+               "mark":  [
+                            0,
+                            1
+                        ],
+               "conf":  "low",
+               "why":  "Rolling about axis; neck marker moving toward camera"
+           },
+    "70":  {
+               "mark":  [
+                            0,
+                            1
+                        ],
+               "conf":  "low",
+               "why":  "Edge-on; neck marker faces camera, rotated from out"
+           },
+    "72":  {
+               "mark":  [
+                            0,
+                            1
+                        ],
+               "conf":  "low",
+               "why":  "Edge-on; neck marker centered toward camera"
+           },
+    "74":  {
+               "mark":  [
+                            0.16,
+                            0.99
+                        ],
+               "conf":  "low",
+               "why":  "Edge-on, blurred; marker still facing camera"
+           },
+    "76":  {
+               "mark":  [
+                            0.25,
+                            0.97
+                        ],
+               "conf":  "low",
+               "why":  "Edge-on tip entering cup; marker faces camera"
+           },
+    "78":  {
+               "mark":  "unsure",
+               "conf":  "low",
+               "why":  "Bowl inside cup, hidden by cup wall"
+           },
+    "80":  {
+               "mark":  "unsure",
+               "conf":  "low",
+               "why":  "Bowl inside cup, hidden by cup wall"
+           },
+    "82":  {
+               "mark":  "unsure",
+               "conf":  "low",
+               "why":  "Bowl inside cup, hidden by cup wall"
+           },
+    "84":  {
+               "mark":  "unsure",
+               "conf":  "low",
+               "why":  "Bowl inside cup, hidden by cup wall"
+           },
+    "86":  {
+               "mark":  "unsure",
+               "conf":  "low",
+               "why":  "Bowl inside cup, hidden by cup wall"
+           },
+    "88":  {
+               "mark":  "unsure",
+               "conf":  "low",
+               "why":  "Bowl inside cup, hidden by cup wall"
+           },
+    "90":  {
+               "mark":  "unsure",
+               "conf":  "low",
+               "why":  "Bowl inside cup, hidden by cup wall"
+           },
+    "92":  {
+               "mark":  "out",
+               "conf":  "low",
+               "why":  "Bowl partly visible in cup; marker back at top"
+           },
+    "94":  {
+               "mark":  "out",
+               "conf":  "low",
+               "why":  "Bowl face visible inside cup; marker at top edge"
+           },
+    "96":  {
+               "mark":  "out",
+               "conf":  "low",
+               "why":  "Wide bowl face inside cup; continuity with later frames"
+           },
+    "98":  {
+               "mark":  "out",
+               "conf":  "low",
+               "why":  "Wide bowl face in cup, interior shading"
+           },
+    "100":  {
+                "mark":  "out",
+                "conf":  "low",
+                "why":  "Blurred; lower rim band visible, face-on"
+            },
+    "102":  {
+                "mark":  "out",
+                "conf":  "medium",
+                "why":  "Face-on, lower rim band and interior shading"
+            },
+    "104":  {
+                "mark":  "out",
+                "conf":  "medium",
+                "why":  "Inner surface with lip crease near lower edge"
+            },
+    "106":  {
+                "mark":  "out",
+                "conf":  "medium",
+                "why":  "Face-on; shaded interior, rim along lower edge"
+            },
+    "108":  {
+                "mark":  "out",
+                "conf":  "low",
+                "why":  "Motion blurred; marker layout matches previous frames"
+            },
+    "110":  {
+                "mark":  "out",
+                "conf":  "medium",
+                "why":  "Face-on, neck marker at upper edge as before"
+            },
+    "112":  {
+                "mark":  "out",
+                "conf":  "medium",
+                "why":  "Interior shading with rim on upper-right edge"
+            },
+    "114":  {
+                "mark":  [
+                             -0.47,
+                             0.88
+                         ],
+                "conf":  "low",
+                "why":  "Edge-on; neck marker now faces camera"
+            }
+}

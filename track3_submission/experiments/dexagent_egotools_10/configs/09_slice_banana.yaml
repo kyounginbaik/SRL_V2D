@@ -1,0 +1,38 @@
+agent:
+  provider: external
+  model: codex-current-session
+  transport_dir: /data1/SRL_V2D/experiments/dexagent_egotools_10/transport/09_slice_banana
+  response_timeout_s: 3600
+run:
+  name: 09_slice_banana
+  output_dir: /data1/SRL_V2D/experiments/dexagent_egotools_10/runs
+examples:
+  reuse: false
+  save_assets: false
+inputs:
+  video: /data1/SRL_V2D/experiments/dexagent_egotools_10/clips/09_slice_banana.mp4
+  task: Steady the banana and slice it with the kitchen knife.
+  setup: /data1/SRL_V2D/third_party/DexAgent/setup
+  library: /data1/SRL_V2D/third_party/DexAgent/tool_library
+camera:
+  source: estimate
+  width: 512
+  height: 512
+  intrinsics:
+    fx: 200.00000000000006
+    fy: 200.00000000000006
+    cx: 256.0
+    cy: 256.0
+stage1:
+  examples: []
+  max_rounds: 12
+  max_wall_minutes: 60
+stage2:
+  max_rounds: 12
+  max_wall_minutes: 30
+stage3:
+  max_rounds: 12
+  max_wall_minutes: 30
+  methods: []
+compute:
+  workers: 2

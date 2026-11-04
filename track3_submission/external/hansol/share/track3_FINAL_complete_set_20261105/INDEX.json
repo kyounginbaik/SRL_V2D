@@ -1,0 +1,102 @@
+[
+ {
+  "ep": 1,
+  "final_source": "A20 donor: A20_ep1_b1 (streamALL20K)",
+  "note": "unchanged from FINAL; see review/ and docs/REPORT_episode_review_20261105.md"
+ },
+ {
+  "ep": 3,
+  "final_source": "A20 donor: A20_ep3_b2 (streamALL20K)",
+  "note": "unchanged from FINAL; see review/ and docs/REPORT_episode_review_20261105.md"
+ },
+ {
+  "ep": 5,
+  "final_source": "A20 donor: A20_ep5_b2 (streamALL20K)",
+  "note": "unchanged from FINAL; see review/ and docs/REPORT_episode_review_20261105.md"
+ },
+ {
+  "ep": 6,
+  "final_source": "base v29/v30c1: G18_ep06_H13b1 (streamG18v29)",
+  "note": "unchanged from FINAL; see review/ and docs/REPORT_episode_review_20261105.md"
+ },
+ {
+  "ep": 8,
+  "final_source": "base v29/v30c1: H13_ep08_a2 (streamH13b)",
+  "note": "unchanged from FINAL; see review/ and docs/REPORT_episode_review_20261105.md"
+ },
+ {
+  "ep": 10,
+  "final_source": "A20 donor: A20_ep10_b1 (streamALL20K)",
+  "note": "unchanged from FINAL; see review/ and docs/REPORT_episode_review_20261105.md"
+ },
+ {
+  "ep": 14,
+  "final_source": "base v29/v30c1: H13_ep14_t1p15 (streamH13b)",
+  "note": "unchanged from FINAL; see review/ and docs/REPORT_episode_review_20261105.md"
+ },
+ {
+  "ep": 15,
+  "final_source": "A20 donor: A20_ep15_b1 (streamALL20K)",
+  "note": "unchanged from FINAL; see review/ and docs/REPORT_episode_review_20261105.md"
+ },
+ {
+  "ep": 16,
+  "final_source": "anchor donor: A20_ep16_anc1 (streamANCHOR (staged by streamALL20K))",
+  "note": "unchanged from FINAL; see review/ and docs/REPORT_episode_review_20261105.md"
+ },
+ {
+  "ep": 19,
+  "final_source": "A20 donor: A20_ep19_b2 (streamALL20K)",
+  "note": "unchanged from FINAL; see review/ and docs/REPORT_episode_review_20261105.md"
+ },
+ {
+  "ep": 20,
+  "final_source": "base v29/v30c1: H13_ep20_b2 (streamH13a)",
+  "note": "unchanged from FINAL; see review/ and docs/REPORT_episode_review_20261105.md"
+ },
+ {
+  "ep": 25,
+  "final_source": "base v29/v30c1: D9_ep25_b4 (streamD9_tight)",
+  "note": "unchanged from FINAL; see review/ and docs/REPORT_episode_review_20261105.md"
+ },
+ {
+  "ep": 28,
+  "final_source": "A20 donor: A20_ep28_b2 (streamALL20K)",
+  "note": "unchanged from FINAL; see review/ and docs/REPORT_episode_review_20261105.md"
+ },
+ {
+  "ep": 30,
+  "final_source": "A20 donor: A20_ep30_b1 (streamALL20K)",
+  "note": "unchanged from FINAL; see review/ and docs/REPORT_episode_review_20261105.md"
+ },
+ {
+  "ep": 32,
+  "final_source": "T32c_b1 (team; replaces FINAL K32_R10)",
+  "note": "MP-SR passes alone (0.95); recon uses human bowl marks (marks_ep32.json)"
+ },
+ {
+  "ep": 33,
+  "final_source": "R6M2 (ours; replaces FINAL K33_H5r16_c3)",
+  "note": "MP-SR passes alone (0.95); recon uses human bowl marks (docs/EP33_AGENT_SPOON_MARKS.md); right hand releases the spoon about 0.5 s early"
+ },
+ {
+  "ep": 35,
+  "final_source": "K35 donor: K35_K35_H2joint_b1 (streamK35_ep35)",
+  "note": "unchanged from FINAL; see review/ and docs/REPORT_episode_review_20261105.md"
+ },
+ {
+  "ep": 36,
+  "final_source": "A20 donor: A20_ep36_b2 (streamALL20K)",
+  "note": "unchanged from FINAL; see review/ and docs/REPORT_episode_review_20261105.md"
+ },
+ {
+  "ep": 37,
+  "final_source": "A20 donor: A20_ep37_b1 (streamALL20K)",
+  "note": "unchanged from FINAL; see review/ and docs/REPORT_episode_review_20261105.md"
+ },
+ {
+  "ep": 38,
+  "final_source": "A20 donor: A20_ep38_b1 (streamALL20K)",
+  "note": "unchanged from FINAL; see review/ and docs/REPORT_episode_review_20261105.md"
+ }
+]

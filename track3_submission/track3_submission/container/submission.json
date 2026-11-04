@@ -1,0 +1,58 @@
+{
+  "schema": "v2d_container_v1",
+  "team": "SRL",
+  "_draft_note": "DRAFT v1. Fields starting with '_' are notes for the team and must be removed before the container is built. Fill every TODO.",
+  "code": {
+    "path": "code",
+    "commit_url": "https://github.com/kyounginbaik/SRL_V2D/commit/5cc5ca516fc791f745449b279620c67e748856cd",
+    "_todo": "If the team commits this overlay and re-uploads FINAL with the new commit URL before the freeze, replace this with the new full-SHA commit URL. The verifier requires the URL in the uploaded rows == HEAD of code/."
+  },
+  "kit": "kit",
+  "submissions": [
+    {
+      "label": "final",
+      "track": "track_3",
+      "file": "submitted/track3_submission.parquet",
+      "_file_sha256": "9bc322af8242e7ee1ec71369d9e725ac737e4cce49920f6270e3a7aa113d16a1",
+      "_file_source": "/data1/hansol/spoon3537/rt/packages/track3_FINALc_ep36s4/all_20_episodes/track3_submission.parquet (8b6fa2b9 = FINAL 0fca055b + ep32 T32c_b1 + ep33 R6M2, with only the ep36 rows replaced by candidate S3_ep36_s4; spoon3537/rt/code/s3pkg.py)",
+      "kaggle_submission_ids": {
+        "add_auc": 57997980,
+        "spider_sr": 0,
+        "maniptrans_sr": 0,
+        "rpe_cm": 0,
+        "mppe_cm": 57997979
+      },
+      "_todo_ids": "add_auc 57997980 and mppe_cm 57997979 are from receipt_s4.json (COMPLETE). MP-SR, SP-SR and RPE uploads of this file: fill from their receipts. 57990221 is the MP-SR upload of the previous file 8b6fa2b9, not of this file. If a board's Final is a different file (e.g. RPE: ep36 is single-object, so 8b6fa2b9 scores the same), add one entry per file.",
+      "evaluator": {
+        "script": "code/challenge_reconstruction/evaluator_build_v2_20261023/package_code/common_evaluator.py",
+        "evaluation_package": "TODO: flash_chord/src/flash_chord/evaluation of the runtime installed in the image",
+        "_note": "eval_script_sha256 cbe866f9 = sha256(common_evaluator.py). eval_code_sha256 fdddb348 uses the team build-v2 convention (concatenated sources in build_manifest.json), not the kit's 4-module digest, so the kit check of eval_code_sha256 will FAIL until this is explained to the organizers or the file is re-packed."
+      },
+      "checkpoints": {
+        "1": "weights/final/episode_000001/portable/original/policy.npz",
+        "3": "weights/final/episode_000003/portable/original/policy.npz",
+        "5": "weights/final/episode_000005/portable/original/policy.npz",
+        "6": "weights/final/episode_000006/portable/original/policy.npz",
+        "8": "weights/final/episode_000008/portable/original/policy.npz",
+        "10": "weights/final/episode_000010/portable/original/policy.npz",
+        "14": "weights/final/episode_000014/portable/original/policy.npz",
+        "15": "weights/final/episode_000015/portable/original/policy.npz",
+        "16": "weights/final/episode_000016/portable/original/policy.npz",
+        "19": "weights/final/episode_000019/portable/original/policy.npz",
+        "20": "weights/final/episode_000020/portable/original/policy.npz",
+        "25": "weights/final/episode_000025/portable/original/policy.npz",
+        "28": "weights/final/episode_000028/portable/original/policy.npz",
+        "30": "weights/final/episode_000030/portable/original/policy.npz",
+        "32": "weights/final/episode_000032/portable/original/policy.npz",
+        "33": "weights/final/episode_000033/portable/original/policy.npz",
+        "35": "weights/final/episode_000035/portable/original/policy.npz",
+        "36": "weights/final/episode_000036/portable/original/policy.npz",
+        "37": "weights/final/episode_000037/portable/original/policy.npz",
+        "38": "weights/final/episode_000038/portable/original/policy.npz"
+      },
+      "meshes": "meshes/final",
+      "_meshes_note": "mesh cells of 9bc322af are FINAL 0fca055b's (ep33 byte-identical to K33_H5r16_c3 per R33_PACKAGE.json; ep36 byte-identical to the v29 selection per S3_PACKAGE.json); CD-O file a03230e5. Export them from the parquet's mesh cells or from CWMESH_SWAP.json sources.",
+      "outputs": "outputs/final/rollouts"
+    }
+  ]
+}

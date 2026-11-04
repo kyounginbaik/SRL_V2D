@@ -1,0 +1,224 @@
+{
+  "task_prompt": "Use chopsticks to pick up a green grape and place it on the bread.",
+  "task_summary": "The right hand uses two chopsticks to pick up and place two green grapes on the bread while the left hand rests.",
+  "environment": {
+    "support_surface": "wooden tabletop",
+    "camera": "moving head-mounted rectified camera"
+  },
+  "hands": {
+    "used": [
+      "right"
+    ],
+    "notes": "The left arm remains at the left side; the right hand manipulates the chopsticks."
+  },
+  "objects": [
+    {
+      "id": "chopsticks",
+      "name": "two light wooden chopsticks",
+      "type": "rigid",
+      "role": "tool",
+      "pieces": {
+        "count": 2,
+        "kind": "chopstick",
+        "loose": true
+      },
+      "properties": [
+        "The two separate slender sticks move relative to each other under independent finger control.",
+        "Their tips must pinch the grape through contact and friction.",
+        "No physical hinge joins the sticks."
+      ],
+      "evidence": "Right hand holds the two sticks throughout 0-14 s; tips approach and close around grapes at 3-6 s and 10-12 s."
+    },
+    {
+      "id": "first_grape",
+      "name": "first green grape",
+      "type": "rigid",
+      "role": "manipulated",
+      "properties": [
+        "Small rounded fruit that can roll on the tabletop.",
+        "Must be grasped by the chopstick tips rather than directly by the hand.",
+        "Remains approximately shape-preserving in this demonstration."
+      ],
+      "evidence": "Picked from the cluster near 4-6 s and placed on the bread near 7-8 s."
+    },
+    {
+      "id": "second_grape",
+      "name": "second green grape",
+      "type": "rigid",
+      "role": "manipulated",
+      "properties": [
+        "A separate small green fruit.",
+        "Must be transported using chopstick contact.",
+        "It remains on the bread after placement."
+      ],
+      "evidence": "A second transfer from the right-side cluster onto the bread occurs near 10-14 s."
+    },
+    {
+      "id": "bread",
+      "name": "square slice of bread",
+      "type": "rigid",
+      "role": "target",
+      "properties": [
+        "The bread supports the placed grapes.",
+        "The slice remains approximately shape-preserving in this clip.",
+        "The bread is already on the plate at the start."
+      ],
+      "evidence": "Bread remains on the patterned plate at 0-14 s."
+    },
+    {
+      "id": "plate",
+      "name": "white plate with blue pattern",
+      "type": "rigid",
+      "role": "static",
+      "properties": [
+        "Shallow plate supports the bread.",
+        "Rim surrounds its interior.",
+        "Stays on the tabletop throughout the transfers."
+      ],
+      "evidence": "Visible to the left of the grape cluster at 0-14 s."
+    }
+  ],
+  "subgoals": [
+    {
+      "index": 1,
+      "acting_hand": "right",
+      "action": "Hold both chopsticks in the right hand.",
+      "motion": "hold",
+      "object_refs": [
+        "chopsticks"
+      ],
+      "hand_roles": {
+        "left": "Rests beside the torso.",
+        "right": "Holds and controls both chopsticks."
+      },
+      "goal": "The chopsticks are held in the right hand.",
+      "time_window_s": [
+        0,
+        1
+      ]
+    },
+    {
+      "index": 2,
+      "acting_hand": "right",
+      "action": "Pinch and lift the first grape with the chopstick tips.",
+      "motion": "grasp_lift",
+      "object_refs": [
+        "chopsticks",
+        "first_grape"
+      ],
+      "hand_roles": {
+        "left": "Rests beside the torso.",
+        "right": "Closes the chopstick tips around the first grape."
+      },
+      "goal": "The first green grape is clamped between the chopstick tips and held clear of the table.",
+      "time_window_s": [
+        1,
+        6
+      ]
+    },
+    {
+      "index": 3,
+      "acting_hand": "right",
+      "action": "Carry the first grape over the bread.",
+      "motion": "carry",
+      "object_refs": [
+        "chopsticks",
+        "first_grape",
+        "bread"
+      ],
+      "hand_roles": {
+        "left": "Rests beside the torso.",
+        "right": "Transports the grape using the chopsticks."
+      },
+      "goal": "The first green grape is held over the bread.",
+      "time_window_s": [
+        6,
+        7.3
+      ]
+    },
+    {
+      "index": 4,
+      "acting_hand": "right",
+      "action": "Place and release the first grape on the bread.",
+      "motion": "place",
+      "object_refs": [
+        "chopsticks",
+        "first_grape",
+        "bread"
+      ],
+      "hand_roles": {
+        "left": "Rests beside the torso.",
+        "right": "Separates the chopstick tips after lowering the grape."
+      },
+      "goal": "The first green grape rests on the bread.",
+      "time_window_s": [
+        7.3,
+        9.2
+      ]
+    },
+    {
+      "index": 5,
+      "acting_hand": "right",
+      "action": "Pinch and lift the second grape using the chopsticks.",
+      "motion": "grasp_lift",
+      "object_refs": [
+        "chopsticks",
+        "second_grape"
+      ],
+      "hand_roles": {
+        "left": "Rests beside the torso.",
+        "right": "Pinches the second grape with the tips."
+      },
+      "goal": "The second green grape is clamped between the chopstick tips and held clear of the table.",
+      "time_window_s": [
+        9.2,
+        11.6
+      ]
+    },
+    {
+      "index": 6,
+      "acting_hand": "right",
+      "action": "Carry the second grape over the bread.",
+      "motion": "carry",
+      "object_refs": [
+        "chopsticks",
+        "second_grape",
+        "bread"
+      ],
+      "hand_roles": {
+        "left": "Rests beside the torso.",
+        "right": "Carries the second grape with the chopsticks."
+      },
+      "goal": "The second green grape is held over the bread.",
+      "time_window_s": [
+        11.6,
+        12.8
+      ]
+    },
+    {
+      "index": 7,
+      "acting_hand": "right",
+      "action": "Place the second grape on the bread.",
+      "motion": "place",
+      "object_refs": [
+        "chopsticks",
+        "second_grape",
+        "bread"
+      ],
+      "hand_roles": {
+        "left": "Rests beside the torso.",
+        "right": "Lowers the grape and opens the chopsticks."
+      },
+      "goal": "The second green grape rests on the bread.",
+      "time_window_s": [
+        12.8,
+        14
+      ]
+    }
+  ],
+  "task_success": "The first green grape rests on the bread, the second green grape rests on the bread, the chopsticks are held in the right hand.",
+  "notes": [
+    "Tool-mediated clamping must remain an explicit requirement; direct hand grasping would change the task.",
+    "This is a curated compatibility test using public raw recordings, not the released multiple-choice reasoning benchmark."
+  ]
+}

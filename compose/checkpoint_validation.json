@@ -1,0 +1,7 @@
+{
+  "checkpoint": "third_party/compose_source/ComPose_final/outputs/temporal_balanced_dex1cam_hoi4d_v2/best.pth",
+  "strict_load": true,
+  "missing_keys": [],
+  "unexpected_keys": [],
+  "weights_only": true
+}

@@ -1,0 +1,89 @@
+{
+  "task_prompt": "Wipe the kitchen counter with the paper towel.",
+  "task_summary": "The right hand presses a white paper towel against the counter around the sink and makes repeated wiping strokes.",
+  "environment": {
+    "support_surface": "kitchen cabinetry",
+    "camera": "Moving head-mounted rectified stereo-left camera."
+  },
+  "hands": {
+    "used": [
+      "right"
+    ]
+  },
+  "objects": [
+    {
+      "id": "paper_towel",
+      "name": "white paper towel",
+      "type": "deformable",
+      "role": "tool",
+      "properties": [
+        "Soft sheet conforms to the fingers and counter surface.",
+        "Wiping requires sustained contact while the towel moves across the surface.",
+        "A held towel above the counter does not establish a completed wiping action."
+      ],
+      "evidence": "White towel is held against the counter in repeated strokes at 0-16 s.",
+      "deformation": {
+        "kind": "flexible sheet",
+        "how_the_task_deforms_it": "The hand bunches the towel and presses it onto the counter."
+      }
+    },
+    {
+      "id": "counter",
+      "name": "white kitchen counter",
+      "type": "rigid",
+      "role": "target",
+      "properties": [
+        "Fixed surface around a recessed sink.",
+        "The target area extends along the right and front edges of the sink.",
+        "Wiping should be evaluated from contact and coverage over this area."
+      ],
+      "evidence": "White surface around the sink is visible throughout 0-17.5 s."
+    }
+  ],
+  "subgoals": [
+    {
+      "acting_hand": "right",
+      "motion": "hold",
+      "action": "Hold the paper towel.",
+      "object_refs": [
+        "paper_towel"
+      ],
+      "goal": "The paper towel is held in the right hand.",
+      "time_window_s": [
+        0,
+        0.4
+      ],
+      "hand_roles": {
+        "left": "Rests at the left side.",
+        "right": "Holds the bunched towel."
+      },
+      "index": 1
+    },
+    {
+      "acting_hand": "right",
+      "motion": "wipe",
+      "action": "Wipe repeatedly around the sink.",
+      "object_refs": [
+        "paper_towel",
+        "counter"
+      ],
+      "goal": "The paper towel traverses the counter surface while pressed against it.",
+      "time_window_s": [
+        0.4,
+        16.6
+      ],
+      "hand_roles": {
+        "left": "Remains resting.",
+        "right": "Presses the towel against the counter and makes repeated strokes."
+      },
+      "observed_outcome": "Contact and repeated strokes are visible; hygienic cleanliness is not measurable from these images.",
+      "index": 2
+    }
+  ],
+  "task_success": "The counter surface has been wiped by the paper towel.",
+  "notes": [
+    "The counter is an object because it is the explicit target of wiping; do not omit the contact-and-coverage requirement.",
+    "Current-session Codex visual review; fixed upstream library; no example reuse.",
+    "Unsupported functional/material outcomes must remain explicit and must not be replaced with pose-only success."
+  ]
+}
