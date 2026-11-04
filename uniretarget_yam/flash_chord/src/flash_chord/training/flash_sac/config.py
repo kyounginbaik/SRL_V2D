@@ -113,6 +113,7 @@ class OptimizationConfig:
     actor_learning_rate_multiplier: float = 1.0
     residual_mean_learning_rate_multiplier: float = 1.0
     behavior_cloning_coefficient: float = 0.0
+    residual_penalty: float = 0.0
     target_tau: float = 0.01
     learning_rate_schedule_updates: int | None = None
 

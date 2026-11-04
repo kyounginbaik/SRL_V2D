@@ -14,7 +14,7 @@ import hydra
 import jax
 import warp as wp
 from hydra.core.hydra_config import HydraConfig
-from omegaconf import DictConfig
+from omegaconf import DictConfig, OmegaConf
 
 from flash_chord.configuration import instantiate_typed, resolve_path, resolved_dict
 from flash_chord.embodiments.base import Embodiment
@@ -53,6 +53,11 @@ class LocalMetricLogger:
 @hydra.main(version_base="1.3", config_path="../src/flash_chord/configs", config_name="train_flash_sac")
 def main(cfg: DictConfig) -> None:
     """Compose one FlashSAC experiment and run its compiled Warp/JAX training loop."""
+    # Observations grow with the number of objects; 6M transitions fill a 24 GB GPU with one object and exceed it with two.
+    _meta = Path(str(cfg.task.parquet)).parents[3] / "recon_meta.json"
+    if _meta.is_file() and len(json.loads(_meta.read_text()).get("objects", [])) >= 2:
+        OmegaConf.set_struct(cfg, False)
+        cfg.training.replay.capacity = min(int(cfg.training.replay.capacity), 4000000)
     if cfg.get("adaptive_voc") is not None and cfg.adaptive_voc.get("mode") == "step_schedule":
         # The original contact-focused arm has no direct position tracking.
         # A separate reference-guided arm may use hand tracking so the lower
@@ -149,11 +154,13 @@ def main(cfg: DictConfig) -> None:
         voc_controller=None
         if cfg.get("adaptive_voc") is not None:
             if reference_update is None:raise ValueError("Adaptive VOC requires the rollout evaluator")
-            from flash_chord.lifecycle.performance_voc import PerformanceVOCController, StepVOCController
+            from flash_chord.lifecycle.performance_voc import PerformanceVOCController, StepVOCController, YamProgressVOCController
             voc_options=resolved_dict(cfg.adaptive_voc)
             voc_mode=voc_options.get("mode", "performance_gate")
             if voc_mode == "step_schedule":
                 voc_controller=StepVOCController(reference_update,voc_options,output_dir)
+            elif voc_mode == "progress":
+                voc_controller=YamProgressVOCController(reference_update,voc_options,output_dir)
             elif voc_mode == "performance_gate":
                 voc_controller=PerformanceVOCController(reference_update,voc_options,output_dir)
             else:

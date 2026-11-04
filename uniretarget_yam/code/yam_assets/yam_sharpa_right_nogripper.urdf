@@ -8,7 +8,7 @@
     <visual>
       <origin xyz="-7.22812e-05 2.52572e-05 0.0159932" rpy="0 -0 0" />
       <geometry>
-        <mesh filename="/data5/exaFLOPs/proj/uniretarget/furniturebench_yam/assets_src/yam/assets/base_link_visual.stl" />
+        <mesh filename="/uniretarget_yam/robot/yam/meshes/base_link_visual.stl" />
       </geometry>
       <material name="base_link_parts_material">
         <color rgba="0.08 0.08 0.08 1.0" />
@@ -17,7 +17,7 @@
     <collision>
       <origin xyz="-7.22812e-05 2.52572e-05 0.0159932" rpy="0 -0 0" />
       <geometry>
-        <mesh filename="/data5/exaFLOPs/proj/uniretarget/furniturebench_yam/assets_src/yam/assets/base_link_collision.stl" />
+        <mesh filename="/uniretarget_yam/robot/yam/meshes/base_link_collision.stl" />
       </geometry>
     </collision>
   </link>
@@ -30,7 +30,7 @@
     <visual>
       <origin xyz="-0.00192861 -0.00795735 0.0208176" rpy="0 -0 -1.5708" />
       <geometry>
-        <mesh filename="/data5/exaFLOPs/proj/uniretarget/furniturebench_yam/assets_src/yam/assets/link_1_visual.stl" />
+        <mesh filename="/uniretarget_yam/robot/yam/meshes/link_1_visual.stl" />
       </geometry>
       <material name="link_1_parts_material">
         <color rgba="0.08 0.08 0.08 1.0" />
@@ -39,7 +39,7 @@
     <collision>
       <origin xyz="-0.00192861 -0.00795735 0.0208176" rpy="0 -0 -1.5708" />
       <geometry>
-        <mesh filename="/data5/exaFLOPs/proj/uniretarget/furniturebench_yam/assets_src/yam/assets/link_1_collision.stl" />
+        <mesh filename="/uniretarget_yam/robot/yam/meshes/link_1_collision.stl" />
       </geometry>
     </collision>
   </link>
@@ -52,7 +52,7 @@
     <visual>
       <origin xyz="0.132008 2.10599e-06 0.000293073" rpy="1.5708 1.96007e-14 3.14159" />
       <geometry>
-        <mesh filename="/data5/exaFLOPs/proj/uniretarget/furniturebench_yam/assets_src/yam/assets/link_2_visual.stl" />
+        <mesh filename="/uniretarget_yam/robot/yam/meshes/link_2_visual.stl" />
       </geometry>
       <material name="link_2_parts_material">
         <color rgba="0.08 0.08 0.08 1.0" />
@@ -61,7 +61,7 @@
     <collision>
       <origin xyz="0.132008 2.10599e-06 0.000293073" rpy="1.5708 1.96007e-14 3.14159" />
       <geometry>
-        <mesh filename="/data5/exaFLOPs/proj/uniretarget/furniturebench_yam/assets_src/yam/assets/link_2_collision.stl" />
+        <mesh filename="/uniretarget_yam/robot/yam/meshes/link_2_collision.stl" />
       </geometry>
     </collision>
   </link>
@@ -74,7 +74,7 @@
     <visual>
       <origin xyz="-0.121816 -0.054846 -0.000111108" rpy="-1.5708 -1.96007e-14 -3.14159" />
       <geometry>
-        <mesh filename="/data5/exaFLOPs/proj/uniretarget/furniturebench_yam/assets_src/yam/assets/link_3_visual.stl" />
+        <mesh filename="/uniretarget_yam/robot/yam/meshes/link_3_visual.stl" />
       </geometry>
       <material name="link_3_parts_material">
         <color rgba="0.08 0.08 0.08 1.0" />
@@ -83,7 +83,7 @@
     <collision>
       <origin xyz="-0.121816 -0.054846 -0.000111108" rpy="-1.5708 -1.96007e-14 -3.14159" />
       <geometry>
-        <mesh filename="/data5/exaFLOPs/proj/uniretarget/furniturebench_yam/assets_src/yam/assets/link_3_collision.stl" />
+        <mesh filename="/uniretarget_yam/robot/yam/meshes/link_3_collision.stl" />
       </geometry>
     </collision>
   </link>
@@ -96,7 +96,7 @@
     <visual>
       <origin xyz="-0.0569778 -0.0527104 0.000154878" rpy="-1.5708 -1.34671e-13 -3.14159" />
       <geometry>
-        <mesh filename="/data5/exaFLOPs/proj/uniretarget/furniturebench_yam/assets_src/yam/assets/link_4_visual.stl" />
+        <mesh filename="/uniretarget_yam/robot/yam/meshes/link_4_visual.stl" />
       </geometry>
       <material name="link_4_parts_material">
         <color rgba="0.08 0.08 0.08 1.0" />
@@ -105,7 +105,7 @@
     <collision>
       <origin xyz="-0.0569778 -0.0527104 0.000154878" rpy="-1.5708 -1.34671e-13 -3.14159" />
       <geometry>
-        <mesh filename="/data5/exaFLOPs/proj/uniretarget/furniturebench_yam/assets_src/yam/assets/link_4_collision.stl" />
+        <mesh filename="/uniretarget_yam/robot/yam/meshes/link_4_collision.stl" />
       </geometry>
     </collision>
   </link>
@@ -118,7 +118,7 @@
     <visual>
       <origin xyz="3.64861e-05 0.00025665 0.0353526" rpy="-3.14159 5.80587e-15 1.5708" />
       <geometry>
-        <mesh filename="/data5/exaFLOPs/proj/uniretarget/furniturebench_yam/assets_src/yam/assets/link_5_visual.stl" />
+        <mesh filename="/uniretarget_yam/robot/yam/meshes/link_5_visual.stl" />
       </geometry>
       <material name="link_5_parts_material">
         <color rgba="0.08 0.08 0.08 1.0" />
@@ -127,7 +127,7 @@
     <collision>
       <origin xyz="3.64861e-05 0.00025665 0.0353526" rpy="-3.14159 5.80587e-15 1.5708" />
       <geometry>
-        <mesh filename="/data5/exaFLOPs/proj/uniretarget/furniturebench_yam/assets_src/yam/assets/link_5_collision.stl" />
+        <mesh filename="/uniretarget_yam/robot/yam/meshes/link_5_collision.stl" />
       </geometry>
     </collision>
   </link>
@@ -189,7 +189,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="/data5/exaFLOPs/proj/uniretarget/furniturebench_yam/assets_src/sharpa_wave/right_sharpa_wave/meshes/flange_B.STL" />
+        <mesh filename="/uniretarget_yam/robot/sharpa_wave/right_sharpa_wave/meshes/flange_B.STL" />
       </geometry>
       <material name="">
         <color rgba="0.79216 0.81961 0.93333 1" />
@@ -211,7 +211,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="/data5/exaFLOPs/proj/uniretarget/furniturebench_yam/assets_src/sharpa_wave/right_sharpa_wave/meshes/wrist_B.STL" />
+        <mesh filename="/uniretarget_yam/robot/sharpa_wave/right_sharpa_wave/meshes/wrist_B.STL" />
       </geometry>
       <material name="">
         <color rgba="0.79216 0.81961 0.93333 1" />
@@ -220,7 +220,7 @@
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="/data5/exaFLOPs/proj/uniretarget/furniturebench_yam/assets_src/sharpa_wave/right_sharpa_wave/meshes/wrist_collision.STL" />
+        <mesh filename="/uniretarget_yam/robot/sharpa_wave/right_sharpa_wave/meshes/wrist_collision.STL" />
       </geometry>
     </collision>
   </link>
@@ -239,7 +239,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="/data5/exaFLOPs/proj/uniretarget/furniturebench_yam/assets_src/sharpa_wave/right_sharpa_wave/meshes/right_hand_C_MC_visual.STL" />
+        <mesh filename="/uniretarget_yam/robot/sharpa_wave/right_sharpa_wave/meshes/right_hand_C_MC_visual.STL" />
       </geometry>
       <material name="">
         <color rgba="0.79216 0.81961 0.93333 1" />
@@ -248,7 +248,7 @@
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="/data5/exaFLOPs/proj/uniretarget/furniturebench_yam/assets_src/sharpa_wave/right_sharpa_wave/meshes/right_hand_C_MC.STL" />
+        <mesh filename="/uniretarget_yam/robot/sharpa_wave/right_sharpa_wave/meshes/right_hand_C_MC.STL" />
       </geometry>
     </collision>
   </link>
@@ -261,7 +261,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="/data5/exaFLOPs/proj/uniretarget/furniturebench_yam/assets_src/sharpa_wave/right_sharpa_wave/meshes/right_thumb_CMC_VL_visual.STL" />
+        <mesh filename="/uniretarget_yam/robot/sharpa_wave/right_sharpa_wave/meshes/right_thumb_CMC_VL_visual.STL" />
       </geometry>
       <material name="">
         <color rgba="0.79216 0.81961 0.93333 1" />
@@ -284,7 +284,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="/data5/exaFLOPs/proj/uniretarget/furniturebench_yam/assets_src/sharpa_wave/right_sharpa_wave/meshes/right_thumb_MC_visual.STL" />
+        <mesh filename="/uniretarget_yam/robot/sharpa_wave/right_sharpa_wave/meshes/right_thumb_MC_visual.STL" />
       </geometry>
       <material name="">
         <color rgba="0.79216 0.81961 0.93333 1" />
@@ -293,7 +293,7 @@
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="/data5/exaFLOPs/proj/uniretarget/furniturebench_yam/assets_src/sharpa_wave/right_sharpa_wave/meshes/right_thumb_MC.STL" />
+        <mesh filename="/uniretarget_yam/robot/sharpa_wave/right_sharpa_wave/meshes/right_thumb_MC.STL" />
       </geometry>
     </collision>
   </link>
@@ -313,7 +313,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="/data5/exaFLOPs/proj/uniretarget/furniturebench_yam/assets_src/sharpa_wave/right_sharpa_wave/meshes/right_thumb_MCP_VL_visual.STL" />
+        <mesh filename="/uniretarget_yam/robot/sharpa_wave/right_sharpa_wave/meshes/right_thumb_MCP_VL_visual.STL" />
       </geometry>
       <material name="">
         <color rgba="0.79216 0.81961 0.93333 1" />
@@ -336,7 +336,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="/data5/exaFLOPs/proj/uniretarget/furniturebench_yam/assets_src/sharpa_wave/right_sharpa_wave/meshes/right_thumb_PP_visual.STL" />
+        <mesh filename="/uniretarget_yam/robot/sharpa_wave/right_sharpa_wave/meshes/right_thumb_PP_visual.STL" />
       </geometry>
       <material name="">
         <color rgba="0.79216 0.81961 0.93333 1" />
@@ -345,7 +345,7 @@
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="/data5/exaFLOPs/proj/uniretarget/furniturebench_yam/assets_src/sharpa_wave/right_sharpa_wave/meshes/right_thumb_PP.STL" />
+        <mesh filename="/uniretarget_yam/robot/sharpa_wave/right_sharpa_wave/meshes/right_thumb_PP.STL" />
       </geometry>
     </collision>
   </link>
@@ -365,7 +365,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="/data5/exaFLOPs/proj/uniretarget/furniturebench_yam/assets_src/sharpa_wave/right_sharpa_wave/meshes/DP_Visual_HB1_TH.STL" />
+        <mesh filename="/uniretarget_yam/robot/sharpa_wave/right_sharpa_wave/meshes/DP_Visual_HB1_TH.STL" />
       </geometry>
       <material name="">
         <color rgba="0.79216 0.81961 0.93333 1" />
@@ -374,7 +374,7 @@
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="/data5/exaFLOPs/proj/uniretarget/furniturebench_yam/assets_src/sharpa_wave/right_sharpa_wave/meshes/DP_HB1_TH.STL" />
+        <mesh filename="/uniretarget_yam/robot/sharpa_wave/right_sharpa_wave/meshes/DP_HB1_TH.STL" />
       </geometry>
     </collision>
   </link>
@@ -394,7 +394,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="/data5/exaFLOPs/proj/uniretarget/furniturebench_yam/assets_src/sharpa_wave/right_sharpa_wave/meshes/elastomer_HB1_TH.STL" />
+        <mesh filename="/uniretarget_yam/robot/sharpa_wave/right_sharpa_wave/meshes/elastomer_HB1_TH.STL" />
       </geometry>
       <material name="">
         <color rgba="0.2 1 0.2 1" />
@@ -403,7 +403,7 @@
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="/data5/exaFLOPs/proj/uniretarget/furniturebench_yam/assets_src/sharpa_wave/right_sharpa_wave/meshes/elastomer_HB1_TH.STL" />
+        <mesh filename="/uniretarget_yam/robot/sharpa_wave/right_sharpa_wave/meshes/elastomer_HB1_TH.STL" />
       </geometry>
     </collision>
   </link>
@@ -435,7 +435,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="/data5/exaFLOPs/proj/uniretarget/furniturebench_yam/assets_src/sharpa_wave/right_sharpa_wave/meshes/right_MCP_VL_visual.STL" />
+        <mesh filename="/uniretarget_yam/robot/sharpa_wave/right_sharpa_wave/meshes/right_MCP_VL_visual.STL" />
       </geometry>
       <material name="">
         <color rgba="0.79216 0.81961 0.93333 1" />
@@ -444,7 +444,7 @@
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="/data5/exaFLOPs/proj/uniretarget/furniturebench_yam/assets_src/sharpa_wave/right_sharpa_wave/meshes/MCP_VL.STL" />
+        <mesh filename="/uniretarget_yam/robot/sharpa_wave/right_sharpa_wave/meshes/MCP_VL.STL" />
       </geometry>
     </collision>
   </link>
@@ -464,7 +464,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="/data5/exaFLOPs/proj/uniretarget/furniturebench_yam/assets_src/sharpa_wave/right_sharpa_wave/meshes/right_PP_visual.STL" />
+        <mesh filename="/uniretarget_yam/robot/sharpa_wave/right_sharpa_wave/meshes/right_PP_visual.STL" />
       </geometry>
       <material name="">
         <color rgba="0.79216 0.81961 0.93333 1" />
@@ -473,7 +473,7 @@
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="/data5/exaFLOPs/proj/uniretarget/furniturebench_yam/assets_src/sharpa_wave/right_sharpa_wave/meshes/right_PP.STL" />
+        <mesh filename="/uniretarget_yam/robot/sharpa_wave/right_sharpa_wave/meshes/right_PP.STL" />
       </geometry>
     </collision>
   </link>
@@ -493,7 +493,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="/data5/exaFLOPs/proj/uniretarget/furniturebench_yam/assets_src/sharpa_wave/right_sharpa_wave/meshes/right_MP_visual.STL" />
+        <mesh filename="/uniretarget_yam/robot/sharpa_wave/right_sharpa_wave/meshes/right_MP_visual.STL" />
       </geometry>
       <material name="">
         <color rgba="0.79216 0.81961 0.93333 1" />
@@ -502,7 +502,7 @@
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="/data5/exaFLOPs/proj/uniretarget/furniturebench_yam/assets_src/sharpa_wave/right_sharpa_wave/meshes/right_MP.STL" />
+        <mesh filename="/uniretarget_yam/robot/sharpa_wave/right_sharpa_wave/meshes/right_MP.STL" />
       </geometry>
     </collision>
   </link>
@@ -522,7 +522,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="/data5/exaFLOPs/proj/uniretarget/furniturebench_yam/assets_src/sharpa_wave/right_sharpa_wave/meshes/DP_visual_HB1_4F.STL" />
+        <mesh filename="/uniretarget_yam/robot/sharpa_wave/right_sharpa_wave/meshes/DP_visual_HB1_4F.STL" />
       </geometry>
       <material name="">
         <color rgba="0.79216 0.81961 0.93333 1" />
@@ -531,7 +531,7 @@
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="/data5/exaFLOPs/proj/uniretarget/furniturebench_yam/assets_src/sharpa_wave/right_sharpa_wave/meshes/DP_HB1_4F.STL" />
+        <mesh filename="/uniretarget_yam/robot/sharpa_wave/right_sharpa_wave/meshes/DP_HB1_4F.STL" />
       </geometry>
     </collision>
   </link>
@@ -551,7 +551,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="/data5/exaFLOPs/proj/uniretarget/furniturebench_yam/assets_src/sharpa_wave/right_sharpa_wave/meshes/elastomer_HB1_4F.STL" />
+        <mesh filename="/uniretarget_yam/robot/sharpa_wave/right_sharpa_wave/meshes/elastomer_HB1_4F.STL" />
       </geometry>
       <material name="">
         <color rgba="0.2 1 0.2 1" />
@@ -560,7 +560,7 @@
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="/data5/exaFLOPs/proj/uniretarget/furniturebench_yam/assets_src/sharpa_wave/right_sharpa_wave/meshes/elastomer_HB1_4F.STL" />
+        <mesh filename="/uniretarget_yam/robot/sharpa_wave/right_sharpa_wave/meshes/elastomer_HB1_4F.STL" />
       </geometry>
     </collision>
   </link>
@@ -592,7 +592,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="/data5/exaFLOPs/proj/uniretarget/furniturebench_yam/assets_src/sharpa_wave/right_sharpa_wave/meshes/right_MCP_VL_visual.STL" />
+        <mesh filename="/uniretarget_yam/robot/sharpa_wave/right_sharpa_wave/meshes/right_MCP_VL_visual.STL" />
       </geometry>
       <material name="">
         <color rgba="0.79216 0.81961 0.93333 1" />
@@ -601,7 +601,7 @@
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="/data5/exaFLOPs/proj/uniretarget/furniturebench_yam/assets_src/sharpa_wave/right_sharpa_wave/meshes/MCP_VL.STL" />
+        <mesh filename="/uniretarget_yam/robot/sharpa_wave/right_sharpa_wave/meshes/MCP_VL.STL" />
       </geometry>
     </collision>
   </link>
@@ -621,7 +621,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="/data5/exaFLOPs/proj/uniretarget/furniturebench_yam/assets_src/sharpa_wave/right_sharpa_wave/meshes/right_PP_visual.STL" />
+        <mesh filename="/uniretarget_yam/robot/sharpa_wave/right_sharpa_wave/meshes/right_PP_visual.STL" />
       </geometry>
       <material name="">
         <color rgba="0.79216 0.81961 0.93333 1" />
@@ -630,7 +630,7 @@
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="/data5/exaFLOPs/proj/uniretarget/furniturebench_yam/assets_src/sharpa_wave/right_sharpa_wave/meshes/right_PP.STL" />
+        <mesh filename="/uniretarget_yam/robot/sharpa_wave/right_sharpa_wave/meshes/right_PP.STL" />
       </geometry>
     </collision>
   </link>
@@ -650,7 +650,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="/data5/exaFLOPs/proj/uniretarget/furniturebench_yam/assets_src/sharpa_wave/right_sharpa_wave/meshes/right_MP_visual.STL" />
+        <mesh filename="/uniretarget_yam/robot/sharpa_wave/right_sharpa_wave/meshes/right_MP_visual.STL" />
       </geometry>
       <material name="">
         <color rgba="0.79216 0.81961 0.93333 1" />
@@ -659,7 +659,7 @@
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="/data5/exaFLOPs/proj/uniretarget/furniturebench_yam/assets_src/sharpa_wave/right_sharpa_wave/meshes/right_MP.STL" />
+        <mesh filename="/uniretarget_yam/robot/sharpa_wave/right_sharpa_wave/meshes/right_MP.STL" />
       </geometry>
     </collision>
   </link>
@@ -679,7 +679,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="/data5/exaFLOPs/proj/uniretarget/furniturebench_yam/assets_src/sharpa_wave/right_sharpa_wave/meshes/DP_visual_HB1_4F.STL" />
+        <mesh filename="/uniretarget_yam/robot/sharpa_wave/right_sharpa_wave/meshes/DP_visual_HB1_4F.STL" />
       </geometry>
       <material name="">
         <color rgba="0.79216 0.81961 0.93333 1" />
@@ -688,7 +688,7 @@
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="/data5/exaFLOPs/proj/uniretarget/furniturebench_yam/assets_src/sharpa_wave/right_sharpa_wave/meshes/DP_HB1_4F.STL" />
+        <mesh filename="/uniretarget_yam/robot/sharpa_wave/right_sharpa_wave/meshes/DP_HB1_4F.STL" />
       </geometry>
     </collision>
   </link>
@@ -708,7 +708,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="/data5/exaFLOPs/proj/uniretarget/furniturebench_yam/assets_src/sharpa_wave/right_sharpa_wave/meshes/elastomer_HB1_4F.STL" />
+        <mesh filename="/uniretarget_yam/robot/sharpa_wave/right_sharpa_wave/meshes/elastomer_HB1_4F.STL" />
       </geometry>
       <material name="">
         <color rgba="0.2 1 0.2 1" />
@@ -717,7 +717,7 @@
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="/data5/exaFLOPs/proj/uniretarget/furniturebench_yam/assets_src/sharpa_wave/right_sharpa_wave/meshes/elastomer_HB1_4F.STL" />
+        <mesh filename="/uniretarget_yam/robot/sharpa_wave/right_sharpa_wave/meshes/elastomer_HB1_4F.STL" />
       </geometry>
     </collision>
   </link>
@@ -749,7 +749,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="/data5/exaFLOPs/proj/uniretarget/furniturebench_yam/assets_src/sharpa_wave/right_sharpa_wave/meshes/right_MCP_VL_visual.STL" />
+        <mesh filename="/uniretarget_yam/robot/sharpa_wave/right_sharpa_wave/meshes/right_MCP_VL_visual.STL" />
       </geometry>
       <material name="">
         <color rgba="0.79216 0.81961 0.93333 1" />
@@ -758,7 +758,7 @@
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="/data5/exaFLOPs/proj/uniretarget/furniturebench_yam/assets_src/sharpa_wave/right_sharpa_wave/meshes/MCP_VL.STL" />
+        <mesh filename="/uniretarget_yam/robot/sharpa_wave/right_sharpa_wave/meshes/MCP_VL.STL" />
       </geometry>
     </collision>
   </link>
@@ -778,7 +778,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="/data5/exaFLOPs/proj/uniretarget/furniturebench_yam/assets_src/sharpa_wave/right_sharpa_wave/meshes/right_PP_visual.STL" />
+        <mesh filename="/uniretarget_yam/robot/sharpa_wave/right_sharpa_wave/meshes/right_PP_visual.STL" />
       </geometry>
       <material name="">
         <color rgba="0.79216 0.81961 0.93333 1" />
@@ -787,7 +787,7 @@
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="/data5/exaFLOPs/proj/uniretarget/furniturebench_yam/assets_src/sharpa_wave/right_sharpa_wave/meshes/right_PP.STL" />
+        <mesh filename="/uniretarget_yam/robot/sharpa_wave/right_sharpa_wave/meshes/right_PP.STL" />
       </geometry>
     </collision>
   </link>
@@ -807,7 +807,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="/data5/exaFLOPs/proj/uniretarget/furniturebench_yam/assets_src/sharpa_wave/right_sharpa_wave/meshes/right_MP_visual.STL" />
+        <mesh filename="/uniretarget_yam/robot/sharpa_wave/right_sharpa_wave/meshes/right_MP_visual.STL" />
       </geometry>
       <material name="">
         <color rgba="0.79216 0.81961 0.93333 1" />
@@ -816,7 +816,7 @@
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="/data5/exaFLOPs/proj/uniretarget/furniturebench_yam/assets_src/sharpa_wave/right_sharpa_wave/meshes/right_MP.STL" />
+        <mesh filename="/uniretarget_yam/robot/sharpa_wave/right_sharpa_wave/meshes/right_MP.STL" />
       </geometry>
     </collision>
   </link>
@@ -836,7 +836,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="/data5/exaFLOPs/proj/uniretarget/furniturebench_yam/assets_src/sharpa_wave/right_sharpa_wave/meshes/DP_visual_HB1_4F.STL" />
+        <mesh filename="/uniretarget_yam/robot/sharpa_wave/right_sharpa_wave/meshes/DP_visual_HB1_4F.STL" />
       </geometry>
       <material name="">
         <color rgba="0.79216 0.81961 0.93333 1" />
@@ -845,7 +845,7 @@
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="/data5/exaFLOPs/proj/uniretarget/furniturebench_yam/assets_src/sharpa_wave/right_sharpa_wave/meshes/DP_HB1_4F.STL" />
+        <mesh filename="/uniretarget_yam/robot/sharpa_wave/right_sharpa_wave/meshes/DP_HB1_4F.STL" />
       </geometry>
     </collision>
   </link>
@@ -865,7 +865,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="/data5/exaFLOPs/proj/uniretarget/furniturebench_yam/assets_src/sharpa_wave/right_sharpa_wave/meshes/elastomer_HB1_4F.STL" />
+        <mesh filename="/uniretarget_yam/robot/sharpa_wave/right_sharpa_wave/meshes/elastomer_HB1_4F.STL" />
       </geometry>
       <material name="">
         <color rgba="0.2 1 0.2 1" />
@@ -874,7 +874,7 @@
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="/data5/exaFLOPs/proj/uniretarget/furniturebench_yam/assets_src/sharpa_wave/right_sharpa_wave/meshes/elastomer_HB1_4F.STL" />
+        <mesh filename="/uniretarget_yam/robot/sharpa_wave/right_sharpa_wave/meshes/elastomer_HB1_4F.STL" />
       </geometry>
     </collision>
   </link>
@@ -906,7 +906,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="/data5/exaFLOPs/proj/uniretarget/furniturebench_yam/assets_src/sharpa_wave/right_sharpa_wave/meshes/right_pinky_MC_visual.STL" />
+        <mesh filename="/uniretarget_yam/robot/sharpa_wave/right_sharpa_wave/meshes/right_pinky_MC_visual.STL" />
       </geometry>
       <material name="">
         <color rgba="0.79216 0.81961 0.93333 1" />
@@ -915,7 +915,7 @@
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="/data5/exaFLOPs/proj/uniretarget/furniturebench_yam/assets_src/sharpa_wave/right_sharpa_wave/meshes/right_pinky_MC.STL" />
+        <mesh filename="/uniretarget_yam/robot/sharpa_wave/right_sharpa_wave/meshes/right_pinky_MC.STL" />
       </geometry>
     </collision>
   </link>
@@ -935,7 +935,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="/data5/exaFLOPs/proj/uniretarget/furniturebench_yam/assets_src/sharpa_wave/right_sharpa_wave/meshes/right_MCP_VL_visual.STL" />
+        <mesh filename="/uniretarget_yam/robot/sharpa_wave/right_sharpa_wave/meshes/right_MCP_VL_visual.STL" />
       </geometry>
       <material name="">
         <color rgba="0.79216 0.81961 0.93333 1" />
@@ -944,7 +944,7 @@
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="/data5/exaFLOPs/proj/uniretarget/furniturebench_yam/assets_src/sharpa_wave/right_sharpa_wave/meshes/MCP_VL.STL" />
+        <mesh filename="/uniretarget_yam/robot/sharpa_wave/right_sharpa_wave/meshes/MCP_VL.STL" />
       </geometry>
     </collision>
   </link>
@@ -964,7 +964,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="/data5/exaFLOPs/proj/uniretarget/furniturebench_yam/assets_src/sharpa_wave/right_sharpa_wave/meshes/right_PP_visual.STL" />
+        <mesh filename="/uniretarget_yam/robot/sharpa_wave/right_sharpa_wave/meshes/right_PP_visual.STL" />
       </geometry>
       <material name="">
         <color rgba="0.79216 0.81961 0.93333 1" />
@@ -973,7 +973,7 @@
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="/data5/exaFLOPs/proj/uniretarget/furniturebench_yam/assets_src/sharpa_wave/right_sharpa_wave/meshes/right_PP.STL" />
+        <mesh filename="/uniretarget_yam/robot/sharpa_wave/right_sharpa_wave/meshes/right_PP.STL" />
       </geometry>
     </collision>
   </link>
@@ -993,7 +993,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="/data5/exaFLOPs/proj/uniretarget/furniturebench_yam/assets_src/sharpa_wave/right_sharpa_wave/meshes/right_MP_visual.STL" />
+        <mesh filename="/uniretarget_yam/robot/sharpa_wave/right_sharpa_wave/meshes/right_MP_visual.STL" />
       </geometry>
       <material name="">
         <color rgba="0.79216 0.81961 0.93333 1" />
@@ -1002,7 +1002,7 @@
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="/data5/exaFLOPs/proj/uniretarget/furniturebench_yam/assets_src/sharpa_wave/right_sharpa_wave/meshes/right_MP.STL" />
+        <mesh filename="/uniretarget_yam/robot/sharpa_wave/right_sharpa_wave/meshes/right_MP.STL" />
       </geometry>
     </collision>
   </link>
@@ -1022,7 +1022,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="/data5/exaFLOPs/proj/uniretarget/furniturebench_yam/assets_src/sharpa_wave/right_sharpa_wave/meshes/DP_visual_HB1_4F.STL" />
+        <mesh filename="/uniretarget_yam/robot/sharpa_wave/right_sharpa_wave/meshes/DP_visual_HB1_4F.STL" />
       </geometry>
       <material name="">
         <color rgba="0.79216 0.81961 0.93333 1" />
@@ -1031,7 +1031,7 @@
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="/data5/exaFLOPs/proj/uniretarget/furniturebench_yam/assets_src/sharpa_wave/right_sharpa_wave/meshes/DP_HB1_4F.STL" />
+        <mesh filename="/uniretarget_yam/robot/sharpa_wave/right_sharpa_wave/meshes/DP_HB1_4F.STL" />
       </geometry>
     </collision>
   </link>
@@ -1051,7 +1051,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="/data5/exaFLOPs/proj/uniretarget/furniturebench_yam/assets_src/sharpa_wave/right_sharpa_wave/meshes/elastomer_HB1_4F.STL" />
+        <mesh filename="/uniretarget_yam/robot/sharpa_wave/right_sharpa_wave/meshes/elastomer_HB1_4F.STL" />
       </geometry>
       <material name="">
         <color rgba="0.1 1 0.2 1" />
@@ -1060,7 +1060,7 @@
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="/data5/exaFLOPs/proj/uniretarget/furniturebench_yam/assets_src/sharpa_wave/right_sharpa_wave/meshes/elastomer_HB1_4F.STL" />
+        <mesh filename="/uniretarget_yam/robot/sharpa_wave/right_sharpa_wave/meshes/elastomer_HB1_4F.STL" />
       </geometry>
     </collision>
   </link>

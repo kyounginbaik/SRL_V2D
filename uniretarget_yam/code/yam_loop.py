@@ -3,7 +3,7 @@
 Reachability, joint limits and the 3 rad/s speed limit shape proposals directly, so a pose
 that only a floating hand could reach is never tried. Physics on randomized trials decides.
 """
-import argparse,json,re,sys,time
+import argparse,json,os,re,sys,time
 from multiprocessing import Pool
 from pathlib import Path
 import numpy as np,mujoco
@@ -14,8 +14,9 @@ from flash_chord.retargeting.contact_wrench import ContactPatch
 from flash_chord.retargeting.rigid_wrench_targets import rigid_contact_wrench_targets
 from flash_chord.retargeting.surface_contact_search import demand_coverage
 
-FPS,SUBSTEPS=20.,20;TOL_P,TOL_R=.03,np.radians(30.);LOST_P,LOST_R=.15,np.radians(150.);TIP_RADIUS=.007
-READY=np.array([0.,1.536,.945,-.61,0.,0.]);ARM_SPEED=3.;DIGITS=('thumb','index','middle','ring','pinky');ROBUST_TRIALS,ROBUST_MINIMUM=24,.9;NATURAL_PALM_MIN=.1;CATCH_UP=int(2.*FPS);PUSH_FRAMES,PUSH_ARM=3,.03;ONSET_FLOOR=2.;SEARCH_PUSH=0.;FINGERS=(3,);VMAX=(.15,.5,.8);WMAX=(.8,3.,4.)  # Caps: initial low and high, mutation ceiling.
+FPS,SUBSTEPS=20.,10;TOL_P,TOL_R=.03,np.radians(30.);LOST_P,LOST_R=.15,np.radians(150.);TIP_RADIUS=.007
+FALLBACK_MINIMUM=.4
+READY=np.array([0.,1.536,.945,-.61,0.,0.]);ARM_SPEED=3.;DIGITS=('thumb','index','middle','ring','pinky');ROBUST_TRIALS,ROBUST_MINIMUM=24,.9;NATURAL_PALM_MIN=.1;CATCH_UP=int(2.*FPS);PUSH_FRAMES,PUSH_ARM=3,.03;END=int(os.environ.get('YAM_END',0));JOIN=None;ONSET_FLOOR=2.;SEARCH_PUSH=0.;FINGERS=(3,);VMAX=(.15,.5,.8);WMAX=(.8,3.,4.)  # Caps: initial low and high, mutation ceiling.
 
 
 def smooth(u):
@@ -27,9 +28,12 @@ def spent_over(ep,er,total):
     f=len(ep);limit=.7*f+.3*total;return sum(ep)>TOL_P*limit or sum(er)>TOL_R*limit
 
 
+def newton_physics(m):
+    """Search under the contact model the policy will train in, so a grasp that only holds here is not chosen. Friction stays lower than Newton's on purpose."""
+    m.geom_condim[:]=3;m.opt.cone=mujoco.mjtCone.mjCONE_PYRAMIDAL;m.opt.impratio=20.;m.geom_solref[:,1]=1.5811;m.opt.timestep=1/(FPS*SUBSTEPS)
 class YamTask:
     def __init__(self,episode,side,object_index,future=(),ignored=(),parked=()):
-        e=Path(episode);self.m=m=mujoco.MjModel.from_binary_path(str(e/'yam/yam_model.mjb'));self.d=mujoco.MjData(m);self.p=mujoco.MjData(m);self.side=side;self.k=object_index;self.future=set(future);self.ignored=set(ignored)
+        e=Path(episode);self.m=m=mujoco.MjModel.from_binary_path(str(e/'yam/yam_model.mjb'));newton_physics(m);self.d=mujoco.MjData(m);self.p=mujoco.MjData(m);self.side=side;self.k=object_index;self.future=set(future);self.ignored=set(ignored)
         with np.load(e/'baseline/physics.npz') as z:self.poses=z['object_pose'][:,0].copy();q0=z['native_qpos'][0,0].copy()
         self.frames=len(self.poses)+1;self.up=-m.opt.gravity/np.linalg.norm(m.opt.gravity);self.jid=lambda n:mujoco.mj_name2id(m,mujoco.mjtObj.mjOBJ_JOINT,n)
         P=f'{side}_arm_';self.prefix=P;self.arm=[self.jid(f'{P}joint{i}') for i in range(1,7)];self.fingers=[j for j in range(m.njnt) if m.joint(j).name.startswith(f'{P}{side}_') and m.jnt_type[j]==3];self.palm=m.body(f'{P}{side}_hand_C_MC').id
@@ -50,6 +54,9 @@ class YamTask:
         self.gp=gaussian_filter1d(self.gp_raw,1.5,axis=0,mode='nearest');q=gaussian_filter1d(q,1.5,axis=0,mode='nearest');self.gr=self.gr_raw[0]*R.from_quat(q/np.linalg.norm(q,axis=1,keepdims=True))
         rest=o[min(10,len(o)-1)];self.o0=rest[:3].copy();self.r0=R.from_quat(rest[3:7]);self.reset_pose=np.r_[i[:3],i[3:7][[3,0,1,2]]]
         moved=(np.linalg.norm(self.gp_raw-self.gp_raw[0],axis=1)>.015)|((self.gr_raw*self.gr_raw[0].inv()).magnitude()>.26);self.onset=max(int(np.flatnonzero(moved)[0]) if moved.any() else len(moved)-1,int(ONSET_FLOOR*FPS));self.other_onset={}
+        if JOIN and JOIN.get('start') is not None:
+            # This hand joins mid-motion: it plans its grasp on the object where the goal has it at that frame.
+            S_=min(int(JOIN['start']),len(self.gp_raw)-1);self.o0=self.gp_raw[S_].copy();self.r0=self.gr_raw[S_];self.onset=max(S_,int(ONSET_FLOOR*FPS));rest=np.r_[self.o0,self.r0.as_quat()]
         for k in range(self.poses.shape[1]):
             x=self.poses[:,k];a=x[0];b=R.from_quat(a[3:7])*R.from_quat(a[10:14]).inv();g=b.apply(x[:,7:10])+a[:3]-b.apply(a[7:10]);h=b*R.from_quat(x[:,10:14]);mv=(np.linalg.norm(g-g[0],axis=1)>.02)|((h*h[0].inv()).magnitude()>.35);self.other_onset[k]=int(np.flatnonzero(mv)[0]) if mv.any() else len(g)
         self.others=[(k,q_) for k,q_ in enumerate(self.object_q) if k!=self.k];self.stage='real'
@@ -70,6 +77,10 @@ class YamTask:
                 if n.startswith(f'{s_}_arm_{s_}_'):
                     lo,hi=m.jnt_range[j];v=float(np.clip(.15 if hi>abs(lo)*1.5 else 0.,lo,hi));v=float(.55*hi) if 'thumb_CMC_FE' in n else v;self.base_q[m.jnt_qposadr[j]]=v
         self.base_ctrl=np.array([self.base_q[m.jnt_qposadr[m.actuator_trnid[a,0]]] for a in range(m.nu)])
+        self.other_act=None
+        if END:self.frames=min(self.frames,END+1)
+        if (e/'yam/flash/other_arm.npz').is_file():
+            with np.load(e/'yam/flash/other_arm.npz') as z:self.other_q=z['q'].copy();self.other_act=[self.act[m.joint(str(n)).id] for n in z['joints']]
         # Local hand axes at the ready posture.
         d=self.p;d.qpos[:]=self.base_q;mujoco.mj_kinematics(m,d);w=self.pose(d);four=[self.tip_world(d,x) for x in DIGITS[1:]];f=np.mean(four,0)-w[0];f/=np.linalg.norm(f);before=np.mean(four,0);q_=d.qpos.copy();d.qpos[[int(m.jnt_qposadr[j]) for j in self.fingers if 'MCP_FE' in m.joint(j).name and 'thumb' not in m.joint(j).name]]+=.3;mujoco.mj_kinematics(m,d);n=np.mean([self.tip_world(d,x) for x in DIGITS[1:]],0)-before;n-=n@f*f;n/=np.linalg.norm(n);d.qpos[:]=q_;mujoco.mj_kinematics(m,d);self.local_normal=w[1].inv().apply(n)
         # Object surface at the settled pose, for proposals.
@@ -80,6 +91,15 @@ class YamTask:
                 t=v[fa];a=.5*np.linalg.norm(np.cross(t[1]-t[0],t[2]-t[0]))
                 if a>=1e-7:T.append(pg+t@Rg.T);N.append(Rg@eq[:3]);A.append(a)
         self.tri,self.tri_n,self.tri_a=np.asarray(T),np.asarray(N),np.asarray(A);self.verts=np.vstack(V);self.low=float((self.verts@self.up).min());self.mg=float(m.body_mass[self.obj]*np.linalg.norm(m.opt.gravity));self.com=self.o0+self.r0.apply(m.body_ipos[self.obj])
+        self.join_q=[]
+        if JOIN and JOIN.get('start') is not None:
+            self.low=-1e3
+            if JOIN.get('parquet'):
+                import pyarrow.parquet as pq_
+                r_=pq_.read_table(JOIN['parquet']).to_pylist()[0];q_=np.array(r_['robot_joint_positions']);o_='left' if side=='right' else 'right';f_=min(int(JOIN['start']),len(q_)-1)
+                for i_,n_ in enumerate(r_['robot_joint_names']):
+                    if n_.startswith((o_+'_','L_arm_j' if o_=='left' else 'R_arm_j')):
+                        j_=(o_+'_arm_joint'+n_[-1]) if '_arm_j' in n_ else (o_+'_arm_'+n_);self.join_q.append((int(m.jnt_qposadr[m.joint(j_).id]),float(q_[f_,i_])))
         de=rigid_contact_wrench_targets(self.gp_raw,self.gr_raw.as_quat(),FPS,float(m.body_mass[self.obj]),m.body_inertia[self.obj],m.body_iquat[self.obj][[1,2,3,0]],m.body_ipos[self.obj],m.opt.gravity);fr=np.arange(self.onset,len(de),10);self.motion=np.array([np.r_[(self.r0*self.gr_raw[int(f)].inv()).apply(de[f,:3]),(self.r0*self.gr_raw[int(f)].inv()).apply(de[f,3:])] for f in fr]);self.nominal=(m.geom_friction.copy(),m.body_mass.copy(),m.body_inertia.copy(),float(m.opt.timestep));self.ik_m=mujoco.MjModel.from_binary_path(str(e/'yam/yam_model.mjb'));self.ik_m.geom_margin[:]=.004;self.ik_d=mujoco.MjData(self.ik_m)
 
     def _native_pos_index(self,q0,k):
@@ -131,13 +151,16 @@ class YamTask:
     def solve_hand(self,g,rng):
         """Arm and three digits together onto the contacts, from an aligned seed, with collisions pushed apart."""
         m,d=self.ik_m,self.ik_d;a,c,b=(np.asarray(g[x]) for x in('index','middle','thumb'));na,nc,nb=(np.asarray(g[x]) for x in('n_index','n_middle','n_thumb'));goal={'index':a+TIP_RADIUS*na,'middle':c+TIP_RADIUS*nc,'thumb':b+TIP_RADIUS*nb};digits=('thumb','index','middle')+tuple(x for x in('ring','pinky') if x in g);goal.update({x:np.asarray(g[x])+TIP_RADIUS*np.asarray(g['n_'+x]) for x in digits[3:]});d.qpos[:]=self.base_q
-        for k,q_ in enumerate(self.object_q):x=self.poses[min(10,len(self.poses)-1),k];d.qpos[q_:q_+3]=x[:3];d.qpos[q_+3:q_+7]=x[3:7][[3,0,1,2]]
+        for k,q_ in enumerate(self.object_q):x=self.poses[min(int(JOIN['start']) if JOIN and JOIN.get('start') is not None else 10,len(self.poses)-1),k];d.qpos[q_:q_+3]=x[:3];d.qpos[q_+3:q_+7]=x[3:7][[3,0,1,2]]
+        for a_,v_ in self.join_q:d.qpos[a_]=v_
         q=np.array(self.q_open);q+=.35*(m.jnt_range[self.fingers,1]-q)*np.array([0 if abs(m.jnt_range[j,0])>.3 and abs(m.jnt_range[j,1])<.5 else 1 for j in self.fingers]);d.qpos[self.q_f]=q;mujoco.mj_kinematics(m,d);ti=self.tip_world(d,'index')-self.tip_world(d,'thumb');wp,wr=self.pose(d);mid=.5*(self.tip_world(d,'index')+self.tip_world(d,'thumb'));normal=wr.apply(self.local_normal);rot,_=R.align_vectors(np.array([goal['index']-goal['thumb'],R.from_rotvec(rng.normal(0,.35,3)).apply(-self.up)]),np.array([ti,normal]),weights=[3.,1.]);tp=.5*(goal['index']+goal['thumb'])+rot.apply(wp-mid);tr=rot*wr
+        seed=getattr(self,'palm_seed',None)
+        if seed is not None and rng.random()<getattr(self,'palm_seed_p',.3):tr=R.from_rotvec(rng.normal(0,.12,3))*seed[1];tp=seed[0]+rng.normal(0,.008,3)  # Start from the reference's palm, so the grasp stays close to it.
         best=None
         for _ in range(4):
             start=np.clip(READY+rng.normal(0,.5,6),m.jnt_range[self.arm,0],m.jnt_range[self.arm,1]);qa,e1,e2=self.arm_ik(start,tp,tr,steps=40,d=d,m=m)
             if best is None or e1+.05*e2<best[1]+.05*best[2]:best=(qa,e1,e2)
-        if best[1]>.04 or best[2]>.7:return None  # The arm cannot bring the hand near this grasp at all.
+        if best[1]>.04 or best[2]>.7:self.fail=('reach',round(best[1],3),round(best[2],2));return None  # The arm cannot bring the hand near this grasp at all.
         d.qpos[self.q_arm]=best[0];dof=self.v_arm+[int(m.jnt_dofadr[j]) for x in digits for j in self.chain[x]];lim=self.arm+[j for x in digits for j in self.chain[x]];jp=np.zeros((3,m.nv));jr=np.zeros_like(jp);jq=np.zeros_like(jp);jqr=np.zeros_like(jp);wanted={self.tips[x][0] for x in digits};W=np.ones(len(dof));W[:6]=.25
         for _ in range(70):
             mujoco.mj_kinematics(m,d);mujoco.mj_comPos(m,d);mujoco.mj_collision(m,d);rows=[];err=[]
@@ -158,7 +181,7 @@ class YamTask:
                 if {x,y}&wanted and self.obj in(x,y):continue
                 deep=max(deep,-float(con.dist))
         wp,wr=self.pose(d)
-        if wr.apply(self.local_normal)@self.natural_palm<NATURAL_PALM_MIN:return None  # The palm must face inward or down, never away from the other arm.
+        if not (JOIN and JOIN.get('start') is not None) and wr.apply(self.local_normal)@self.natural_palm<NATURAL_PALM_MIN:self.fail=('palm',);return None  # On the table the palm must face inward or down. An object already in the air can be taken from any side.
         fing=d.qpos[self.q_f].copy();star=d.qpos.copy();pre=star.copy();idx={j:i for i,j in enumerate(self.fingers)}
         for x in digits:
             ch=self.chain[x];dd=[int(m.jnt_dofadr[j]) for j in ch];ad=[int(m.jnt_qposadr[j]) for j in ch];b_,l=self.tips[x];n_=np.asarray(g['n_'+x]);d.qpos[:]=star;mujoco.mj_kinematics(m,d);tg=self.tip_world(d,x)+.02*n_
@@ -178,7 +201,7 @@ class YamTask:
 
     def follow(self,s,n):
         """One clock along the goal under speed limits, lifted just enough to clear the support."""
-        v,w=s['vmax'],s['wmax'];ps=np.tile(self.o0,(n,1));rs=[self.r0]*n;p=self.o0.copy();r=self.r0;dt=1/FPS;start=self.onset-2;tau=start;local=self.r0.inv().apply(self.verts[::max(1,len(self.verts)//200)]-self.o0);floor=float((self.verts@self.up).min())
+        v,w=s['vmax'],s['wmax'];ps=np.tile(self.o0,(n,1));rs=[self.r0]*n;p=self.o0.copy();r=self.r0;dt=1/FPS;start=self.onset-2;tau=start;local=self.r0.inv().apply(self.verts[::max(1,len(self.verts)//200)]-self.o0);floor=-1e3 if JOIN and JOIN.get('start') is not None else float((self.verts@self.up).min())
         for f in range(n):
             if f>=start:
                 for k in range(tau+1,min(f,len(self.gp)-1)+1):
@@ -212,19 +235,35 @@ class YamTask:
 
     def compile(self,s,horizon,base_ctrl=None):
         """Control tape [frame, actuator]: arm joint targets respect the speed limit by construction."""
-        m=self.m;n=min(horizon+1,self.frames);C=np.tile(self.base_ctrl if base_ctrl is None else base_ctrl[0],(n,1)) if base_ctrl is None else base_ctrl[:n].copy();wp=np.asarray(s['p']);wr=R.from_rotvec(s['r']);way=self.closure_path(s);dt=lambda x:int(round(x*FPS));close_end=max(3,self.onset-dt(.15));close_start=max(2,close_end-dt(.4));arrive=max(1,close_start-dt(.3));step=ARM_SPEED/FPS*.9
+        m=self.m;n=min(horizon+1,self.frames);C=np.tile(self.base_ctrl if base_ctrl is None else base_ctrl[0],(n,1)) if base_ctrl is None else base_ctrl[:n].copy();
+        if self.other_act is not None:C[:,self.other_act]=self.other_q[np.minimum(np.arange(n),len(self.other_q)-1)]
+        wp=np.asarray(s['p']);wr=R.from_rotvec(s['r']);way=self.closure_path(s);dt=lambda x:int(round(x*FPS));close_end=max(3,self.onset-dt(.15));close_start=max(2,close_end-dt(.4));arrive=max(1,close_start-dt(.3));step=ARM_SPEED/FPS*.9
         d=self.p;d.qpos[:]=self.base_q;normal=wr.apply(self.local_normal);q_grasp,_,_=self.arm_ik(np.asarray(s['arm']),wp,wr,steps=15);q_pre,e1,_=self.arm_ik(q_grasp,wp-s['clearance']*normal,wr,steps=25);hp,hr=self.follow(s,n);Q=np.zeros((n,6));F=np.tile(self.q_open,(n,1));q=READY.copy();Q[0]=q;miss=[]
+        f0=int(JOIN.get('from',0)) if JOIN and base_ctrl is not None else 0;q0=base_ctrl[min(f0,len(base_ctrl)-1),self.act_arm].copy() if f0 else READY.copy();f_open=base_ctrl[min(f0,len(base_ctrl)-1),self.act_f].copy() if f0 else self.q_open
+        if f0:q=q0.copy();Q[0]=q
         for f in range(1,n):
             if f<arrive:
-                u=smooth(f/max(1,arrive));q=READY+u*(q_pre-READY);F[f]=self.q_open+u*(np.asarray(s['pre'])-self.q_open)
+                u=smooth((f-f0)/max(1,arrive-f0));q=q0+u*(q_pre-q0);F[f]=f_open+u*(np.asarray(s['pre'])-f_open)
             elif f<close_start:
                 u=smooth((f-arrive)/max(1,close_start-arrive));q=q_pre+u*(q_grasp-q_pre);F[f]=s['pre']
             else:
                 u=smooth((f-close_start)/max(1,close_end-close_start));w=u*(len(way)-1);i=min(int(w),len(way)-2);F[f]=way[i]+(w-i)*(way[i+1]-way[i]);rel=hr[f]*self.r0.inv();q,e1,e2=self.arm_ik(q,hp[f]+rel.apply(wp-self.o0),rel*wr,steps=8,limit=step)
                 if f>=self.onset:miss.append((e1,e2))
+            if JOIN and f<close_start:q=Q[f-1]+np.clip(q-Q[f-1],-step,step)
             Q[f]=q
         self.last_Q=Q;V=np.gradient(Q,1/FPS,axis=0)
-        C[:,self.act_arm]=Q+self.kd_over_kp*np.clip(V,-ARM_SPEED,ARM_SPEED);C[:,self.act_f]=F;return C,(np.array(miss) if miss else np.zeros((0,2)))
+        C[:,self.act_arm]=Q+self.kd_over_kp*np.clip(V,-ARM_SPEED,ARM_SPEED);C[:,self.act_f]=F
+        if f0:
+            own=self.act_arm+self.act_f;C[:min(f0,n),own]=base_ctrl[:min(f0,n),own];Q[:min(f0,n)]=C[:min(f0,n),self.act_arm]
+        for rel in (JOIN or {}).get('release',()):
+            # The earlier hold lets go only after this hand has closed: open the fingers, then bring the arm home.
+            o_=rel['side'];R_=int(rel['frame']);oa=[self.act[self.jid(f'{o_}_arm_joint{i}')] for i in range(1,7)];of=[a for a in range(m.nu) if m.joint(int(m.actuator_trnid[a,0])).name.startswith(f'{o_}_arm_{o_}_')];hold=C[min(R_,n-1)].copy()
+            for f in range(R_,n):C[f,of]=hold[of]+smooth((f-R_)/8.)*(self.base_ctrl[of]-hold[of])
+            x=hold[oa].copy()
+            for f in range(R_,n):
+                if f>=R_+8:x=x+np.clip(READY-x,-step,step)
+                C[f,oa]=x
+        return C,(np.array(miss) if miss else np.zeros((0,2)))
 
     def randomize(self,rng):
         m=self.m;f,ma,ine,dt=self.nominal;g=self.geoms;sc=float(rng.uniform(1.,1.25));m.geom_friction[:]=f;m.geom_friction[g,0]=f[g,0]*rng.uniform(.8,1.);m.body_mass[:]=ma;m.body_inertia[:]=ine;m.body_mass[self.obj]=ma[self.obj]*sc;m.body_inertia[self.obj]=ine[self.obj]*sc;m.opt.timestep=dt*float(rng.choice([1.,.8,1.25]));self.substeps=int(round(1/(FPS*m.opt.timestep)))
@@ -233,6 +272,7 @@ class YamTask:
         m=self.m;f,ma,ine,dt=self.nominal;m.geom_friction[:]=f;m.body_mass[:]=ma;m.body_inertia[:]=ine;m.opt.timestep=dt;self.substeps=SUBSTEPS
 
     def reach_speed(self,s):
+        if JOIN:return 0.
         """Peak joint speed of the fifth-order reach from the ready pose to this grasp's pre-grasp, in the time the onset leaves."""
         dt=lambda x:int(round(x*FPS));close_end=max(3,self.onset-dt(.15));close_start=max(2,close_end-dt(.4));arrive=max(1,close_start-dt(.3));wp=np.asarray(s['p']);wr=R.from_rotvec(s['r']);self.p.qpos[:]=self.base_q;q_grasp,_,_=self.arm_ik(np.asarray(s['arm']),wp,wr,steps=15);q_pre,_,_=self.arm_ik(q_grasp,wp-s['clearance']*wr.apply(self.local_normal),wr,steps=25);return float(1.875*np.abs(q_pre-READY).max()*FPS/arrive)
 
@@ -309,7 +349,7 @@ def _proposal(seed):
         if g is None:continue
         s=T_.solve_hand(g,rng)
         if s is not None and s['residual_m']<.008 and s['penetration_m']<.008 and T_.reach_speed(s)<=ARM_SPEED:
-            s['carry']=T_.carry_score(s);return s
+            s['carry']=T_.carry_score(s);s['seed_kind']=getattr(T_,'seed_kind','reference');return s
     return None
 def _job(job):
     s,h,stage,seed,*push=job;rng=np.random.default_rng(seed);level=push[0] if push else (SEARCH_PUSH if stage=='real' else 0.)
@@ -325,23 +365,23 @@ def _child(job):
 def rank(r):
     if r.get('rung')=='lift':return (-min(r['lift_mm'],60.),-r['hold'],-r['frontier'],max(r['mean_cm']/3,r['mean_deg']/30))
     # A candidate that never held the object cannot outrank one that did, whatever its error.
-    never_held=r['hold']<5 or r['lift_mm']<20.
+    never_held=r['hold']<5 or (r['lift_mm']<20. and not (JOIN and JOIN.get('start') is not None))
     return (never_held,-min(r['frontier'],r['sample'].get('cap',10**6)),-r['hold'],max(r['mean_cm']/3,r['mean_deg']/30),-r['lift_mm'])
 STRIP=('error','error_frames','dense_frames','dense_error','qpos')
 
 
 def main():
-    p=argparse.ArgumentParser();p.add_argument('--episode',type=Path,required=True);p.add_argument('--side',required=True);p.add_argument('--object',type=int,default=0);p.add_argument('--output',type=Path,required=True);p.add_argument('--workers',type=int,default=8);p.add_argument('--proposals',type=int,default=240);p.add_argument('--population',type=int,default=80);p.add_argument('--generations',type=int,default=120);p.add_argument('--stall',type=int,default=25);p.add_argument('--seed',type=int,default=0);p.add_argument('--future',type=int,nargs='*',default=[]);p.add_argument('--ignored',type=int,nargs='*',default=[]);p.add_argument('--base-tape',default='');p.add_argument('--onset-floor',type=float,default=ONSET_FLOOR);p.add_argument('--search-push',type=float,default=0.);p.add_argument('--wide-caps',action='store_true');p.add_argument('--fingers',type=int,nargs='+',default=[3])
-    a=p.parse_args();globals().update(ONSET_FLOOR=a.onset_floor,SEARCH_PUSH=a.search_push,FINGERS=tuple(a.fingers));a.wide_caps and globals().update(VMAX=(.15,1.,1.5),WMAX=(.8,6.,8.));a.output.mkdir(parents=True,exist_ok=True);(a.output/'milestones').mkdir(exist_ok=True);log=(a.output/'generations.jsonl').open('a');rng=np.random.default_rng(a.seed);t0=time.monotonic();args=(a.episode,a.side,a.object,a.future,a.ignored,(),a.base_tape or None);c=a.seed*1000000+1;base=YamTask(*args[:6]);frames=base.frames;base_ctrl=np.load(a.base_tape)['ctrl'] if a.base_tape else None;print(json.dumps(dict(stage='start',frames=frames,onset=base.onset,side=a.side,object=a.object)),flush=True)
+    p=argparse.ArgumentParser();p.add_argument('--end',type=int,default=0);p.add_argument('--join',default='');p.add_argument('--episode',type=Path,required=True);p.add_argument('--side',required=True);p.add_argument('--object',type=int,default=0);p.add_argument('--output',type=Path,required=True);p.add_argument('--workers',type=int,default=8);p.add_argument('--proposals',type=int,default=240);p.add_argument('--population',type=int,default=80);p.add_argument('--generations',type=int,default=120);p.add_argument('--stall',type=int,default=25);p.add_argument('--seed',type=int,default=0);p.add_argument('--future',type=int,nargs='*',default=[]);p.add_argument('--ignored',type=int,nargs='*',default=[]);p.add_argument('--base-tape',default='');p.add_argument('--onset-floor',type=float,default=ONSET_FLOOR);p.add_argument('--search-push',type=float,default=0.);p.add_argument('--wide-caps',action='store_true');p.add_argument('--fingers',type=int,nargs='+',default=[3])
+    a=p.parse_args();globals().update(JOIN=json.load(open(a.join)) if a.join else None,END=a.end or END,ONSET_FLOOR=a.onset_floor,SEARCH_PUSH=a.search_push,FINGERS=tuple(a.fingers));a.wide_caps and globals().update(VMAX=(.15,1.,1.5),WMAX=(.8,6.,8.));a.output.mkdir(parents=True,exist_ok=True);(a.output/'milestones').mkdir(exist_ok=True);log=(a.output/'generations.jsonl').open('a');rng=np.random.default_rng(a.seed);t0=time.monotonic();args=(a.episode,a.side,a.object,a.future,a.ignored,(),a.base_tape or None);c=a.seed*1000000+1;base=YamTask(*args[:6]);frames=base.frames;base_ctrl=np.load(a.base_tape)['ctrl'] if a.base_tape else None;print(json.dumps(dict(stage='start',frames=frames,onset=base.onset,side=a.side,object=a.object)),flush=True)
     def ids(n):
         nonlocal c;r=range(c,c+n);c+=n;return r
     with Pool(a.workers,_init,(args,)) as pool:
         attempts=a.proposals;pop=[s for s in pool.imap_unordered(_proposal,ids(attempts),chunksize=2) if s is not None]
         scores=[s['carry'] for s in pop];print(json.dumps(dict(stage='proposals',kept=len(pop),of=attempts,seconds=round(time.monotonic()-t0),carry_p50_p90_max=np.percentile(scores,[50,90,100]).round(2).tolist() if scores else [])),flush=True)
         # Physics only for grasps the arm can actually carry: the best third, at least twenty.
-        pop=sorted(pop,key=lambda s:-s['carry'])[:max(20,len(pop)//3)]
+        print(json.dumps(dict(stage='proposal_kinds',reach=sum(s.get('seed_kind')=='reach' for s in pop),reference=sum(s.get('seed_kind')!='reach' for s in pop),reference_carry_max=max([s['carry'] for s in pop if s.get('seed_kind')!='reach'],default=0.),reach_carry_max=max([s['carry'] for s in pop if s.get('seed_kind')=='reach'],default=0.))),flush=True);pop=sorted(pop,key=lambda s:(-round(s['carry'],1),s.get('seed_kind')=='reach'))[:max(20,len(pop)//3)]
         if not pop:print(json.dumps(dict(stage='no_reachable_proposal')),flush=True);return
-        stage='lift';horizon=min(frames-1,base.onset+40);hist=pool.map(_job,[(s,horizon,stage,i) for s,i in zip(pop,ids(len(pop)))],chunksize=2);best=-1;stalled=0;milestone=-1;best_lift=-1.
+        fallback=None;mid=bool(JOIN and JOIN.get('start') is not None);stage='real' if mid else 'lift';horizon=min(frames-1,base.onset+(60 if mid else 40));hist=pool.map(_job,[(s,horizon,stage,i) for s,i in zip(pop,ids(len(pop)))],chunksize=2);best=-1;stalled=0;milestone=-1;best_lift=-1.
         for g in range(a.generations):
             hist.sort(key=rank);hist=hist[:600];top=hist[:12];chk=pool.map(_job,[(r['sample'],horizon,stage,i) for r in top for i in ids(3)],chunksize=1);ver=[]
             for k,r in enumerate(top):
@@ -361,10 +401,15 @@ def main():
                 for r in ready[:3]:
                     tr=pool.map(_job,[(r['sample'],horizon,stage,i) for i in ids(ROBUST_TRIALS)],chunksize=1);rate=float(np.mean([t['frontier']>=horizon-1 and t['mean_cm']<100*TOL_P and t['mean_deg']<np.degrees(TOL_R) for t in tr]));line=dict(stage='robustness',rate=rate,cm=r['mean_cm'],deg=r['mean_deg']);print(json.dumps(line),flush=True);log.write(json.dumps(line)+'\n');log.flush()
                     if rate>=ROBUST_MINIMUM:winner=r;winner['robust_pass_rate']=rate;break
+                    if rate>=FALLBACK_MINIMUM and (fallback is None or rate>fallback['robust_pass_rate']):fallback=dict(r,robust_pass_rate=rate)
                     r['sample']=dict(r['sample'],cap=horizon-2)
                 if winner is not None:
                     hist.remove(winner);hist.insert(0,winner);(a.output/'pass.json').write_text(json.dumps({k:v for k,v in winner.items() if k not in STRIP},indent=1)+'\n');print(json.dumps(dict(stage='yam_passed',robust=winner['robust_pass_rate'],cm=winner['mean_cm'],deg=winner['mean_deg'])),flush=True);break
-            if stage=='real' and stalled>=a.stall:print(json.dumps(dict(stage='stalled',frontier=best)),flush=True);break
+            if stage=='real' and stalled>=a.stall:
+                print(json.dumps(dict(stage='stalled',frontier=best)),flush=True)
+                # The whole motion was tracked but not reliably under perturbed physics: let Newton judge it rather than discard it.
+                if fallback is not None:hist.insert(0,fallback);(a.output/'pass.json').write_text(json.dumps({k:v for k,v in fallback.items() if k not in STRIP},indent=1)+'\n');print(json.dumps(dict(stage='yam_fallback',robust=fallback['robust_pass_rate'],cm=fallback['mean_cm'],deg=fallback['mean_deg'])),flush=True)
+                break
             el=hist[:max(6,len(hist)//20)];kids=pool.map(_child,[(el[int(rng.integers(len(el)))],i,stage) for i in ids(a.population)],chunksize=4);hist+=pool.map(_job,[(s,horizon,stage,i) for s,i in zip(kids,ids(len(kids)))],chunksize=2)
     hist.sort(key=rank);base.nominal_physics();base.set_stage('real');C,_=base.compile(hist[0]['sample'],frames-1,base_ctrl);np.savez_compressed(a.output/'best_tape.npz',ctrl=C);(a.output/'top.json').write_text(json.dumps([{k:v for k,v in r.items() if k not in STRIP} for r in hist[:20]],indent=1)+'\n');print('failures',[r['failure'] for r in hist if 'failure' in r][:3],flush=True)
 

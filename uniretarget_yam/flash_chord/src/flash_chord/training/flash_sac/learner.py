@@ -595,6 +595,7 @@ def _actor_temperature_update(
             batch.action,
             jnp.exp(state.temperature.log_temperature),
             behavior_cloning_coefficient=config.optimization.behavior_cloning_coefficient,
+            residual_penalty=config.optimization.residual_penalty,
         )
         return result.loss * state.loss_scale.scale, (result, mutable["batch_stats"])
 

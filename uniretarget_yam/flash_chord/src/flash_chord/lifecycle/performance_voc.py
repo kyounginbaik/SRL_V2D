@@ -147,3 +147,55 @@ class StepVOCController:
                         'voc_schedule/scale': self.scales[current],
                         'voc_schedule/index': current}, step=self.current_step)
         print('[step VOC] ' + json.dumps(record), flush=True)
+
+
+class YamProgressVOCController:
+    """Lower object assistance when the policy passes the next lower level, with no time limit."""
+
+    def __init__(self, editor, options, output_dir):
+        if editor.training.resume:
+            raise ValueError('Progress VOC requires a fresh run; resuming without gate history is unsafe')
+        self.editor = editor
+        self.scales = tuple(float(x) for x in options.get('scales', (1., .75, .5, .25, .1, .05, .025, .01, 0.)))
+        if len(self.scales) < 2 or self.scales[-1] != 0. or any(a <= b for a, b in zip(self.scales, self.scales[1:])):
+            raise ValueError('Progress VOC scales must strictly decrease to zero')
+        self.interval = int(options.get('interval', 2500096))
+        self.min_passed = float(options.get('min_passed', 0.75))
+        self.required = int(options.get('required_passes', 2))
+        self.index = 0
+        self.streak = 0
+        self.reference_version = -1
+        self.next_check = self.interval
+        self.output = Path(output_dir)
+        (self.output / 'voc_gate_manifest.json').write_text(json.dumps(dict(
+            mode='progress', scales=self.scales, interval=self.interval, min_passed=self.min_passed,
+            required_passes=self.required, probe='next lower level, frozen policy, frame zero, worst object decides'), indent=2) + '\n')
+
+    @property
+    def scale(self):
+        return self.scales[self.index]
+
+    def __call__(self, learner, step, logger):
+        if step < self.next_check or self.index == len(self.scales) - 1:
+            return
+        self.next_check = step + self.interval
+        if self.reference_version != self.editor.version:
+            self.reference_version = self.editor.version
+            self.streak = 0
+        probe = self.scales[self.index + 1]
+        metrics, _ = self.editor.rollout(self.editor.binding, learner, self.editor.training.seed + 700000 + int(step), voc_probe_scale=probe)
+        passed = bool(metrics['passed'] >= self.min_passed)
+        self.streak = self.streak + 1 if passed else 0
+        before = self.scale
+        lowered = self.streak >= self.required
+        if lowered:
+            self.index += 1
+            self.streak = 0
+        record = dict(step=int(step), mode='progress', reference_version=self.editor.version, scale_before=before, probe_scale=probe,
+                      scale_after=self.scale, lowered=lowered, streak=self.streak, passed=metrics['passed'],
+                      frontier=metrics['frontier'], kinds=metrics['kinds'], cm=metrics['cm'], deg=metrics['deg'])
+        with (self.output / 'voc_gate.jsonl').open('a') as stream:
+            stream.write(json.dumps(record) + '\n')
+        if logger is not None:
+            logger.log({'curriculum/voc_scale': self.scale, 'voc_schedule/index': self.index}, step=int(step))
+        print('[progress VOC] ' + json.dumps(record), flush=True)

@@ -1,0 +1,20 @@
+_target_: flash_chord.configuration.make_fixed_curriculum
+
+# Local experiment: no VOC assistance after the reset hold. Pair with reset.always_reset_to_first_frame=true.
+thresholds: [50001920]
+
+stages:
+  - _target_: flash_chord.configuration.make_curriculum_stage
+    voc_scale: 0.0
+    objective_weights:
+      object_keypoints: ${objective.object_keypoints.weight}
+      hand_keypoints: ${objective.hand_keypoints.weight}
+      hand_joint_pos: ${objective.hand_joint_pos.weight}
+      contact_wrench_support: ${objective.contact_wrench_support.weight}
+      missed_contact: 0.0
+      unintended_contact: 0.0
+      termination: -100.0
+      action_rate_l2: ${objective.action_rate_l2.weight}
+      action_l2: ${objective.action_l2.weight}
+      contact_force_l2: ${objective.contact_force_l2.weight}
+      force_closure: ${objective.force_closure.weight}

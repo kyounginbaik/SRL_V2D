@@ -1,0 +1,44 @@
+_target_: flash_chord.configuration.make_fixed_curriculum
+
+# Object assist starts at 1.0 and steps down to zero at two thirds of the run. Testing and scoring stay unassisted. Pair with reset.always_reset_to_first_frame=true.
+thresholds: [4167680, 8333312, 12500992, 16666624, 20834304, 25001984, 29167616, 33335296, 50001920]
+
+stages:
+  - _target_: flash_chord.configuration.make_curriculum_stage
+    voc_scale: 1.0
+    objective_weights: &weights
+      object_keypoints: ${objective.object_keypoints.weight}
+      hand_keypoints: ${objective.hand_keypoints.weight}
+      hand_joint_pos: ${objective.hand_joint_pos.weight}
+      contact_wrench_support: ${objective.contact_wrench_support.weight}
+      missed_contact: 0.0
+      unintended_contact: 0.0
+      termination: -100.0
+      action_rate_l2: ${objective.action_rate_l2.weight}
+      action_l2: ${objective.action_l2.weight}
+      contact_force_l2: ${objective.contact_force_l2.weight}
+      force_closure: ${objective.force_closure.weight}
+  - _target_: flash_chord.configuration.make_curriculum_stage
+    voc_scale: 0.75
+    objective_weights: *weights
+  - _target_: flash_chord.configuration.make_curriculum_stage
+    voc_scale: 0.5
+    objective_weights: *weights
+  - _target_: flash_chord.configuration.make_curriculum_stage
+    voc_scale: 0.25
+    objective_weights: *weights
+  - _target_: flash_chord.configuration.make_curriculum_stage
+    voc_scale: 0.1
+    objective_weights: *weights
+  - _target_: flash_chord.configuration.make_curriculum_stage
+    voc_scale: 0.05
+    objective_weights: *weights
+  - _target_: flash_chord.configuration.make_curriculum_stage
+    voc_scale: 0.025
+    objective_weights: *weights
+  - _target_: flash_chord.configuration.make_curriculum_stage
+    voc_scale: 0.01
+    objective_weights: *weights
+  - _target_: flash_chord.configuration.make_curriculum_stage
+    voc_scale: 0.0
+    objective_weights: *weights

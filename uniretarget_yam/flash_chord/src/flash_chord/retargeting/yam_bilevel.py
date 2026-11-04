@@ -48,7 +48,7 @@ def identity_edit():
 def measure(poses, palm, onset):
     """Median failure over worlds: first frame out of budget, what the object did by then."""
     worlds = poses.shape[1]
-    frontier, slip, types, cm, deg = [], [], [], [], []
+    frontier, slip, types, cm, deg, lift = [], [], [], [], [], []
     for w in range(worlds):
         x = poses[:, w, 0]
         i = x[0]
@@ -67,7 +67,14 @@ def measure(poses, palm, onset):
         over = spent | lost
         f = int(np.flatnonzero(over)[0]) if over.any() else len(ep)
         pp = palm[:, w, :3]
-        pr = R.from_quat(palm[:, w, 3:7])
+        # A palm with an invalid pose has diverged: its world fails from that frame on.
+        pq = np.array(palm[:, w, 3:7], dtype=float)
+        bad = ~np.isfinite(pq).all(axis=1) | (np.linalg.norm(np.nan_to_num(pq), axis=1) < 1e-6)
+        if bad.any():
+            f = min(f, int(np.flatnonzero(bad)[0]))
+            pq[bad] = (0.0, 0.0, 0.0, 1.0)
+            print(f"[measure] world {w}: {int(bad.sum())} invalid palm poses from frame {int(np.flatnonzero(bad)[0])}", flush=True)
+        pr = R.from_quat(pq)
         rel_p = pr.inv().apply(x[:, :3] - pp)
         rel_r = pr.inv() * ro
         start = min(onset, len(ep) - 1)
@@ -77,6 +84,9 @@ def measure(poses, palm, onset):
         s = start + int(late[0]) if len(late) else -1
         goal_moved = np.linalg.norm(gp[: max(f, 1)] - gp[0], axis=1).max()
         moved_obj = np.linalg.norm(x[: max(f, 1), :3] - x[0, :3], axis=1).max()
+        travel = np.linalg.norm(x[: min(f + 25, len(x)), :3] - x[0, :3], axis=1).max()
+        wanted = max(np.linalg.norm(gp[: min(f + 25, len(gp))] - gp[0], axis=1).max(), 1e-6)
+        lift.append(float(min(travel / wanted, 1.0)))
         kind = "held" if f == len(ep) else ("never_held" if goal_moved > 0.05 and moved_obj < 0.4 * goal_moved else ("slips" if 0 <= s <= f else "off_track"))
         frontier.append(f)
         slip.append(s)
@@ -94,13 +104,14 @@ def measure(poses, palm, onset):
         kinds={str(k): int(c) for k, c in zip(values, counts)},
         cm=float(cm.mean()),
         deg=float(deg.mean()),
+        lift=float(np.median(lift)),
         passed=float(passed.mean()),
     )
 
 
 def score(m):
     """Larger is better: full passes first, then how far it gets, then accuracy."""
-    return (m["passed"], m["frontier"], -max(m["cm"] / 3.0, m["deg"] / 30.0))
+    return (m["passed"], m["frontier"], m.get("lift", 0.0), -max(m["cm"] / 3.0, m["deg"] / 30.0))
 
 
 def better(a, b):
@@ -109,6 +120,11 @@ def better(a, b):
         return a["passed"] >= b["passed"] + 0.1
     if a["frontier"] != b["frontier"]:
         return a["frontier"] >= b["frontier"] + 3
+    # A grasp that moves the object further is real progress even before the frontier moves.
+    if a.get("lift", 0.0) >= b.get("lift", 0.0) + 0.05 and a["cm"] <= b["cm"] + 1.0:
+        return True
+    if a.get("lift", 0.0) <= b.get("lift", 0.0) - 0.05:
+        return False
     return max(a["cm"] / 3.0, a["deg"] / 30.0) <= 0.95 * max(b["cm"] / 3.0, b["deg"] / 30.0)
 
 
@@ -118,7 +134,9 @@ class YamReferenceEditor:
         if training.resume:
             raise ValueError("resume is not supported for the YAM upper level")
         self.interval = int(self.options["interval"])
-        self.next_update = int(self.options.get("warmup", self.interval))
+        # A grasp already proven in the physics search should be the reference from the first step: training on a
+        # reference that never touches the object only teaches the policy to ignore it.
+        self.next_update = 0 if self.options.get("pool") else int(self.options.get("warmup", self.interval))
         self.count = int(self.options.get("candidates", 12))
         self.training, self.setup, self.metadata = training, setup, checkpoint_metadata
         self.config = deepcopy(environment_config)
@@ -130,6 +148,7 @@ class YamReferenceEditor:
         self.projector = LocalProjector(embodiment, self.baseline)
         self.names = list(self.projector.layout.scalar_joints.names)
         self.rng = np.random.default_rng(training.seed + 10000)
+        self.train_voc = instantiate_typed(OmegaConf.create(self.config["env"]), RLEnvConfig).voc
         evaluation = deepcopy(self.config)
         apply_evaluation_composition(evaluation, world_count=int(self.options.get("eval_worlds", 16)))
         self.eval_config = instantiate_typed(OmegaConf.create(evaluation["env"]), RLEnvConfig)
@@ -152,6 +171,30 @@ class YamReferenceEditor:
         self.task = Y.YamTask(self.options["episode"], self.side, int(self.options.get("object", 0)))
         self.task.set_stage("real")
         self.onset = self.task.onset
+        # Contact schedule: every object carried must pass, each judged against whichever hand holds it at that frame; the worst decides.
+        self.holds = {}
+        meta = Path(self.options["episode"]) / "recon_meta.json"
+        environ = __import__("os").environ
+        if meta.is_file() and not environ.get("RECON_ONE_HOLD"):
+            all_holds = json.loads(meta.read_text()).get("holds", [])
+            upto = int(environ.get("RECON_HOLDS_UPTO", 0))
+            used = all_holds[:upto] if upto else all_holds
+            for h in used:
+                self.holds.setdefault(int(h["index"]), []).append(h)
+            # Every object in the scene counts, including one no hand is scheduled to hold.
+            meta_objects = json.loads(meta.read_text()).get("objects", [])
+            self.unheld = [k for k in range(len(meta_objects)) if k not in {int(h["index"]) for h in all_holds}]
+            if len(all_holds) < 2 and not self.unheld:
+                self.holds = {}
+            self.hold_onset = {k: Y.YamTask(self.options["episode"], v[0]["side"], k).onset for k, v in self.holds.items()}
+            self.hold_cut = {k: (max(int(x.get("release") or x["object_end"]) for x in v) if upto else max(int(x["object_end"]) for x in v)) for k, v in self.holds.items()}
+            # A hold the next hand joins without a release is only judged until that hand is on the object.
+            self.judged_until_join = set()
+            for k, v in self.holds.items():
+                joins = [x for x in all_holds[upto:] if int(x["index"]) == k] if upto else []
+                if joins and v[-1].get("release") is None:
+                    self.hold_cut[k] = min(self.hold_cut[k], max(int(joins[0]["onset"]), int(v[-1]["onset"])) + 20)
+                    self.judged_until_join.add(k)
         prefix = "R" if self.side == "right" else "L"
         qids = self.projector.layout.scalar_joints.q_ids
         self.arm_q = [qids[self.names.index(f"{prefix}_arm_j{i}")] for i in range(1, 7)]
@@ -164,6 +207,21 @@ class YamReferenceEditor:
         self.edit = identity_edit()
         self.actor = self.policy = None
         self.version = 0
+        # Whole-grasp alternatives from the physics search; local edits alone cannot leave the demonstrated grasp.
+        self.pool = []
+        for parquet in self.options.get("pool", ()):
+            other = setup_scene(
+                parquet=parquet, control_fps=self.eval_config.sim.fps, motion_speed=task["motion_speed"],
+                embodiment=embodiment, collision=collision, world_count=1,
+                include_support=scene["support"], decompose_objects=scene["decompose_objects"],
+                contact_friction=scene.get("contact_friction", 1.0),
+                object_free_joint_damping=scene.get("object_free_joint_damping", 0.0),
+                source_frame_playback=task["source_frame_playback"],
+                motion_start_frame=task["motion_start_frame"], motion_end_frame=task["motion_end_frame"],
+            )
+            if command_digest(other.reference) != self.command:
+                raise ValueError(f"pool reference {parquet} has different object commands")
+            self.pool.append((str(parquet), other.scene.robot_reference))
         self._publish(0)
 
     def _palm_path(self, q):
@@ -200,15 +258,21 @@ class YamReferenceEditor:
         for f in range(n):
             arm, _, _ = t.arm_ik(arm, p[f], r[f], steps=8, limit=step)
             q[f, self.arm_q] = arm
-        fingers = self.human_q[:, self.finger_q] + contact[:, None] * edit["close"] * (self.limits[:, 1] - self.human_q[:, self.finger_q])
+        grasp = self.human_q[min(self.onset, n - 1), self.finger_q] - self.human_q[0, self.finger_q]
+        closing = np.where(grasp >= 0.0, self.limits[:, 1], self.limits[:, 0])
+        fingers = self.human_q[:, self.finger_q] + contact[:, None] * edit["close"] * (closing - self.human_q[:, self.finger_q])
         q[:, self.finger_q] = np.clip(fingers, self.limits[:, 0], self.limits[:, 1])
         target = self.baseline.joint_target.copy()
         target[:, self.projector.dids] = q[:, self.projector.qids]
         return build_robot_reference_binding(self.projector.builder, self.projector.layout, q, target, self.baseline.fps)
 
-    def rollout(self, binding, learner, seed):
-        """Frozen policy, no assistance, full episode, from the task's own start."""
-        env = RLEnv(replace(self.eval_setup.scene, robot_reference=binding), self.eval_setup.reference, config=deepcopy(self.eval_config))
+    def rollout(self, binding, learner, seed, voc_probe_scale=0.0):
+        """Frozen policy, full episode, from the task's own start. No assistance unless a VOC probe asks for it."""
+        eval_config = deepcopy(self.eval_config)
+        if voc_probe_scale > 0.0:
+            eval_config.voc = deepcopy(self.train_voc)
+            eval_config.voc_scale = float(voc_probe_scale)
+        env = RLEnv(replace(self.eval_setup.scene, robot_reference=binding), self.eval_setup.reference, config=eval_config)
         env.reset(frame_id=0)
         if env.device.is_cuda:
             env.capture_step()
@@ -225,9 +289,10 @@ class YamReferenceEditor:
                 self.actor, state, obs, key, deterministic=True,
                 action_transform=self.training.network.action_transform, action_scale=self.training.network.action_scale,
             )
+        self._action_dim = adapter.action_dim
         W = env.world_count
         per_world = env.model.body_count // W
-        poses, palm = [], []
+        poses, palm, palms = [], [], []
         for _ in range(binding.num_frames - 1):
             action, key = self.policy(state, obs, key)
             obs = jnp.array(adapter.step(action).observation, copy=True)
@@ -238,7 +303,30 @@ class YamReferenceEditor:
             gq = env.command.body_target_quat_w.numpy().reshape(W, -1, 4)
             poses.append(np.concatenate([x, gp, gq], axis=-1))
             palm.append(b.reshape(W, per_world, 7)[:, self.palm_body])
-        return measure(np.asarray(poses), np.asarray(palm), self.onset), np.asarray(poses)
+            palms.append(b.reshape(W, per_world, 7))
+        # Judge the object this reference moves, not whichever body happens to come first.
+        everything = np.asarray(poses)
+        poses = everything[:, :, [int(self.options.get("object", 0))]]
+        m = measure(poses, np.asarray(palm), self.onset)
+        if self.holds:
+            palms = np.asarray(palms)
+            hands = {h.side: h.palm_frame.body_id for h in self.projector.layout.hands}
+            parts = []
+            for k, v in self.holds.items():
+                n = min(self.hold_cut[k] + 1, len(everything))
+                stitched = palms[:n, :, hands[v[0]["side"]]].copy()
+                for h in v[1:]:
+                    stitched[int(h["start"]):] = palms[int(h["start"]):n, :, hands[h["side"]]]
+                parts.append(measure(everything[:n, :, [k]], stitched, self.hold_onset[k]))
+                # Cut mid-motion, it cannot have finished the move yet: whether it is on track is what counts.
+                if k in getattr(self, "judged_until_join", ()):
+                    parts[-1]["lift"] = 1.0
+            # An object no hand holds only has to stay on its recorded path.
+            for k in getattr(self, "unheld", ()):
+                parts.append(measure(everything[:, :, [k]], palms[:, :, next(iter(hands.values()))], 0))
+                parts[-1]["lift"] = 1.0
+            m = dict(min(parts, key=lambda x: (x["passed"], -x["cm"])), holds=[{a: x[a] for a in ("passed", "cm", "deg", "kinds")} for x in parts])
+        return m, poses
 
     def propose(self, m, poses):
         """Edits chosen by the failure type; physics decides which survive."""
@@ -297,17 +385,59 @@ class YamReferenceEditor:
             candidate = self.build(edit)
             result, _ = self.rollout(candidate, learner, seed)
             record["candidates"].append(result)
+            # An edit that still holds nothing is no reason to throw away the replay buffer, or a grasp known to work.
+            if result["kind"] == "never_held" and self.pool:
+                continue
             if better(result, before) and (best is None or score(result) > score(best[0])):
                 best = (result, edit, candidate)
+        for name, candidate in self.pool:
+            if name == getattr(self, "current_pool", None) and self.version > 0 and not any(self.edit["local"]) and np.all(self.edit["dp"] == 0):
+                continue
+            result, _ = self.rollout(candidate, learner, seed)
+            result["pool"] = name
+            record["candidates"].append(result)
+            # A whole new grasp must already work with the current policy, not merely beat a failure.
+            if result["passed"] >= float(self.options.get("pool_min_pass", 0.5)) and better(result, before) and (best is None or score(result) > score(best[0])):
+                best = (result, dict(identity_edit(), pool=name), candidate)
+            # A policy trained on a reference that never touches the object is no judge of one that does: while nothing is held, also test the grasp on its own.
+            already = name == getattr(self, "current_pool", None) and not any(self.edit["local"]) and np.all(self.edit["dp"] == 0)
+            # On a partial-gate run the same test applies to a reference that passes nothing, however it fails.
+            partial_gate = float(self.options.get("alone_min", 0.3)) == 0 and before["passed"] == 0
+            if (before["kind"] == "never_held" or partial_gate) and not already:
+                trained = self.policy
+                self.policy = lambda state_, o, k: (jnp.zeros((o.shape[0], self._action_dim), dtype=o.dtype), k)
+                alone, _ = self.rollout(candidate, learner, self.training.seed)
+                self.policy = trained
+                result["alone"] = {a: alone[a] for a in ("passed", "cm", "deg", "kinds", "lift")}
+                carried = sum(v for a, v in alone["kinds"].items() if a in ("held", "off_track")) / max(1, sum(alone["kinds"].values()))
+                # A partly working grasp is still far better than a reference that never touches the object, and the policy can firm it up.
+                if carried >= float(self.options.get("alone_min", 0.3)) and alone["lift"] >= 0.8 and (best is None or score(alone) > score(best[0])):
+                    best = (alone, dict(identity_edit(), pool=name, alone=True), candidate)
         if best is not None:
             # A fresh seed guards against keeping a lucky rollout.
             control, _ = self.rollout(self.binding, learner, seed + 100000)
-            check, _ = self.rollout(best[2], learner, seed + 100000)
+            if best[1].get("alone"):
+                trained = self.policy
+                self.policy = lambda state_, o, k: (jnp.zeros((o.shape[0], self._action_dim), dtype=o.dtype), k)
+                check, _ = self.rollout(best[2], learner, seed + 100000)
+                self.policy = trained
+            else:
+                check, _ = self.rollout(best[2], learner, seed + 100000)
             record["validation"] = dict(control=control, candidate=check)
-            if better(check, control):
+            # A grasp that carries the object beats a reference that never touches it, even if few worlds pass yet.
+            rescued = best[1].get("alone") and control["kind"] == "never_held" and check["frontier"] >= control["frontier"] + 3 and check["lift"] >= 0.8
+            if better(check, control) or rescued:
                 self.edit, self.binding = best[1], best[2]
+                adopted = self.edit.get("pool")
                 self.version += 1
                 self._publish(step)
+                if adopted:
+                    # Later local edits refine the adopted grasp. It stays in the pool, so a later
+                    # collapse can return to it; only the reference in use is skipped.
+                    self.current_pool = adopted
+                    self.human_q = self.binding.joint_q.copy()
+                    self.human_p, self.human_r = self._palm_path(self.human_q)
+                    self.edit = identity_edit()
                 record["accepted"] = True
         record.update(version_after=self.version, seconds=time.perf_counter() - started)
         if command_digest(self.setup.reference) != self.command:

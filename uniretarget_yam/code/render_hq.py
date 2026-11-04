@@ -16,17 +16,17 @@ def loop_frontier(ep,er,total):
     n=np.arange(1,len(ep)+1);limit=.7*n+.3*total;over=np.flatnonzero((ep>.15)|(er>np.radians(150.))|(np.cumsum(ep)>.03*limit)|(np.cumsum(er)>np.radians(30.)*limit));return int(over[0]) if len(over) else -1
 def errors(o):
     i=o[0];al=R.from_quat(i[3:7])*R.from_quat(i[10:14]).inv();gp=al.apply(o[:,7:10])+i[:3]-al.apply(i[7:10]);gr=al*R.from_quat(o[:,10:14]);return gp,gr,np.linalg.norm(o[:,:3]-gp,axis=1),(R.from_quat(o[:,3:7]).inv()*gr).magnitude()
-p=argparse.ArgumentParser();p.add_argument('--model',type=Path,required=True);p.add_argument('--run',type=Path,required=True);p.add_argument('--world',type=int,default=0);p.add_argument('--object',type=int,default=0);p.add_argument('--title',default='');p.add_argument('--subtitle',default='');p.add_argument('--cause',type=int,default=-1);p.add_argument('--output',type=Path,required=True);p.add_argument('--still',type=int);p.add_argument('--slow',type=int,default=2);p.add_argument('--ghost',type=Path);p.add_argument('--ghost_side',default='right_');p.add_argument('--edits',default='');p.add_argument('--kinematic',action='store_true');a=p.parse_args()
-m=mujoco.MjModel.from_binary_path(str(a.model));z=np.load(a.run/'physics.npz');cap=int(z['native_capture_world_ids'][a.world]);Q=z['native_qpos'][:,a.world];poses=z['object_pose'][:,cap];fps=float(z['fps'])
+p=argparse.ArgumentParser();p.add_argument('--model',type=Path,required=True);p.add_argument('--run',type=Path,required=True);p.add_argument('--world',type=int,default=0);p.add_argument('--object',type=int,default=0);p.add_argument('--title',default='');p.add_argument('--subtitle',default='');p.add_argument('--cause',type=int,default=-1);p.add_argument('--output',type=Path,required=True);p.add_argument('--still',type=int);p.add_argument('--slow',type=int,default=2);p.add_argument('--ghost',type=Path);p.add_argument('--ghost_side',default='right_');p.add_argument('--edits',default='');p.add_argument('--kinematic',action='store_true');a=p.parse_args();a.subtitle=''  # A compact panel: title and numbers only.
+m=mujoco.MjModel.from_binary_path(str(a.model.with_name('yam_model_visual.mjb') if a.model.with_name('yam_model_visual.mjb').is_file() else a.model));z=np.load(a.run/'physics.npz');cap=int(z['native_capture_world_ids'][a.world]);Q=z['native_qpos'][:,a.world];poses=z['object_pose'][:,cap];fps=float(z['fps'])
 free=[j for j in range(m.njnt) if m.jnt_type[j]==0];body=lambda k:int(m.jnt_bodyid[min(free,key=lambda j:float(np.linalg.norm(z['native_qpos'][0,0][m.jnt_qposadr[j]:m.jnt_qposadr[j]+3]-poses[0,k,:3])))]);obj=body(a.object)
 # Materials: warm table, graphite hands, saturated object colours, soft studio lights.
-PALETTE={0:(.86,.42,.20,1),1:(.16,.52,.86,1),2:(.30,.70,.40,1)}
+PALETTE={0:(.10,.70,.75,1),1:(.16,.40,.90,1),2:(.30,.75,.40,1)}
 VENDOR=m.geom_rgba.copy()
 m.geom_matid[:]=-1
 for g in range(m.ngeom):
     n=m.body(int(m.geom_bodyid[g])).name
     if n.startswith(('left_','right_')):m.geom_rgba[g]=(.20,.22,.26,1) if n.startswith('right_') else (.33,.35,.40,1)
-    elif n=='support':m.geom_rgba[g]=(.78,.74,.68,1)
+    elif n=='support':m.geom_rgba[g]=(.66,.38,.18,1)
     elif m.geom(g).name.startswith('yam_'):m.geom_rgba[g]=VENDOR[g]
     elif int(m.geom_bodyid[g])==0:m.geom_rgba[g]=(.93,.93,.94,1)
 for k in range(poses.shape[1]):
@@ -52,8 +52,9 @@ if any(m.body(b).name.endswith('_arm_base_link') for b in range(m.nbody)):
     # The arms face the table along recon +y, so look back at them from the far side and above.
     cam.azimuth=-68;cam.elevation=-34;cam.distance=max(cam.distance,1.25);cam.lookat[:]=np.median(poses[:n,:,:3].reshape(-1,3),axis=0)+np.array([0,-.08,.06])
 vy=np.linspace(0,1,H*SS)[:,None,None];top=np.array([232,236,241.]);bot=np.array([186,192,200.]);bg=(top*(1-vy)+bot*vy)*np.ones((1,W*SS,1))
-floor=[g for g in range(m.ngeom) if m.geom_type[g]==mujoco.mjtGeom.mjGEOM_PLANE];F_T=font(34,True);F_S=font(26);F_B=font(30,True);F_M=font(26);F_L=font(22);INK=(28,32,38);RED=(205,48,42);GRN=(30,140,84);AMB=(214,140,20);MUT=(92,98,108);BLUE=(36,104,190)
+floor=[g for g in range(m.ngeom) if m.geom_type[g]==mujoco.mjtGeom.mjGEOM_PLANE];F_T=font(24,True);F_S=font(18);F_B=font(20,True);F_M=font(18);F_L=font(15);INK=(28,32,38);RED=(205,48,42);GRN=(30,140,84);AMB=(214,140,20);MUT=(92,98,108);BLUE=(36,104,190)
 GHOST_ID=100000;ROBOT_GHOST_ID=100001
+import booth;BOOTH=booth.boxes(a.model.parent);BOOTH_ID=100002
 ghost=np.load(a.ghost) if a.ghost else None;dg=mujoco.MjData(m);edits=[int(x) for x in a.edits.split(',') if x]
 def add_robot_ghost(s,f):
     # The original reference as a second robot, only on the arm that differs and only where it differs.
@@ -61,36 +62,36 @@ def add_robot_ghost(s,f):
     for i in range(base):
         g=s.geoms[i]
         if g.objtype==mujoco.mjtObj.mjOBJ_GEOM and g.objid<m.ngeom and s.ngeom<s.maxgeom and m.body(int(m.geom_bodyid[g.objid])).name.startswith(a.ghost_side) and not m.body(int(m.geom_bodyid[g.objid])).name.endswith('base_link'):
-            k=g.objid;t=s.geoms[s.ngeom];mujoco.mjv_initGeom(t,g.type,g.size,dg.geom_xpos[k],dg.geom_xmat[k],np.array([.35,.68,1.,1.],np.float32));t.dataid=g.dataid;t.objtype=mujoco.mjtObj.mjOBJ_GEOM;t.objid=ROBOT_GHOST_ID;s.ngeom+=1
+            k=g.objid;t=s.geoms[s.ngeom];mujoco.mjv_initGeom(t,g.type,g.size,dg.geom_xpos[k],dg.geom_xmat[k],np.array([.35,.68,1.,1.],np.float32));t.dataid=g.dataid;t.objtype=mujoco.mjtObj.mjOBJ_GEOM;t.objid=ROBOT_GHOST_ID;t.segid=s.ngeom;s.ngeom+=1
 def add_ghost(s,f):
     rot=gr[f].as_matrix();base=s.ngeom
     for i in range(base):
         g=s.geoms[i]
         if g.objtype==mujoco.mjtObj.mjOBJ_GEOM and g.objid<m.ngeom and m.geom_bodyid[g.objid]==obj and s.ngeom<s.maxgeom:
-            k=g.objid;lr=R.from_quat(m.geom_quat[k][[1,2,3,0]]).as_matrix();t=s.geoms[s.ngeom];mujoco.mjv_initGeom(t,g.type,g.size,gp[f]+rot@m.geom_pos[k],(rot@lr).ravel(),np.array([.10,.80,.48,1.],np.float32));t.dataid=g.dataid;t.objtype=mujoco.mjtObj.mjOBJ_GEOM;t.objid=GHOST_ID;s.ngeom+=1
+            k=g.objid;lr=R.from_quat(m.geom_quat[k][[1,2,3,0]]).as_matrix();t=s.geoms[s.ngeom];mujoco.mjv_initGeom(t,g.type,g.size,gp[f]+rot@m.geom_pos[k],(rot@lr).ravel(),np.array([.10,.80,.48,1.],np.float32));t.dataid=g.dataid;t.objtype=mujoco.mjtObj.mjOBJ_GEOM;t.objid=GHOST_ID;t.segid=s.ngeom;s.ngeom+=1
 def frame(f):
-    d.qpos[:]=Q[f];mujoco.mj_forward(m,d);r.update_scene(d,cam);s=r.scene;s.flags[mujoco.mjtRndFlag.mjRND_SHADOW]=1;s.flags[mujoco.mjtRndFlag.mjRND_REFLECTION]=0
+    d.qpos[:]=Q[f];mujoco.mj_kinematics(m,d);mujoco.mj_comPos(m,d);mujoco.mj_camlight(m,d);r.update_scene(d,cam);booth.add(r.scene,BOOTH);s=r.scene;s.flags[mujoco.mjtRndFlag.mjRND_SHADOW]=1;s.flags[mujoco.mjtRndFlag.mjRND_REFLECTION]=0
     if s.nlight<8:
         l=s.lights[s.nlight];l.type=mujoco.mjtLightType.mjLIGHT_DIRECTIONAL;l.pos[:]=cam.lookat+np.array([.6,-.8,1.6]);l.dir[:]=(cam.lookat-l.pos)/np.linalg.norm(cam.lookat-l.pos);l.diffuse[:]=.55;l.ambient[:]=.05;l.specular[:]=.15;l.castshadow=1;s.nlight+=1
-    rgb=r.render().astype(float);seg.update_scene(d,cam);ids=seg.render()[...,0];mask=(ids<0)|np.isin(ids,floor);rgb[mask]=bg[mask]
+    rgb=r.render().astype(float);seg.update_scene(d,cam);booth.add(seg.scene,BOOTH,BOOTH_ID);ids=seg.render()[...,0];mask=(ids<0)|np.isin(ids,floor);rgb[mask]=bg[mask]
     # Goal ghost: rendered in its own pass so depth stays right, then blended over the composite.
     if not a.kinematic:add_ghost(r.scene,f);lit=r.render().astype(float);seg.update_scene(d,cam);add_ghost(seg.scene,f);over=seg.render()[...,0]==GHOST_ID;rgb[over]=.55*rgb[over]+.45*lit[over]
     if ghost is not None and (ghost['palm_cm'][f]>.2 or ghost['palm_deg'][f]>2):
         add_robot_ghost(r.scene,f);lit=r.render().astype(float);add_robot_ghost(seg.scene,f);over=seg.render()[...,0]==ROBOT_GHOST_ID;rgb[over]=.45*rgb[over]+.55*lit[over]
     im=cv2.resize(rgb.astype(np.uint8),(W,H),interpolation=cv2.INTER_AREA);img=Image.fromarray(im).convert('RGBA');ov=Image.new('RGBA',img.size,(0,0,0,0));dr=ImageDraw.Draw(ov)
     # One panel, sized to its contents: title, time, current error, episode mean (what the official metric judges), limit.
-    bad=first>=0 and f>=first;f1=f+1;mc,md=100*ep[:f1].mean(),np.degrees(er[:f1].mean());VX=148
+    bad=first>=0 and f>=first;f1=f+1;mc,md=100*ep[:f1].mean(),np.degrees(er[:f1].mean());VX=88
     other_text=[(f'other object {k}:  {100*e1[f]:.1f} cm / {np.degrees(e2[f]):.0f}°'+('   past its frontier' if fr>=0 and f>=fr else ''),RED if fr>=0 and f>=fr else BLUE) for k,(e1,e2,fr) in others.items()]
-    right=60+max(dr.textlength(a.title,font=F_T),dr.textlength(a.subtitle,font=F_S) if a.subtitle else 0,VX-60+dr.textlength('00.00 cm  /  000.0°',font=F_B),dr.textlength('t = 00.00 s   frame 000',font=F_M),*(dr.textlength(x,font=F_L) for x,_ in other_text))+24
-    y=102+(38 if a.subtitle else 0);dr.rounded_rectangle((36,32,right,y+36*((1 if a.kinematic else 4)+(ghost is not None))+34*(0 if a.kinematic else len(other_text))+14),18,fill=(255,255,255,222));dr.text((60,50),a.title,font=F_T,fill=INK)
-    if a.subtitle:dr.text((60,102),a.subtitle,font=F_S,fill=MUT)
-    dr.text((60,y),f't = {f/fps:.2f} s   frame {f}',font=F_M,fill=MUT);y+=36
+    right=36+max(dr.textlength(a.title,font=F_T),dr.textlength(a.subtitle,font=F_S) if a.subtitle else 0,VX-36+dr.textlength('00.00 cm  /  000.0°',font=F_B),dr.textlength('t = 00.00 s   frame 000',font=F_M),*(dr.textlength(x,font=F_L) for x,_ in other_text))+14
+    y=58+(24 if a.subtitle else 0);dr.rounded_rectangle((24,22,right,y+24*((1 if a.kinematic else 4)+(ghost is not None))+20*(0 if a.kinematic else len(other_text))+6),12,fill=(255,255,255,222));dr.text((36,28),a.title,font=F_T,fill=INK)
+    if a.subtitle:dr.text((36,58),a.subtitle,font=F_S,fill=MUT)
+    dr.text((36,y),f't = {f/fps:.2f} s   frame {f}',font=F_M,fill=MUT);y+=24
     if not a.kinematic:
-        dr.text((60,y),'now',font=F_M,fill=MUT);dr.text((VX,y-2),f'{100*ep[f]:.1f} cm  /  {np.degrees(er[f]):.0f}°',font=F_B,fill=RED if bad else (AMB if ep[f]>=.03 or er[f]>=np.radians(30) else GRN));y+=36
-        dr.text((60,y),'mean',font=F_M,fill=MUT);dr.text((VX,y-2),f'{mc:.2f} cm  /  {md:.1f}°',font=F_B,fill=RED if mc>=3 or md>=30 else GRN);y+=36
-        dr.text((60,y),'limit',font=F_M,fill=MUT);dr.text((VX,y),'3 cm  /  30°',font=F_M,fill=MUT);y+=36
-        for x,c in other_text:dr.text((60,y),x,font=F_L,fill=c);y+=34
-    if ghost is not None:dr.text((60,y),'edit',font=F_M,fill=MUT);dr.text((VX,y-2),f"{ghost['palm_cm'][f]:.1f} cm  /  {ghost['palm_deg'][f]:.0f}°",font=F_B,fill=BLUE);y+=36
+        dr.text((36,y),'now',font=F_M,fill=MUT);dr.text((VX,y-1),f'{100*ep[f]:.1f} cm  /  {np.degrees(er[f]):.0f}°',font=F_B,fill=RED if bad else (AMB if ep[f]>=.03 or er[f]>=np.radians(30) else GRN));y+=24
+        dr.text((36,y),'mean',font=F_M,fill=MUT);dr.text((VX,y-1),f'{mc:.2f} cm  /  {md:.1f}°',font=F_B,fill=RED if mc>=3 or md>=30 else GRN);y+=24
+        dr.text((36,y),'limit',font=F_M,fill=MUT);dr.text((VX,y),'3 cm  /  30°',font=F_M,fill=MUT);y+=24
+        for x,c in other_text:dr.text((36,y),x,font=F_L,fill=c);y+=20
+    if ghost is not None:dr.text((36,y),'edit',font=F_M,fill=MUT);dr.text((VX,y-1),f"{ghost['palm_cm'][f]:.1f} cm  /  {ghost['palm_deg'][f]:.0f}°",font=F_B,fill=BLUE);y+=24
     if a.cause>=0 and abs(f-a.cause)<=6:dr.rounded_rectangle((36,H-214,560,H-150),14,fill=AMB+(235,));dr.text((58,H-200),'Traced cause: fix targets here',font=F_M,fill=(255,255,255))
     if first>=0 and abs(f-first)<=6:dr.rounded_rectangle((590,H-214,1240,H-150),14,fill=RED+(235,));dr.text((612,H-200),'Frontier: lost, or error budget used up',font=F_M,fill=(255,255,255))
     x0,x1,yb=60,W-60,H-84;xf=lambda v:int(x0+(x1-x0)*v/max(1,n-1));dr.rounded_rectangle((36,H-132,W-36,H-30),18,fill=(255,255,255,222));dr.rounded_rectangle((x0,yb-5,x1,yb+5),5,fill=(205,210,216,255));dr.rounded_rectangle((x0,yb-5,xf(f),yb+5),5,fill=(120,128,140,255))

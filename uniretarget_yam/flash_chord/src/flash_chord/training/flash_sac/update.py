@@ -167,6 +167,7 @@ def actor_loss(
     temperature: jax.Array,
     *,
     behavior_cloning_coefficient: float,
+    residual_penalty: float = 0.0,
 ) -> ActorLoss:
     """Compute the squashed-policy objective with optional upstream BC regularization."""
     if log_probability.shape != minimum_q.shape:
@@ -186,6 +187,9 @@ def actor_loss(
     if behavior_cloning_coefficient > 0.0:
         q_scale = jax.lax.stop_gradient(jnp.abs(minimum_q).mean())
         loss = loss + behavior_cloning_coefficient * q_scale * behavior_cloning_loss
+    if residual_penalty > 0.0:
+        # Actions are residuals on a reference that already works: leave it only where the critic pays for it.
+        loss = loss + residual_penalty * jax.lax.stop_gradient(jnp.abs(minimum_q).mean()) * jnp.mean(jnp.square(action))
     return ActorLoss(
         loss=loss,
         entropy=-log_probability.mean(),

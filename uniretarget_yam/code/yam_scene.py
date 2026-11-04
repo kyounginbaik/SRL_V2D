@@ -1,4 +1,5 @@
 """Build a YAM + Sharpa scene around one episode's objects and table, with vendor meshes and gains."""
+import os
 import argparse,json,re,tempfile
 from pathlib import Path
 import numpy as np,mujoco
@@ -16,6 +17,7 @@ def placement(native,poses):
     return up,M,c
 def build(episode,output):
     e=Path(episode);n=mujoco.MjModel.from_binary_path(str(e/'native_model.mjb'));z=np.load(e/'baseline/physics.npz');poses=z['object_pose'][:,0];q0=z['native_qpos'][0,0];up,M,c=placement(n,poses)
+    if (e/'center.json').is_file():c=np.array(json.loads((e/'center.json').read_text()))  # Workspace centred on the object being moved.
     s=mujoco.MjSpec();s.option.timestep=1/400;s.option.gravity=n.opt.gravity;s.option.integrator=n.opt.integrator;s.option.cone=n.opt.cone;s.option.impratio=n.opt.impratio;s.option.solver=n.opt.solver;s.option.iterations=n.opt.iterations;s.option.ls_iterations=n.opt.ls_iterations;s.option.tolerance=n.opt.tolerance;s.visual.global_.offwidth=1920;s.visual.global_.offheight=1080
     d=mujoco.MjData(n);d.qpos[:]=q0;mujoco.mj_kinematics(n,d);keep=[];mesh_ids={};robot=lambda name:name.startswith(('left_','right_'))
     def copy_geom(parent,g,prefix):
@@ -44,13 +46,10 @@ def build(episode,output):
     for g in range(n.ngeom):
         if n.body(int(n.geom_bodyid[g])).name=='support' and n.geom_type[g]==mujoco.mjtGeom.mjGEOM_CYLINDER:tabletop.append(float(d.geom_xpos[g]@up+n.geom_size[g,1]))
     table=max(tabletop) if tabletop else floor
-    # The vendor's yam_setup.usd table and the back aluminium profile the arm bases bolt onto (robot frame, around the workspace).
-    q=R.from_matrix(M).as_quat()[[3,0,1,2]];fixed=lambda x,y,mid:c+M@np.array([x,y,0.])-((c@up)-mid)*up
-    s.worldbody.add_geom(name='yam_table',type=mujoco.mjtGeom.mjGEOM_BOX,pos=fixed(.03,0.,table-.001-.325),quat=q,size=[.395,.8,.325],rgba=[.95,.95,.95,1],friction=[.8,.005,.0001])
-    s.worldbody.add_geom(name='yam_profile',type=mujoco.mjtGeom.mjGEOM_BOX,pos=fixed(-.305,0.,table+.03),quat=q,size=[.06,.8,.03],rgba=[.78,.79,.81,1],friction=[.8,.005,.0001])
+    q=R.from_matrix(M).as_quat()[[3,0,1,2]]
     bases={}
     for side in ('left','right'):
-        p=c+M@np.array([*BASE_XY[side],0.]);p=p-(p@up)*up+(table+BASE_ABOVE_TABLE)*up;q=R.from_matrix(M).as_quat()[[3,0,1,2]];bases[side]=dict(pos=p.tolist(),quat=q.tolist());fr=s.worldbody.add_frame(pos=p,quat=q);arm=arm_spec(side);root=arm.body('base_link') if arm.body('base_link') is not None else arm.worldbody.first_body()
+        p=c+M@np.array([BASE_XY[side][0]+float(os.environ.get('YAM_BASE_X','0')),BASE_XY[side][1],0.]);p=p-(p@up)*up+(table+BASE_ABOVE_TABLE+float(os.environ.get('YAM_BASE_UP','0')))*up;q=R.from_matrix(M).as_quat()[[3,0,1,2]];bases[side]=dict(pos=p.tolist(),quat=q.tolist());fr=s.worldbody.add_frame(pos=p,quat=q);arm=arm_spec(side);root=arm.body('base_link') if arm.body('base_link') is not None else arm.worldbody.first_body()
         fr.attach_body(root,f'{side}_arm_','')
     # The base is welded to the world, so MuJoCo's parent filter does not cover the first joint.
     for side in ('left','right'):s.add_exclude(bodyname1=f'{side}_arm_base_link',bodyname2=f'{side}_arm_link_1')
@@ -65,7 +64,17 @@ def build(episode,output):
                     j.armature=arm_;j.frictionloss=fr_;a=s.add_actuator(name='pos_'+nm,target=nm,trntype=mujoco.mjtTrn.mjTRN_JOINT,gaintype=mujoco.mjtGain.mjGAIN_FIXED,biastype=mujoco.mjtBias.mjBIAS_AFFINE);a.gainprm[0]=FINGER_KP;a.biasprm[0:3]=[0,-FINGER_KP,-FINGER_KD];a.forcelimited=1;a.forcerange=[-eff,eff];break
     for b in s.bodies:
         if b.name.startswith(('left_','right_')):b.gravcomp=1.
-    m=s.compile();mujoco.mj_saveModel(m,str(output/'yam_model.mjb'),None);placement_out=dict(bases=bases,up=up.tolist(),center=c.tolist(),table_height=table,objects=list(names),arm_speed_limit=ARM_SPEED);(output/'yam_placement.json').write_text(json.dumps(placement_out,indent=1)+'\n');return m,placement_out
+    m=s.compile();mujoco.mj_saveModel(m,str(output/'yam_model.mjb'),None);visual_model(s,e,names,output);m=mujoco.MjModel.from_binary_path(str(output/'yam_model.mjb'));placement_out=dict(bases=bases,up=up.tolist(),center=c.tolist(),table_height=table,objects=list(names),arm_speed_limit=ARM_SPEED);(output/'yam_placement.json').write_text(json.dumps(placement_out,indent=1)+'\n');return m,placement_out
+def visual_model(s,e,names,output):
+    """A copy for videos only: the real object mesh shown, the convex parts hidden. Physics and the search never load it."""
+    import trimesh
+    for n in names:
+        p=e.parent.parent/'objects'/e.name/f'{n}_visual.obj'
+        if not p.is_file():continue
+        t=trimesh.load(p,force='mesh');b=s.body(n)
+        for g in b.geoms:g.group=3
+        s.add_mesh(name=f'{n}_visual_mesh',uservert=t.vertices.ravel().tolist(),userface=t.faces.ravel().tolist(),inertia=mujoco.mjtMeshInertia.mjMESH_INERTIA_SHELL);b.add_geom(name=f'{n}_visual_geom',type=mujoco.mjtGeom.mjGEOM_MESH,meshname=f'{n}_visual_mesh',contype=0,conaffinity=0,group=0,density=0,mass=0)
+    mujoco.mj_saveModel(s.compile(),str(output/'yam_model_visual.mjb'),None)
 if __name__=='__main__':
     p=argparse.ArgumentParser();p.add_argument('episode');a=p.parse_args();e=Path(a.episode);out=e/'yam';out.mkdir(exist_ok=True);m,info=build(e,out);print(json.dumps(dict(nq=m.nq,nv=m.nv,nu=m.nu,nbody=m.nbody,ngeom=m.ngeom,nmesh=m.nmesh,table=round(info['table_height'],3),base=info['bases']['right']['pos'])))
     d=mujoco.MjData(m)

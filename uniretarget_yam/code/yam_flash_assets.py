@@ -17,7 +17,8 @@ def build(episode,output):
         q=pl[side]['quat'];rpy=R.from_quat([q[1],q[2],q[3],q[0]]).as_euler('xyz');fix=ET.SubElement(robot,'joint',name=f'{p}_base_fixed',type='fixed');ET.SubElement(fix,'origin',xyz=' '.join(f'{v:.8f}' for v in pl[side]['pos']),rpy=' '.join(f'{v:.8f}' for v in rpy));ET.SubElement(fix,'parent',link='world');ET.SubElement(fix,'child',link=ren(root))
     # The vendor table and back profile, exactly where the MuJoCo scene puts them.
     m=mujoco.MjModel.from_binary_path(str(Path(episode)/'yam/yam_model.mjb'))
-    for name in ('yam_table','yam_profile'):
+    # Only the recording's round table (in the scene's support) stands in the workspace.
+    for name in ():
         g=m.geom(name);w=g.quat;rpy=R.from_quat([w[1],w[2],w[3],w[0]]).as_euler('xyz');l=ET.SubElement(robot,'link',name=name);i=ET.SubElement(l,'inertial');ET.SubElement(i,'mass',value='1');ET.SubElement(i,'inertia',ixx='1',iyy='1',izz='1',ixy='0',ixz='0',iyz='0')
         for tag in ('visual','collision'):
             e=ET.SubElement(l,tag);ET.SubElement(ET.SubElement(e,'geometry'),'box',size=' '.join(f'{2*v:.6f}' for v in g.size))
