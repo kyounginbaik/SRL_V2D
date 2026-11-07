@@ -1,0 +1,246 @@
+Explicit bilevel surrogate with a numerically checked lower response
+=================================================================
+
+This implementation changes the lower optimization problem. It does NOT
+certify the global optimum of full neural FlashSAC. That distinction is part
+of the method definition, not a hidden assumption.
+
+At a search stage t, freeze the current FlashSAC backbone, critic, covariance,
+temperature and batch statistics. Theta specifies a feasible local full-hand
+reference edit. Simulate the frozen base policy under that reference to
+obtain its adaptation observations D_t(theta). Use fixed sampling rules and
+common Gaussian action noise across candidates.
+
+For each observation, let h_i(theta) be the frozen actor's final feature
+vector, augmented by 1 for its mean bias. Let m_i be the base Gaussian mean
+before tanh. Differentiate the frozen-critic SAC actor loss
+
+  ell_i(m) = alpha log pi_m(a_i | o_i) - min(Q1(o_i,a_i), Q2(o_i,a_i))
+
+through the sampled action and tanh, holding its noise and covariance fixed.
+Call that gradient g_i. Set one scalar eta_theta for the whole candidate's
+dataset: min(configured_teacher_step, target_bound / max_i,j |g_i,j|).
+The target is Y_i=-eta_theta*g_i; this rescales rather than coordinate-clips
+the gradient. H stacks the h_i rows. The explicit lower objective is
+
+  G_t(theta,W) = ||H(theta) W - Y(theta)||_F^2/(2N)
+                 + lambda ||W||_F^2/2,       lambda > 0.
+
+Ignoring a W-independent constant and dividing by eta_theta gives a
+linearization of the frozen-critic empirical actor loss, a quadratic trust
+penalty on logit changes, and a ridge penalty on the head increment.
+This is a proximal actor-improvement SURROGATE, not the nonlinear SAC loss.
+
+The adapted controller is
+
+  pi_theta,W(o): mean = base_mean(o) + h(o)^T W,
+                action = action_scale * tanh(mean).
+
+All 56 outputs (wrists AND fingers) are adapted. W is folded into the existing
+unit-direction/gain mean head and mean bias so ordinary inference/checkpoints
+use the selected controller without an external runtime adapter. Every real
+effective head matrix is representable by unit columns and scalar gains;
+the lower variable W itself is unconstrained.
+
+The stage's bilevel problem is
+
+  minimize_theta F_t(theta, W_t*(theta)),
+  W_t*(theta) = argmin_W G_t(theta,W).
+
+F_t runs full-horizon VOC0 physics with that candidate's OWN adapted
+controller. In local_nominal mode it scores the shared failure-local interval
+(error onset through failure + 1 second), plus CHORD-style normalized tolerance-band wrench-support error (weight 5),
+missed and unintended support penalties (weight 1 each), and separately
+scaled reference penalties. No contact-position distance enters ranking or
+acceptance. Both-object success
+is computed before averaging. Object/reference commands remain immutable.
+Search/confirmation use solved no-edit controls, and a selected reference
+is published together with its selected lower response.
+
+PROPOSITION 1: UNIQUE LOWER SOLUTION
+
+Write A=H^T H/N+lambda I and B=H^T Y/N. The gradient is AW-B and
+the Hessian in vectorized W is I_actions tensor A. For any vector v,
+v^T A v=||Hv||^2/N+lambda||v||^2 >= lambda||v||^2.
+Thus G is lambda-strongly convex, has a unique minimizer, and
+
+  W*=solve(A,B).
+
+No assumption of strong convexity of the neural network or contact simulator
+is made. Strong convexity holds because THIS lower objective is quadratic.
+
+PROPOSITION 2: COMPUTABLE APPROXIMATION BOUNDS
+
+For a computed W_hat let R=A W_hat-B. Since R=A(W_hat-W*),
+
+  ||W_hat-W*||_F <= ||R||_F/lambda.
+  G(W_hat)-G(W*) = .5 tr(R^T A^-1 R)
+                 <= ||R||_F^2/(2lambda).
+
+The solver checks these residual-based bounds. It also recomputes them for
+the effective deployed float32 head after folding, refusing a response above
+the configured tolerance. Bounds are analytical real-arithmetic bounds
+evaluated numerically, not formally verified interval-arithmetic certificates.
+Floating-point action/matrix multiplication may introduce additional rounding.
+
+With 1/L gradient steps and L>=lambda_max(A), the lower iteration contracts:
+
+  ||W_K-W*||_F <= (1-lambda/L)^K ||W_0-W*||_F.
+
+This establishes convergence of the iterative approximation for this actual
+lower objective. The production solver uses a linear solve and residual check
+instead of assuming that a fixed training budget reaches an optimum.
+
+PROPOSITION 3: RESPONSE DERIVATIVES AND UPPER APPROXIMATION
+
+At differentiable data mappings, differentiating AW*=B gives
+
+  dW*=solve(A, dB-dA W*).
+
+The supplied JVP implements this identity; tests compare against independent
+finite differences. The robot search currently uses response-aware function
+evaluations, not differentiation through contact physics.
+
+For a bounded measurable composed function J(theta)=F(theta,W*(theta)),
+Gaussian smoothing J_sigma(theta)=E_u[J(theta+sigma*u)] with u~N(0,I)
+has gradient E[(J(theta+sigma*u)-J(theta-sigma*u))*u/(2sigma)].
+Thus the optional two-sided estimator includes lower-response dependence
+without differentiating the simulator. With each value error bounded by e,
+its gradient bias is at most e*sqrt(d)/sigma, by the triangle inequality
+and E||u||<=sqrt(d). A bound on W alone is NOT a bound on physical cost;
+that further step needs a justified Lipschitz bound in W.
+This estimator is a tested numerical primitive, not the production upper
+proposal rule or a claim of convergence of the full training loop.
+
+The production upper approximation samples a finite candidate set, solves
+each lower response, and compares against a matched adapted no-edit control.
+In local_nominal mode every pair uses the original demonstration start and
+one common scoring interval across all windows. It selects the lowest local
+cost satisfying prefix/large-regression guards, with a 1e-4 minimum gain.
+The optional legacy strict_robust mode retests up to four finalists on three
+paired perturbed resets and requires every per-reset gate. Neither statement
+covers an unsearched continuous reference domain.
+
+If evaluated feasible-set costs differ uniformly from ideal costs by at most
+e, exact finite-set minimization gives regret at most 2e (plus the 1e-4
+acceptance deadband in local_nominal mode): apply the bound
+once at the selected candidate, the estimated minimization inequality, and
+once at the ideal finite-set minimizer. If the continuous composed objective
+is L-Lipschitz and the candidate set is an h-cover, add L*h. Neither a small
+covering radius in 56D nor a physical-cost Lipschitz constant is certified by
+this implementation. Three reset tests do not supply a distribution-free
+task-success certificate. Held-out testing remains necessary.
+
+WHAT THESE PROOFS DO NOT ESTABLISH
+
+They do not bound the gap between this proximal lower surrogate and the
+globally optimal neural RL policy. Between search stages, regular FlashSAC
+learning refreshes the base controller/critic; G_t changes. Therefore the
+code does not claim convergence of that whole evolving loop to a stationary
+point of one fixed global bilevel objective. Freezing the base throughout an
+outer optimization experiment would remove that particular source of drift,
+but still would not turn the convex surrogate into full neural RL.
+
+The method is explicit bilevel optimization OF A STATED SURROGATE. Calling it
+an exact solver or a proven approximation of the original full neural-RL
+bilevel problem would exceed what has been established here.
+
+TESTS / REFERENCES
+
+tests/retargeting/test_response_bilevel.py checks independent SVD solutions,
+rank-deficient designs, parameter/gap bounds, implicit finite differences,
+lower contraction, invalid-input refusal, and a toy problem where the old
+frozen-response search stalls but response-aware evaluation improves.
+test_response_policy.py checks folding, unchanged non-head parameters and
+the equality of batched adapted policies with individual deployed actors.
+
+Related foundations, not a claim that our simulator meets every assumption:
+https://proceedings.mlr.press/v80/franceschi18a.html (Sections2-3)
+https://www.jmlr.org/papers/v24/22-1043.html (lower contraction framework)
+https://arxiv.org/pdf/2007.05170 (response-gradient dependence in TTSA)
+
+CHORD UPPER OBJECTIVE REVISION (2026-10-14)
+
+For each time/world/hand/object cell, let s_ref and s_sim be support vectors.
+The squared band deviation is ||max((1-beta)s_ref-s_sim,0)||^2 +
+||max(s_sim-(1+beta)s_ref,0)||^2, beta=0.1. We divide by reference support
+energy, cap each active cell at 10, average active cells within each object,
+and give objects equal weight. This uses the tolerance-band loss underlying
+CHORD Eq.3, with explicit normalization for upper candidate scoring; it is
+not the paper's exponential lower RL reward.
+
+Missed support is the fraction of reference-active directions absent in the
+simulation, averaged over reference-active cells. Unintended support counts
+reference-inactive hand/object cells with simulated support, plus their mean
+squared support energy (capped at 10). No fingertip-to-reference-contact
+position errors are computed or gated in this experiment.
+
+Upper F = position/0.03 + orientation/0.3 + 2*(1-joint_object_success)
+        + 5*cws_band_error + missed_fraction
+        + unintended_fraction + unintended_energy
+        + 3*instability + geometric_edit_and_rate_penalties.
+F is capped to [0,100]. In local_nominal mode pose, joint-success and wrench
+terms use [error onset, failure+1s), clipped to the horizon. All candidates
+share this interval even when their edit windows differ. No failure uses the
+whole episode. Earlier prefix mean errors may increase by at most 2 mm and
+0.01 rad; prefix p95 by 5 mm and 0.03 rad. Large-regression guards allow at
+most +5 cm and +20 degrees in each object's mean pose error, measured both
+over the whole episode and separately after the scoring interval. New
+instability is rejected. No per-object whole-episode first-failure-time or
+individual wrench-component veto is applied. fixed_start additionally protects
+the successful prefix of the archived best pair: no earlier sustained failure
+and no mean/p95 prefix regressions beyond the preceding tolerances. Acceptance requires local cost improvement
+>1e-4 at the original start; there are no perturbed confirmation resets.
+The fixed_start launch uses one nominal baseline rollout; it disables the
+optional legacy 16 perturbed baseline probes. These tolerances are engineering choices.
+Legacy strict_robust retains its three-reset, per-object nonregression rules.
+Both wrists and fingers can change; intended hand/object labels remain fixed.
+Raw normalized wrench MSE is retained as a diagnostic, not an upper cost.
+
+The lower quadratic, response folding, residual bounds, physics settings,
+and adaptive failure-based window selection are unchanged. Changing F does
+not remove the stated limitations on full neural-RL/global convergence.
+
+Source: https://arxiv.org/html/2607.00033v2#S3.SS1
+
+Upper FlashSAC proposal ablation (2026-10-14)
+------------------------------------------
+The optional upper_proposal=flashsac selects a learned contextual Gaussian proposal
+distribution instead of independent zero-mean Gaussian sampling. All candidate
+lower solves, objective terms, paired validation and pair publication are unchanged.
+A search round inserts terminal transitions (context, proposed correction, reward),
+where reward = clip(F_t(no-edit,W*_t(no-edit)) - F_t(theta,W*_t(theta)), -5, 5).
+Critic/actor updates learn this one-step entropy-regularized bandit. Replay is
+refreshed each stage; networks persist, so old reward labels are never replayed
+against a changed lower stage. The no-edit action is explicitly included. The
+best evaluated feasible pair is selected with F, without clipping its gain
+to the proposal learner's [-5,5] reward interval.
+
+The local feasible reference map bounds edits in both proposal modes. The upper
+actor uses an identity action transform and initial Gaussian std 0.5, matching
+the independent sampler's initial support. The implemented 32 gradient steps
+(16 actor updates) per batch are an approximation, without a global upper-policy
+convergence claim. Changing the proposal mechanism leaves the exact per-candidate
+lower optimum and residual bound valid. It does not turn the algorithm into
+an implicit-gradient method or prove whole-loop convergence.
+
+Fixed-start demonstration preservation (2026-10-15)
+-------------------------------------------------
+fixed_start=true binds training, window detection, candidate evaluation and
+checkpoint checks to one physical initial state. Finger opening and random
+reference-frame reset sampling are disabled. Every candidate still receives
+its own solved lower response, with unchanged residual bounds. Initial robot
+and object generalized positions plus zero velocities are audited by hash.
+
+The incumbent pair has a verified successful prefix ending at its first
+sustained tracking failure. A candidate must preserve that historical prefix,
+even if the current lower learner has already regressed. Accepted pairs are
+stored immutably. The preferred archive pointer ranks prefix length first,
+then the fixed full-horizon cost; this provides a nondecreasing archived prefix,
+not a guarantee that subsequent neural-policy training cannot regress.
+Checks run at upper stages and lower checkpoint boundaries. No implicit actor-
+only rollback is performed. If the solved no-edit head violates the saved
+prefix and no edit passes, the incoming learner is retained and the stage logs
+lower_response_applied=false. No optimal-lower-response claim is made about
+that retained incoming learner. The accepted candidate pairs still use their
+certified surrogate responses. No global convergence guarantee is added.
